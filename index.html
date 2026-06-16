@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Escala — e-CEJUSC3</title>
+<title>Sistema de Escala</title>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; }
   :root{
@@ -369,7 +369,7 @@
    CAMADA DE DADOS — IndexedDB (único ponto a trocar p/ nuvem)
    ============================================================ */
 const DB = (function(){
-  const NAME='escala_cejusc', VER=1; let dbp=null;
+  const NAME='escala_adm', VER=1; let dbp=null;
   function open(){
     if(dbp) return dbp;
     dbp=new Promise((res,rej)=>{
@@ -440,7 +440,7 @@ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeM(b.data
 /* ===== Backup (exportar / importar) — ponte simples até a nuvem ===== */
 async function exportarBackup(){
   const pautas=await DB.list(); const config=await DB.getConfig(); const equipe=await DB.getEquipe();
-  const data={ app:'escala-cejusc', versao:1, exportadoEm:new Date().toISOString(), config, equipe, pautas };
+  const data={ app:'escala_adm', versao:1, exportadoEm:new Date().toISOString(), config, equipe, pautas };
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='backup-escala-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href);
@@ -474,7 +474,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala CEJUSC</h1></div>
+      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" id="hEquipe" title="Configurar equipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 11a3 3 0 002-5.24"/></svg><span class="hide-sm">Equipe</span></button>
@@ -484,7 +484,7 @@ async function renderHome(){
     </div></nav>
     <div class="wrap">
       <div class="row between wrapf" style="margin-bottom:2px;">
-        <div><div class="eyebrow">e-CEJUSC3</div><h1 style="font-size:20px;">Pautas guardadas</h1></div>
+        <div><div class="eyebrow">ADM</div><h1 style="font-size:20px;">Pautas guardadas</h1></div>
       </div>
 
       <div class="row between wrapf" style="margin-top:18px;gap:10px;">
@@ -945,7 +945,7 @@ async function renderPauta(id){
         <div id="gabWrap" style="margin-top:12px;"></div>
       </div>
 
-      <p class="faint" style="font-size:12px;text-align:center;margin-top:14px;">Tudo é salvo automaticamente neste navegador (IndexedDB). Copie as colunas para colar na sua planilha do TJDFT.</p>
+      <p class="faint" style="font-size:12px;text-align:center;margin-top:14px;">Tudo é salvo automaticamente neste navegador (IndexedDB). Copie as colunas para colar na sua planilha.</p>
     </div>`;
 
   /* ---- filtros de coluna (estilo Excel): { campo: Set(valoresPermitidos) }; '' = (Vazias) ---- */

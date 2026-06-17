@@ -709,7 +709,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.6</h1></div>
+      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.5</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" id="hEquipe" title="Configurar equipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 11a3 3 0 002-5.24"/></svg><span class="hide-sm">Equipe</span></button>
@@ -752,30 +752,87 @@ async function renderHome(){
 }
 function linhaInfo(p){ const status=p.status==='editando'?'<span class="badge b-open">aberta</span>':(audsDe(p)===0?'<span class="badge b-draft">rascunho</span>':''); return {auds:audsDe(p),status}; }
 
-function renderTabela(cont,vis){
-  cont.innerHTML=`<div class="card shadow" style="overflow:hidden;"><table class="t"><thead><tr><th>Data</th><th>Nome</th><th style="text-align:center">Aud.</th><th>Código</th><th>Última edição</th><th></th></tr></thead><tbody></tbody></table></div>`;
-  const tb=cont.querySelector('tbody');
-  vis.forEach(p=>{ const [y,m,d]=(p.data||'--- - -').split('-'); const i=linhaInfo(p); const tr=document.createElement('tr');
-    tr.innerHTML=`<td><div class="row" style="gap:10px;"><div class="datebox" style="width:42px;height:42px;background:#f1f5f9;border:1px solid var(--line);"><span class="d" style="font-size:15px;">${d||'—'}</span><span class="m faint" style="font-size:9px;">${m?M3A[+m-1]:''}</span></div><span class="mono faint" style="font-size:12px;">${isoParaBR(p.data)}</span></div></td>
-      <td style="font-weight:700;">${esc(p.nome)} ${i.status}</td>
-      <td style="text-align:center;"><span class="tnums" style="font-weight:700;${i.auds?'':'color:var(--faint)'}">${i.auds||'—'}</span></td>
-      <td><span class="mono faint" style="font-size:12px;">${esc(p.codigo||'—')}</span></td>
-      <td class="muted">${relTempo(p.editadoEm)}</td>
-      <td style="text-align:right;white-space:nowrap;"><span style="color:var(--brand);font-weight:700;font-size:12px;">Abrir →</span> <button class="btn icon-btn btn-sm del" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:transparent;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></td>`;
-    tr.querySelector('.del').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
-    tr.onclick=()=>abrirPauta(p.id); tb.appendChild(tr); });
-}
-function renderMural(cont,vis){
-  cont.innerHTML=`<div class="grid"></div>`; const g=cont.querySelector('.grid');
-  const nc=document.createElement('button'); nc.className='newcard'; nc.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:13px;">Nova pauta</span>'; nc.onclick=()=>openM('mNova'); g.appendChild(nc);
-  vis.forEach(p=>{ const [y,m,d]=(p.data||'').split('-'); const i=linhaInfo(p); const isR=i.auds===0&&p.status!=='editando'; const c=document.createElement('button'); c.className='pcard';
-    c.innerHTML=`<button class="btn icon-btn btn-sm del-x" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:#fff;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
-      <div class="row between" style="align-items:flex-start;"><div class="datebox" style="width:54px;height:54px;${isR?'background:#fffbeb;border:1px solid var(--amber-100);':'background:var(--brand-50);border:1px solid var(--brand-100);'}"><span class="d" style="font-size:20px;${isR?'color:var(--amber-700)':'color:var(--brand)'}">${d||'—'}</span><span class="m" style="font-size:9px;${isR?'color:var(--amber-700)':'color:var(--brand)'}">${m?M3A[+m-1]:''}</span></div>${i.status||'<span class="mono faint" style="font-size:11px;">'+esc(p.codigo||'')+'</span>'}</div>
-      <div style="font-weight:700;margin-top:14px;">${esc(p.nome)}</div><div class="faint" style="font-size:12px;margin-top:2px;">${relTempo(p.editadoEm)}</div>
-      <div class="row between" style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px;"><span class="muted" style="font-size:13px;">${i.auds?'<b class="tnums">'+i.auds+'</b> audiências':'<span class="faint">sem audiências</span>'}</span><span style="color:var(--brand);font-weight:700;font-size:12px;">abrir →</span></div>`;
-    c.querySelector('.del-x').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
-    c.onclick=()=>abrirPauta(p.id); g.appendChild(c); });
-}
+    function renderTabela(cont,vis){
+      // Captura a data de hoje no formato YYYY-MM-DD
+      const t = new Date(); 
+      const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+
+      cont.innerHTML=`<div class="card shadow" style="overflow:hidden;"><table class="t"><thead><tr><th>Data</th><th>Nome</th><th style="text-align:center">Aud.</th><th>Código</th><th>Última edição</th><th></th></tr></thead><tbody></tbody></table></div>`;
+      const tb=cont.querySelector('tbody');
+      
+      vis.forEach(p=>{ 
+        const isHoje = (p.data === hoje);
+        const [y,m,d]=(p.data||'--- - -').split('-'); 
+        const i=linhaInfo(p); 
+        const tr=document.createElement('tr');
+        
+        // Destaque de fundo se for hoje
+        if (isHoje) tr.style.backgroundColor = '#eff6ff';
+
+        const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-left:8px;">HOJE</span>` : '';
+        const dateBoxStyle = isHoje ? 'background:#3b82f6; border-color:#2563eb;' : 'background:#f1f5f9; border:1px solid var(--line);';
+        const dateCor = isHoje ? 'color:#fff;' : '';
+        const monthCor = isHoje ? 'color:#dbeafe;' : '';
+
+        tr.innerHTML=`<td><div class="row" style="gap:10px;"><div class="datebox" style="width:42px;height:42px;${dateBoxStyle}"><span class="d" style="font-size:15px;${dateCor}">${d||'—'}</span><span class="m ${isHoje?'':'faint'}" style="font-size:9px;${monthCor}">${m?M3A[+m-1]:''}</span></div><span class="mono faint" style="font-size:12px;${isHoje?'color:#1e3a8a;font-weight:700;':''}">${isoParaBR(p.data)}</span>${badgeHoje}</div></td>
+          <td style="font-weight:700; ${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)} ${i.status}</td>
+          <td style="text-align:center;"><span class="tnums" style="font-weight:700;${i.auds?'':'color:var(--faint)'}">${i.auds||'—'}</span></td>
+          <td><span class="mono faint" style="font-size:12px;">${esc(p.codigo||'—')}</span></td>
+          <td class="muted">${relTempo(p.editadoEm)}</td>
+          <td style="text-align:right;white-space:nowrap;"><span style="color:var(--brand);font-weight:700;font-size:12px;">Abrir →</span> <button class="btn icon-btn btn-sm del" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:transparent;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></td>`;
+        
+        tr.querySelector('.del').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
+        tr.onclick=()=>abrirPauta(p.id); 
+        tb.appendChild(tr); 
+      });
+    }
+
+    function renderMural(cont,vis){
+      // Captura a data de hoje no formato YYYY-MM-DD
+      const t = new Date(); 
+      const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+
+      cont.innerHTML=`<div class="grid"></div>`; const g=cont.querySelector('.grid');
+      
+      const nc=document.createElement('button'); nc.className='newcard'; nc.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:13px;">Nova pauta</span>'; nc.onclick=()=>openM('mNova'); g.appendChild(nc);
+      
+      vis.forEach(p=>{ 
+        const isHoje = (p.data === hoje);
+        const [y,m,d]=(p.data||'').split('-'); 
+        const i=linhaInfo(p); 
+        const isR=i.auds===0&&p.status!=='editando'; 
+        const c=document.createElement('button'); 
+        c.className='pcard';
+        
+        // Destaque de borda e sombra se for hoje
+        if (isHoje) {
+          c.style.borderColor = '#3b82f6';
+          c.style.backgroundColor = '#f8fafc';
+          c.style.boxShadow = '0 0 0 1px #3b82f6, 0 4px 14px rgba(59,130,246,0.15)';
+        }
+
+        const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-top:4px;">HOJE</span>` : '';
+        const dateBoxStyle = isHoje ? 'background:#3b82f6; border:1px solid #2563eb;' : (isR?'background:#fffbeb;border:1px solid var(--amber-100);':'background:var(--brand-50);border:1px solid var(--brand-100);');
+        const dCor = isHoje ? 'color:#fff;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
+        const mCor = isHoje ? 'color:#dbeafe;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
+
+        c.innerHTML=`<button class="btn icon-btn btn-sm del-x" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:#fff;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+          <div class="row between" style="align-items:flex-start;">
+            <div class="row" style="gap:10px;">
+              <div class="datebox" style="width:54px;height:54px;${dateBoxStyle}"><span class="d" style="font-size:20px;${dCor}">${d||'—'}</span><span class="m" style="font-size:9px;${mCor}">${m?M3A[+m-1]:''}</span></div>
+              <div style="display:flex; flex-direction:column; align-items:flex-start;">${badgeHoje}</div>
+            </div>
+            ${i.status||'<span class="mono faint" style="font-size:11px;">'+esc(p.codigo||'')+'</span>'}
+          </div>
+          <div style="font-weight:700;margin-top:14px;${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)}</div><div class="faint" style="font-size:12px;margin-top:2px;">${relTempo(p.editadoEm)}</div>
+          <div class="row between" style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px;"><span class="muted" style="font-size:13px;">${i.auds?'<b class="tnums">'+i.auds+'</b> audiências':'<span class="faint">sem audiências</span>'}</span><span style="color:var(--brand);font-weight:700;font-size:12px;">abrir →</span></div>`;
+        
+        c.querySelector('.del-x').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
+        c.onclick=()=>abrirPauta(p.id); 
+        g.appendChild(c); 
+      });
+    }
+
 async function excluirPauta(p){ if(!confirm('Excluir "'+p.nome+'"? Esta ação não pode ser desfeita.')) return; await DB.remove(p.id); toast('Pauta excluída.'); renderHome(); }
 
 /* ============================================================

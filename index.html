@@ -397,6 +397,100 @@
   <div class="modal-foot"><div class="row between" style="gap:8px;flex-wrap:wrap;"><span class="faint" style="font-size:12px;">As alterações são salvas no seu navegador.</span><div class="row"><button class="btn" id="eqFechar">Fechar</button><button class="btn btn-primary" id="eqSalvar">Salvar</button></div></div></div>
 </div></div>
 
+<div class="modal-bg keep-open" id="mCancelSup"><div class="modal md modal-flex">
+  <div class="modal-head">
+    <div class="row between" style="align-items:flex-start;">
+      <div>
+        <div style="font-size:19px;font-weight:800;">Cancelamentos e Supervisões</div>
+        <div class="muted" style="font-size:14px;">Gerencie as excepcionalidades e demandas de supervisão.</div>
+      </div>
+      <button class="btn icon-btn" onclick="closeM('mCancelSup')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+  </div>
+  <div class="modal-body" style="display:flex; flex-direction:column; gap:20px; padding-bottom: 20px;">
+    <div>
+      <div style="font-weight:700; font-size:15px; margin-bottom:4px; color:var(--brand);">1. Cancelamentos do Dia</div>
+      <div class="muted" style="font-size:12.5px; margin-bottom:8px;">Insira ou cole os números dos processos cancelados:</div>
+      <div id="csCancelList" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+    <hr style="border:0; border-top:1px solid var(--line);">
+    <div>
+      <div class="row between" style="margin-bottom:8px;">
+        <div style="font-weight:700; font-size:15px; color:var(--brand);">2. Supervisões do Dia</div>
+        <button class="btn btn-sm" id="csBtnGerenciar">Gerenciar Grade</button>
+      </div>
+      <div id="csSupList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <div class="row between">
+      <button class="btn" onclick="closeM('mCancelSup')">Fechar</button>
+      <button class="btn btn-primary" id="csBtnProcessar">Processar e Salvar na Pauta</button>
+    </div>
+  </div>
+</div></div>
+
+<div class="modal-bg keep-open" id="mGerenciarSup"><div class="modal md modal-flex">
+  <div class="modal-head">
+    <div class="row between" style="align-items:flex-start;">
+      <div>
+        <div style="font-size:19px;font-weight:800;">Gerenciar Grade de Supervisões</div>
+        <div class="muted" style="font-size:14px;">Defina os horários padrão de supervisão semanais.</div>
+      </div>
+      <button class="btn icon-btn" id="gsX"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    
+    <div class="row wrapf" style="margin-top:12px; gap:8px; background:#f1f5f9; padding:8px 12px; border-radius:8px; align-items:center;">
+      <span style="font-size:13px; font-weight:700; color:var(--muted);">Filtrar por Supervisor:</span>
+      <select id="gsFiltroSup" class="sel" style="flex:1; min-width:180px; max-width:300px; font-size:13px; padding:6px 10px;"></select>
+      <button id="gsBtnLimparFiltro" class="btn icon-btn btn-sm" title="Limpar Filtro" style="color:#ef4444; border-color:#fecaca; display:none; padding:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div style="flex:1;"></div>
+      <button id="gsBtnSimples" class="btn btn-sm" style="background:#eff6ff; color:#2563eb; border-color:#bfdbfe;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><circle cx="12" cy="12" r="10" fill="#3b82f6" stroke="none"/></svg>
+        Aud. Simples
+      </button>
+    </div>
+  </div>
+  <div class="modal-body" id="gsList" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px;"></div>
+  <div class="modal-foot">
+    <div class="row between">
+      <button class="btn btn-sm" id="gsAdd">+ Adicionar Supervisão</button>
+      <button class="btn btn-primary" id="gsSalvar">Salvar Configuração</button>
+    </div>
+  </div>
+</div></div>
+
+<div class="modal-bg keep-open" id="mGerenciarSimples"><div class="modal md modal-flex">
+  <div class="modal-head">
+    <div class="row between" style="align-items:flex-start;">
+      <div>
+        <div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#3b82f6"/></svg>
+          Aud. Simples (Estagiários)
+        </div>
+        <div class="muted" style="font-size:14px;">Defina a cota diária (ignora automaticamente o dia de folga).</div>
+      </div>
+      <button class="btn icon-btn" id="gSimplesX"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="row" style="margin-top:12px; gap:8px; background:#eff6ff; padding:8px 12px; border-radius:8px;">
+      <span style="font-size:13px; font-weight:700; color:#1e3a8a;">Filtrar por Estagiário:</span>
+      <select id="gSimplesFiltro" class="sel" style="flex:1; max-width:300px; font-size:13px; padding:6px 10px; border-color:#bfdbfe;"></select>
+      <button id="gSimplesBtnLimpar" class="btn icon-btn btn-sm" title="Limpar Filtro" style="color:#ef4444; border-color:#fecaca; display:none; padding:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="modal-body" id="gSimplesList" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px;"></div>
+  <div class="modal-foot">
+    <div class="row between">
+      <button class="btn btn-sm" id="gSimplesAdd">+ Adicionar Regra</button>
+      <button class="btn btn-primary" id="gSimplesSalvar">Salvar Configuração</button>
+    </div>
+  </div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <div class="modal-bg keep-open" id="mDiaEdit"><div class="modal xl modal-flex">
@@ -472,6 +566,20 @@ const DB = (function(){
     },
     async saveConfig(salas){ 
       await getRef().child('config/salas').set(salas); 
+    },
+    async getSupConfig(){ 
+      const snap = await getRef().child('config/supervisoes').once('value'); 
+      return snap.val() || []; 
+    },
+    async saveSupConfig(data){ 
+      await getRef().child('config/supervisoes').set(data); 
+    },
+    async getSimplesConfig(){ 
+      const snap = await getRef().child('config/simples').once('value'); 
+      return snap.val() || []; 
+    },
+    async saveSimplesConfig(data){ 
+      await getRef().child('config/simples').set(data); 
     },
     async getEquipe(){ 
       const snap = await getRef().child('config/equipe').once('value'); 
@@ -601,7 +709,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.5</h1></div>
+      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.6</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" id="hEquipe" title="Configurar equipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 11a3 3 0 002-5.24"/></svg><span class="hide-sm">Equipe</span></button>
@@ -1026,6 +1134,7 @@ async function renderPauta(id){
         <div class="row wrapf" style="gap:8px;">
           <label class="row" style="gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="soCom"> só com processo</label>
           <button class="btn" id="pConfig"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13M3 12h7M3 17h11"/><circle cx="19" cy="7" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg> Salas</button>
+          <button class="btn" id="pCancelSup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.58a1 1 0 0 1 .7.3l5.42 5.42a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z"/></svg> Cancelamentos e Supervisões</button>
           <button class="btn" id="pDia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 14h.01M12 14h.01M16 14h.01"/></svg> Equipe do dia</button>
           <input type="file" id="pjeFile" accept=".xlsx,.xls,.csv" style="display:none;">
           <button class="btn" id="pImport"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg> Importar PJe</button>
@@ -1248,6 +1357,7 @@ async function renderPauta(id){
   document.getElementById('pNome').addEventListener('input',e=>{ pautaAtual.nome=e.target.value; agendaSalvar(); });
   document.getElementById('soCom').onchange=()=>montarGrade();
   document.getElementById('pConfig').onclick=()=>abrirConfig('pauta',pautaAtual);
+  document.getElementById('pCancelSup').onclick=()=>abrirCancelSup();
   document.getElementById('pImport').onclick=()=>document.getElementById('pjeFile').click();
   document.getElementById('pjeFile').addEventListener('change',e=>{ if(e.target.files[0]) importarNaPauta(e.target.files[0]); e.target.value=''; });
   const cw=document.getElementById('copyWrap');
@@ -1635,6 +1745,648 @@ function sincronizaGabarito(p){
   });
   p.dia.gab=novo;
 }
+
+    /* ============================================================
+      CONTROLE DE CANCELAMENTOS E SUPERVISÕES DO DIA
+      ============================================================ */
+    async function abrirCancelSup() {
+      const p = pautaAtual;
+      diaInit(p);
+      if(!p.dia.cancelamentos) p.dia.cancelamentos = [""];
+      if(!p.dia.supervisoes_dados) p.dia.supervisoes_dados = {};
+
+      renderCsCancelamentos();
+      await renderCsSupervisoes();
+
+      document.getElementById('csBtnGerenciar').onclick = () => abrirGerenciarSup();
+      document.getElementById('csBtnProcessar').onclick = () => processarCancelSup();
+
+      openM('mCancelSup');
+    }
+
+    function renderCsCancelamentos() {
+      const box = document.getElementById('csCancelList');
+      box.innerHTML = '';
+      
+      // Limpa campos vazios que ficaram soltos e garante apenas 1 branco no final
+      const limpos = pautaAtual.dia.cancelamentos.filter(x => x.trim() !== '');
+      limpos.push('');
+      pautaAtual.dia.cancelamentos = limpos;
+
+      const arr = pautaAtual.dia.cancelamentos;
+      
+      arr.forEach((num, idx) => {
+        const inp = document.createElement('input');
+        inp.className = 'input';
+        inp.value = num;
+        inp.placeholder = 'Número do processo';
+        
+        inp.addEventListener('input', () => {
+          arr[idx] = inp.value;
+          agendaSalvar();
+          
+          // Se preencheu o último campo disponível, cria o próximo imediatamente sem perder o foco
+          if (idx === arr.length - 1 && inp.value.trim() !== '') {
+            arr.push('');
+            renderCsCancelamentos();
+            setTimeout(() => {
+              const inputs = box.querySelectorAll('input');
+              if(inputs[idx]) inputs[idx].focus();
+            }, 10);
+          }
+        });
+        
+        inp.addEventListener('blur', () => {
+          // Se o usuário apagou o conteúdo de um campo intermediário e saiu dele, redesenha limpando
+          if (inp.value.trim() === '' && idx < arr.length - 1) {
+            renderCsCancelamentos();
+          }
+        });
+
+        box.appendChild(inp);
+      });
+    }
+
+    // ATUALIZAÇÃO: Vincula o botão "Aud. Simples" na hora que a janela de Supervisão abre
+    const btnSimplesOriginal = document.getElementById('gsBtnSimples');
+    if (btnSimplesOriginal) btnSimplesOriginal.onclick = () => abrirGerenciarSimples();
+
+    async function renderCsSupervisoes() {
+      const box = document.getElementById('csSupList');
+      box.innerHTML = '';
+      const dia = diaSemanaISO(pautaAtual.data);
+      if(!dia) {
+        box.innerHTML = '<div class="faint">Defina a data da pauta primeiro para carregar as supervisões.</div>';
+        return;
+      }
+      
+      const sups = (await DB.getSupConfig()) || [];
+      const hojeSups = sups.filter(s => s.dia === dia && !s.inativa).sort((a,b) => parseInt(a.hora) - parseInt(b.hora));
+      
+      const simples = (await DB.getSimplesConfig()) || [];
+      // MÁGICA AQUI: O filtro ignora automaticamente o estagiário se o dia de folga dele bater com o dia atual da pauta!
+      const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia).sort((a,b) => parseInt(a.hora) - parseInt(b.hora));
+
+      if(!hojeSups.length && !hojeSimples.length) {
+        box.innerHTML = '<div class="faint">Nenhuma supervisão ou audiência simples ativa para este dia (' + diaSemanaISO(pautaAtual.data) + ').</div>';
+        return;
+      }
+
+      const compCores = { 1: '#10b981', 2: '#f59e0b', 3: '#ef4444' };
+      const compTitles = { 1: 'Baixa Complexidade', 2: 'Média Complexidade', 3: 'Alta Complexidade' };
+
+      // 1) Imprime as Supervisões padrão
+      hojeSups.forEach(s => {
+        if (!s.complexidade) s.complexidade = 1;
+        const row = document.createElement('div');
+        row.className = 'row between';
+        row.style.cssText = 'padding:8px 12px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; gap:12px; align-items:center; flex-wrap:wrap;';
+        
+        const cor = (s.tipo === 'servidor') ? getSupervisorColor(s.supervisor) : 'var(--ink)';
+        const svgCpx = `<svg width="12" height="12" viewBox="0 0 24 24" title="${compTitles[s.complexidade]}" style="margin-right:6px;"><circle cx="12" cy="12" r="10" fill="${compCores[s.complexidade]}"/></svg>`;
+
+        row.innerHTML = `<div style="min-width:180px; display:flex; align-items:center;">
+            ${svgCpx}
+            <b class="mono" style="margin-right:8px;">${s.hora}h00</b> 
+            <span style="font-weight:700; color:${cor}; margin-right:8px;">${esc(s.supervisor)}</span> 
+            <span class="badge" style="background:var(--brand-50); color:var(--brand-d);">${eqCap(s.tipo)}</span>
+          </div>`;
+        
+        const inp = document.createElement('input');
+        inp.className = 'input';
+        inp.style.flex = '1'; inp.style.minWidth = '200px';
+        inp.placeholder = 'Nº do processo sob supervisão';
+        inp.value = pautaAtual.dia.supervisoes_dados[s.id] || '';
+        
+        inp.oninput = () => { pautaAtual.dia.supervisoes_dados[s.id] = inp.value.trim(); agendaSalvar(); };
+        row.appendChild(inp); box.appendChild(row);
+      });
+
+      // 2) Imprime as Aud. Simples (Ícone Azul)
+      if(hojeSimples.length > 0) {
+        const divDivider = document.createElement('div');
+        divDivider.innerHTML = '<hr style="border:0; border-top:1px dashed var(--line2); margin:10px 0;"><div style="font-weight:700; font-size:13px; color:#2563eb; margin-bottom:8px;">Audiências Simples (Estagiários)</div>';
+        box.appendChild(divDivider);
+
+        hojeSimples.forEach(s => {
+          const row = document.createElement('div');
+          row.className = 'row between';
+          row.style.cssText = 'padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; gap:12px; align-items:center; flex-wrap:wrap;';
+          
+          const cor = getSupervisorColor(s.estagiario) || 'var(--ink)';
+          const svgCpx = `<svg width="12" height="12" viewBox="0 0 24 24" title="Audiência Simples" style="margin-right:6px;"><circle cx="12" cy="12" r="10" fill="#3b82f6"/></svg>`;
+
+          row.innerHTML = `<div style="min-width:180px; display:flex; align-items:center;">
+              ${svgCpx}
+              <b class="mono" style="margin-right:8px; color:#1e3a8a;">${s.hora}h00</b> 
+              <span style="font-weight:700; color:${cor}; margin-right:8px;">${esc(s.estagiario)}</span> 
+            </div>`;
+          
+          const inp = document.createElement('input');
+          inp.className = 'input';
+          inp.style.flex = '1'; inp.style.minWidth = '200px'; inp.style.borderColor = '#93c5fd';
+          inp.placeholder = 'Nº do processo (Aud. Simples)';
+          inp.value = pautaAtual.dia.supervisoes_dados[s.id] || '';
+          
+          inp.oninput = () => { pautaAtual.dia.supervisoes_dados[s.id] = inp.value.trim(); agendaSalvar(); };
+          row.appendChild(inp); box.appendChild(row);
+        });
+      }
+    }
+
+    async function processarCancelSup() {
+      const p = pautaAtual;
+      let alterou = false;
+      
+      const cancelados = p.dia.cancelamentos.map(x => soDigitos(x)).filter(Boolean);
+      const naoEncontradosCancel = [];
+      
+      if(cancelados.length > 0) {
+        linhasDaPauta(p).forEach(L => {
+          const c = p.celulas[L.key];
+          if(c && (c.proc || '').trim()) {
+            if(cancelados.includes(soDigitos(c.proc))) {
+              if(c.res !== 'Cancelada') { c.res = 'Cancelada'; alterou = true; }
+            }
+          }
+        });
+        
+        p.dia.cancelamentos.filter(Boolean).forEach(num => {
+          let achou = false;
+          linhasDaPauta(p).forEach(L => { const c = p.celulas[L.key]; if(c && soDigitos(c.proc) === soDigitos(num)) achou = true; });
+          if(!achou) naoEncontradosCancel.push(num);
+        });
+      }
+
+      const dia = diaSemanaISO(p.data);
+      const sups = (await DB.getSupConfig()) || [];
+      const hojeSups = sups.filter(s => s.dia === dia && !s.inativa);
+      
+      hojeSups.forEach(s => {
+        const procInformado = p.dia.supervisoes_dados[s.id];
+        if(procInformado && procInformado.trim()) {
+          const digSup = soDigitos(procInformado);
+          linhasDaPauta(p).forEach(L => {
+            const c = p.celulas[L.key];
+            if(c && soDigitos(c.proc) === digSup) {
+              if(s.tipo === 'servidor') c.c1 = s.supervisor;
+              else c.c2 = s.supervisor;
+              
+              let obsAtual = (c.c3 || '').trim();
+              if (!obsAtual.includes('Supervisão')) c.c3 = obsAtual ? obsAtual + ' | Supervisão' : 'Supervisão';
+              alterou = true;
+            }
+          });
+        }
+      });
+
+      const simples = (await DB.getSimplesConfig()) || [];
+      const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia);
+
+      hojeSimples.forEach(s => {
+        const procInformado = p.dia.supervisoes_dados[s.id];
+        if(procInformado && procInformado.trim()) {
+          const digSup = soDigitos(procInformado);
+          linhasDaPauta(p).forEach(L => {
+            const c = p.celulas[L.key];
+            if(c && soDigitos(c.proc) === digSup) {
+              const pessoaInfo = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
+              if(pessoaInfo && pessoaInfo.tipo === 'servidor') c.c1 = s.estagiario;
+              else c.c2 = s.estagiario; // Estagiários e Voluntários caem em c2
+              
+              let obsAtual = (c.c3 || '').trim();
+              if (!obsAtual.includes('Aud. Simples')) c.c3 = obsAtual ? obsAtual + ' | Aud. Simples' : 'Aud. Simples';
+              alterou = true;
+            }
+          });
+        }
+      });
+
+      if(alterou) {
+        agendaSalvar();
+        if(window._refreshEspelho) window._refreshEspelho();
+      }
+
+      closeM('mCancelSup');
+      if(naoEncontradosCancel.length > 0) alert(`${naoEncontradosCancel.length} processos não estão na pauta:\n${naoEncontradosCancel.join('\n')}`);
+      else toast('Ajustes processados com sucesso!');
+    }
+
+    /* ============================================================
+      GRADE DE SUPERVISÕES COM ACORDEÃO E FILTRO DINÂMICO
+      ============================================================ */
+    let gsAlvo = [];
+    let gsDiaAtivo = 'Seg';         // Controla qual dia está expandido no modo padrão
+    let gsFiltroSupervisor = '';    // Armazena o supervisor selecionado no filtro
+
+    // Helper: Gera uma cor fixa e consistente para o servidor baseado no nome
+    function getSupervisorColor(nome) {
+      if (!nome) return '';
+      const cores = ['#0284c7', '#059669', '#d97706', '#dc2626', '#7c3aed', '#db2777', '#ea580c', '#4f46e5', '#0891b2', '#65a30d'];
+      let hash = 0;
+      for (let i = 0; i < nome.length; i++) hash = nome.charCodeAt(i) + ((hash << 5) - hash);
+      return cores[Math.abs(hash) % cores.length];
+    }
+
+    async function abrirGerenciarSup() {
+      closeM('mCancelSup');
+      gsAlvo = (await DB.getSupConfig()) || [];
+      gsFiltroSupervisor = '';
+      
+      if (!gsDiaAtivo) gsDiaAtivo = 'Seg';
+
+      const selectFiltro = document.getElementById('gsFiltroSup');
+      const btnLimpar = document.getElementById('gsBtnLimparFiltro');
+      
+      selectFiltro.innerHTML = '<option value="">Todos os supervisores (com escala)</option>';
+      
+      const nomesEscalados = [...new Set(gsAlvo.map(s => s.supervisor).filter(Boolean))].sort();
+      const supervisoresValidos = (pautaEquipe || []).filter(pe => pe.tipo === 'servidor' || pe.tipo === 'voluntario');
+      
+      nomesEscalados.forEach(nome => {
+        const pe = supervisoresValidos.find(x => x.nome === nome);
+        const tipo = pe ? eqCap(pe.tipo) : 'Desconhecido';
+        const op = document.createElement('option');
+        op.value = nome;
+        op.textContent = `${nome} (${tipo})`;
+        selectFiltro.appendChild(op);
+      });
+      
+      selectFiltro.value = '';
+      btnLimpar.style.display = 'none';
+
+      selectFiltro.onchange = () => {
+        gsFiltroSupervisor = selectFiltro.value;
+        btnLimpar.style.display = gsFiltroSupervisor ? '' : 'none';
+        renderGsList();
+      };
+
+      btnLimpar.onclick = () => {
+        gsFiltroSupervisor = '';
+        selectFiltro.value = '';
+        btnLimpar.style.display = 'none';
+        renderGsList();
+      };
+      
+      renderGsList();
+      
+      document.getElementById('gsAdd').onclick = () => {
+        if (!gsDiaAtivo) gsDiaAtivo = 'Seg';
+        gsAlvo.push({ 
+          id: uid(), 
+          dia: gsDiaAtivo, 
+          hora: 13, 
+          supervisor: gsFiltroSupervisor || '', 
+          tipo: gsFiltroSupervisor ? (supervisoresValidos.find(x => x.nome === gsFiltroSupervisor)?.tipo || 'servidor') : 'servidor',
+          inativa: false,
+          complexidade: 1 // 1=Verde(Simples), 2=Amarelo(Média), 3=Vermelho(Alta)
+        });
+        renderGsList();
+      };
+      
+      document.getElementById('gsSalvar').onclick = async () => {
+        await DB.saveSupConfig(gsAlvo);
+        toast('Grade de supervisões atualizada!');
+        closeM('mGerenciarSup');
+        abrirCancelSup();
+      };
+
+      document.getElementById('gsX').onclick = () => {
+        closeM('mGerenciarSup');
+        abrirCancelSup();
+      };
+
+      openM('mGerenciarSup');
+    }
+
+    function renderGsList() {
+      const box = document.getElementById('gsList');
+      box.innerHTML = '';
+      
+      if (!gsDiaAtivo) gsDiaAtivo = 'Seg';
+
+      const btnAdd = document.getElementById('gsAdd');
+      if (btnAdd) btnAdd.textContent = `+ Adicionar em ${EQDIA_NOME[gsDiaAtivo] || gsDiaAtivo}`;
+      
+      const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+      const supervisoresValidos = (pautaEquipe || []).filter(pe => pe.tipo === 'servidor' || pe.tipo === 'voluntario');
+      const compCores = { 1: '#10b981', 2: '#f59e0b', 3: '#ef4444' };
+      const compTitles = { 1: 'Baixa Complexidade', 2: 'Média Complexidade', 3: 'Alta Complexidade' };
+
+      diasSemana.forEach(d => {
+        const isAtivo = (d === gsDiaAtivo); 
+        const temSupervisorNoDia = gsAlvo.some(s => s.dia === d && s.supervisor === gsFiltroSupervisor);
+        const isOpen = isAtivo || (gsFiltroSupervisor && temSupervisorNoDia);
+        
+        let supsDoDia = gsAlvo.filter(s => s.dia === d);
+        if (gsFiltroSupervisor) supsDoDia = supsDoDia.filter(s => s.supervisor === gsFiltroSupervisor);
+        
+        const nSups = supsDoDia.length;
+        const dayContainer = document.createElement('div');
+        dayContainer.style.cssText = 'border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:6px;';
+        
+        const header = document.createElement('div');
+        header.className = 'row between';
+        const bgColor = isAtivo ? 'var(--brand-50)' : (isOpen ? '#f1f5f9' : '#f8fafc');
+        const shadow = isAtivo ? 'box-shadow: inset 4px 0 0 var(--brand);' : '';
+        
+        header.style.cssText = `padding:10px 14px; cursor:pointer; font-weight:700; font-size:14px; background:${bgColor}; color:${isOpen ? 'var(--brand-d)' : 'var(--ink)'}; transition: background 0.15s; ${shadow}`;
+        
+        header.innerHTML = `
+          <div class="row" style="gap:8px;">
+            <span>${EQDIA_NOME[d] || d}</span>
+            <span class="chip" style="padding:1px 8px; font-size:11px; background:#fff; border-color:var(--line2);">
+              <b>${nSups}</b> ${nSups === 1 ? 'supervisão' : 'supervisões'}
+            </span>
+          </div>
+          <span style="font-size:11px; font-weight:600; color:var(--muted);">${isOpen ? '▲ recolher' : '▼ expandir'}</span>
+        `;
+        
+        header.onclick = () => {
+          if (gsDiaAtivo === d) gsDiaAtivo = gsFiltroSupervisor ? d : '';
+          else gsDiaAtivo = d; 
+          renderGsList();
+        };
+        dayContainer.appendChild(header);
+        
+        if (isOpen) {
+          const body = document.createElement('div');
+          body.style.cssText = 'padding:10px 12px; display:flex; flex-direction:column; gap:6px; background:#fff;';
+          supsDoDia.sort((a,b) => a.hora - b.hora);
+          
+          if (!supsDoDia.length) {
+            body.innerHTML = `<div class="faint" style="text-align:center; padding:12px; font-size:13px;">
+              ${gsFiltroSupervisor ? 'Nenhuma sessão mapeada para este supervisor na ' + (EQDIA_NOME[d] || d) + '.' : 'Nenhuma supervisão programada para este dia.'}
+            </div>`;
+          } else {
+            supsDoDia.forEach((s) => {
+              const realIdx = gsAlvo.findIndex(x => x.id === s.id);
+              if (!s.complexidade) s.complexidade = 1; // Fallback para registros antigos
+              
+              const row = document.createElement('div');
+              row.className = 'row';
+              row.style.cssText = 'gap:8px; padding:4px 6px; align-items:center; border-radius:6px; transition:0.2s;';
+              
+              if (s.inativa) {
+                row.style.opacity = '0.5';
+                row.style.background = '#f8fafc';
+              }
+
+              // Ícone interativo de Complexidade
+              const btnComp = document.createElement('button');
+              btnComp.className = 'btn icon-btn';
+              btnComp.disabled = !!s.inativa;
+              btnComp.title = compTitles[s.complexidade];
+              btnComp.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="${compCores[s.complexidade]}"/></svg>`;
+              
+              btnComp.onclick = () => {
+                s.complexidade = s.complexidade === 3 ? 1 : s.complexidade + 1;
+                btnComp.title = compTitles[s.complexidade];
+                btnComp.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="${compCores[s.complexidade]}"/></svg>`;
+              };
+
+              const selHora = document.createElement('select');
+              selHora.className = 'sel';
+              selHora.disabled = !!s.inativa;
+              if (s.inativa) selHora.style.textDecoration = 'line-through';
+              
+              [13,14,15,16,17,18].forEach(h => {
+                const op = document.createElement('option'); op.value = h; op.textContent = h+'h00';
+                if(s.hora == h) op.selected = true;
+                selHora.appendChild(op);
+              });
+              selHora.onchange = () => s.hora = parseInt(selHora.value);
+
+              const selSup = document.createElement('select');
+              selSup.className = 'sel';
+              selSup.style.flex = '1';
+              selSup.disabled = !!s.inativa;
+              
+              const opPadrao = document.createElement('option');
+              opPadrao.value = '';
+              opPadrao.textContent = 'Selecione o supervisor...';
+              selSup.appendChild(opPadrao);
+
+              supervisoresValidos.forEach(pe => {
+                const op = document.createElement('option');
+                op.value = pe.nome;
+                op.textContent = `${pe.nome} (${eqCap(pe.tipo)})`;
+                if(s.supervisor === pe.nome) op.selected = true;
+                selSup.appendChild(op);
+              });
+
+              const aplicarEstilosSup = () => {
+                if (s.inativa) {
+                  selSup.style.color = '';
+                  selSup.style.fontWeight = '';
+                  selSup.style.textDecoration = 'line-through';
+                } else if (s.tipo === 'servidor' && s.supervisor) {
+                  selSup.style.color = getSupervisorColor(s.supervisor);
+                  selSup.style.fontWeight = '700';
+                  selSup.style.textDecoration = 'none';
+                } else {
+                  selSup.style.color = '';
+                  selSup.style.fontWeight = '';
+                  selSup.style.textDecoration = 'none';
+                }
+              };
+              aplicarEstilosSup();
+
+              selSup.onchange = () => {
+                s.supervisor = selSup.value;
+                const pessoa = supervisoresValidos.find(pe => pe.nome === selSup.value);
+                if (pessoa) s.tipo = pessoa.tipo;
+                aplicarEstilosSup();
+              };
+
+              const btnToggle = document.createElement('button');
+              btnToggle.className = 'btn icon-btn';
+              btnToggle.title = s.inativa ? 'Ativar Supervisão' : 'Desativar Temporariamente';
+              btnToggle.style.color = s.inativa ? '#10b981' : '#94a3b8'; 
+              btnToggle.style.borderColor = s.inativa ? '#a7f3d0' : 'var(--line2)';
+              btnToggle.innerHTML = s.inativa 
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>' 
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+              
+              btnToggle.onclick = () => {
+                s.inativa = !s.inativa;
+                renderGsList();
+              };
+
+              const btnDel = document.createElement('button');
+              btnDel.className = 'btn icon-btn';
+              btnDel.style.color = '#ef4444';
+              btnDel.style.borderColor = '#fecaca';
+              btnDel.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>';
+              btnDel.onclick = () => {
+                if (realIdx >= 0) {
+                  gsAlvo.splice(realIdx, 1);
+                  renderGsList();
+                }
+              };
+
+              // Adicionamos o botão de complexidade (btnComp) logo após o horário
+              row.appendChild(selHora);
+              row.appendChild(btnComp);
+              row.appendChild(selSup);
+              row.appendChild(btnToggle);
+              row.appendChild(btnDel);
+              body.appendChild(row);
+            });
+          }
+          dayContainer.appendChild(body);
+        }
+        box.appendChild(dayContainer);
+      });
+    }
+
+
+    /* ============================================================
+      AUDIÊNCIAS SIMPLES (ESTAGIÁRIOS)
+      ============================================================ */
+    let gsSimplesAlvo = [];
+    let gsSimplesFiltroVal = '';
+    let lastSimplesClickTime = 0; // Nova variável para controlar os 5 segundos
+
+    async function abrirGerenciarSimples() {
+      closeM('mGerenciarSup');
+      gsSimplesAlvo = (await DB.getSimplesConfig()) || [];
+      gsSimplesFiltroVal = '';
+
+      const selectFiltro = document.getElementById('gSimplesFiltro');
+      const btnLimpar = document.getElementById('gSimplesBtnLimpar');
+      
+      selectFiltro.innerHTML = '<option value="">Todos os estagiários da lista</option>';
+      const nomesEscalados = [...new Set(gsSimplesAlvo.map(s => s.estagiario).filter(Boolean))].sort();
+      
+      nomesEscalados.forEach(nome => {
+        const op = document.createElement('option');
+        op.value = nome; op.textContent = nome;
+        selectFiltro.appendChild(op);
+      });
+      
+      selectFiltro.value = '';
+      btnLimpar.style.display = 'none';
+
+      selectFiltro.onchange = () => {
+        gsSimplesFiltroVal = selectFiltro.value;
+        btnLimpar.style.display = gsSimplesFiltroVal ? '' : 'none';
+        renderGsSimplesList();
+      };
+
+      btnLimpar.onclick = () => {
+        gsSimplesFiltroVal = ''; selectFiltro.value = '';
+        btnLimpar.style.display = 'none';
+        renderGsSimplesList();
+      };
+      
+      renderGsSimplesList();
+      
+      document.getElementById('gSimplesAdd').onclick = () => {
+        let estPadrao = gsSimplesFiltroVal || '';
+        const agora = Date.now();
+        
+        // Se clicou de novo em menos de 5 segundos, herda o nome da última linha adicionada
+        if (agora - lastSimplesClickTime <= 5000 && gsSimplesAlvo.length > 0) {
+          const ultimaRegra = gsSimplesAlvo[gsSimplesAlvo.length - 1];
+          if (ultimaRegra.estagiario) {
+            estPadrao = ultimaRegra.estagiario;
+          }
+        }
+        
+        lastSimplesClickTime = agora; // Atualiza o relógio para o próximo clique
+
+        gsSimplesAlvo.push({ id: uid(), hora: 13, estagiario: estPadrao, diaFolga: 'Nenhum', inativa: false });
+        renderGsSimplesList();
+      };
+      
+      document.getElementById('gSimplesSalvar').onclick = async () => {
+        await DB.saveSimplesConfig(gsSimplesAlvo);
+        toast('Grade de aud. simples atualizada!');
+        closeM('mGerenciarSimples');
+        abrirGerenciarSup();
+      };
+
+      document.getElementById('gSimplesX').onclick = () => {
+        closeM('mGerenciarSimples');
+        abrirGerenciarSup();
+      };
+
+      openM('mGerenciarSimples');
+    }
+
+    function renderGsSimplesList() {
+      const box = document.getElementById('gSimplesList');
+      box.innerHTML = '';
+      
+      const equipeGeral = (pautaEquipe || []);
+      let list = gsSimplesAlvo;
+      if (gsSimplesFiltroVal) list = list.filter(s => s.estagiario === gsSimplesFiltroVal);
+      
+      if (!list.length) {
+        box.innerHTML = `<div class="faint" style="text-align:center; padding:12px; font-size:13px;">Nenhuma regra de audiência simples cadastrada.</div>`;
+        return;
+      }
+
+      list.forEach((s) => {
+        const realIdx = gsSimplesAlvo.findIndex(x => x.id === s.id);
+        const row = document.createElement('div');
+        row.className = 'row wrapf';
+        row.style.cssText = 'gap:8px; padding:8px 10px; align-items:center; border:1px solid var(--line); border-radius:8px; background:#fff;';
+        if (s.inativa) { row.style.opacity = '0.5'; row.style.background = '#f8fafc'; }
+
+        const selHora = document.createElement('select');
+        selHora.className = 'sel'; selHora.disabled = !!s.inativa;
+        if (s.inativa) selHora.style.textDecoration = 'line-through';
+        [13,14,15,16,17,18].forEach(h => {
+          const op = document.createElement('option'); op.value = h; op.textContent = h+'h00';
+          if(s.hora == h) op.selected = true;
+          selHora.appendChild(op);
+        });
+        selHora.onchange = () => s.hora = parseInt(selHora.value);
+
+        const selSup = document.createElement('select');
+        selSup.className = 'sel'; selSup.style.flex = '1'; selSup.disabled = !!s.inativa;
+        const opPadrao = document.createElement('option');
+        opPadrao.value = ''; opPadrao.textContent = 'Selecione o estagiário...';
+        selSup.appendChild(opPadrao);
+
+        equipeGeral.forEach(pe => {
+          const op = document.createElement('option'); op.value = pe.nome; op.textContent = `${pe.nome} (${eqCap(pe.tipo)})`;
+          if(s.estagiario === pe.nome) op.selected = true;
+          selSup.appendChild(op);
+        });
+        selSup.onchange = () => s.estagiario = selSup.value;
+
+        const spanFolga = document.createElement('span');
+        spanFolga.textContent = 'NPJ:'; spanFolga.style.cssText = 'font-size:12px; color:var(--muted); font-weight:600; margin-left:4px;';
+        
+        const selFolga = document.createElement('select');
+        selFolga.className = 'sel'; selFolga.disabled = !!s.inativa;
+        ['Nenhum', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex'].forEach(d => {
+          const op = document.createElement('option'); op.value = d; op.textContent = d;
+          if(s.diaFolga === d) op.selected = true;
+          selFolga.appendChild(op);
+        });
+        selFolga.onchange = () => s.diaFolga = selFolga.value;
+
+        const btnToggle = document.createElement('button');
+        btnToggle.className = 'btn icon-btn'; btnToggle.title = s.inativa ? 'Ativar' : 'Desativar';
+        btnToggle.style.color = s.inativa ? '#10b981' : '#94a3b8'; 
+        btnToggle.innerHTML = s.inativa ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+        btnToggle.onclick = () => { s.inativa = !s.inativa; renderGsSimplesList(); };
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'btn icon-btn'; btnDel.style.color = '#ef4444';
+        btnDel.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>';
+        btnDel.onclick = () => { gsSimplesAlvo.splice(realIdx, 1); renderGsSimplesList(); };
+
+        row.appendChild(selHora); row.appendChild(selSup);
+        row.appendChild(spanFolga); row.appendChild(selFolga);
+        row.appendChild(btnToggle); row.appendChild(btnDel);
+        box.appendChild(row);
+      });
+    }
 
 /* ============================================================
    ROTEADOR

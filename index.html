@@ -709,7 +709,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.5</h1></div>
+      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.7</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" id="hEquipe" title="Configurar equipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 11a3 3 0 002-5.24"/></svg><span class="hide-sm">Equipe</span></button>
@@ -1129,18 +1129,39 @@ function agendaSalvar(){ pautaAtual.status='editando'; clearTimeout(salvarTimer)
 
 /* ---- Equipe disponível no dia (com ajustes exclusivos da pauta) ---- */
 let pautaEquipe=[];
-const AUS_LABEL={ferias:'Férias',prova:'Prova',atestado:'Atestado',folga:'Folga',afast:'Afastamento'};
+const AUS_LABEL={ferias:'Férias',prova:'Prova',atestado:'Atestado',folga:'Folga',afast:'Afastamento',supervisao:'Supervisão',iniciante:'Iniciante'};
 const DIA_FULL={Seg:'segunda-feira',Ter:'terça-feira',Qua:'quarta-feira',Qui:'quinta-feira',Sex:'sexta-feira',Sab:'sábado',Dom:'domingo'};
 function diaSemanaISO(iso){ const a=(iso||'').split('-').map(Number); if(a.length<3||!a[0]) return null; const d=new Date(a[0],a[1]-1,a[2]); return ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'][d.getDay()]; }
 function diaInit(p){ if(!p.dia) p.dia={}; if(!p.dia.gab) p.dia.gab={}; if(!p.dia.aus) p.dia.aus={}; if(!p.dia.hor) p.dia.hor={}; if(!Array.isArray(p.dia.extra)) p.dia.extra=[]; }
 function horasEfetivas(p,pe,dia,isExtra){ const hor=p.dia.hor||{}; if(hor[pe.id]) return hor[pe.id].slice(); if(isExtra) return (pe.hor||[]).slice(); return eqSlotsNoDia(pe,dia); }
 function limiteEfetivo(horas,ev){ const b=horas.length; return ev==='prova'? Math.min(2,b) : b; }
+
 function gabaritoPessoas(p){
   const dia=diaSemanaISO(p.data); const aus=p.dia.aus||{}; const out=[];
-  (pautaEquipe||[]).forEach(pe=>{ const ev=aus[pe.id]||null; if(ev&&ev!=='prova') return; const horas=horasEfetivas(p,pe,dia,false); if(!horas.length) return; out.push({pe,ev,horas,extra:false}); });
-  (p.dia.extra||[]).forEach(ex=>{ const ev=aus[ex.id]||null; if(ev&&ev!=='prova') return; const horas=horasEfetivas(p,ex,dia,true); if(!horas.length) return; out.push({pe:ex,ev,horas,extra:true}); });
+  (pautaEquipe||[]).forEach(pe=>{
+    const ev=aus[pe.id]||null;
+    if(ev && !['prova','supervisao','iniciante'].includes(ev)) return;
+    let horas=horasEfetivas(p,pe,dia,false);
+    
+    // Se a pessoa foi designada para audiência, força o aparecimento do horário no Gabarito (mesmo em dia de folga)
+    const horasGab = (p.dia.gab && p.dia.gab[pe.id]) ? p.dia.gab[pe.id] : [];
+    if(!horas.length && !horasGab.length) return;
+    if(horasGab.length > 0) horas = [...new Set([...horas, ...horasGab])].sort((a,b)=>a-b);
+    
+    out.push({pe,ev,horas,extra:false});
+  });
+  (p.dia.extra||[]).forEach(ex=>{
+    const ev=aus[ex.id]||null;
+    if(ev && !['prova','supervisao','iniciante'].includes(ev)) return;
+    let horas=horasEfetivas(p,ex,dia,true);
+    const horasGab = (p.dia.gab && p.dia.gab[ex.id]) ? p.dia.gab[ex.id] : [];
+    if(!horas.length && !horasGab.length) return;
+    if(horasGab.length > 0) horas = [...new Set([...horas, ...horasGab])].sort((a,b)=>a-b);
+    out.push({pe:ex,ev,horas,extra:true});
+  });
   return out;
 }
+
 function gabOrdena(arr){ return arr.sort((a,b)=> (EQRANK[a.pe.tipo]-EQRANK[b.pe.tipo]) || (a.pe.nome||'~').localeCompare(b.pe.nome||'~','pt',{sensitivity:'base'})); }
 
 async function renderPauta(id){
@@ -1430,7 +1451,12 @@ async function renderPauta(id){
     const pe=(pautaEquipe||[]).concat(p.dia.extra||[]).find(x=>chave(x.nome)===nk);
     if(!pe) return false;
     let presente=false;
-    for(const L of linhas){ if(+L.HH!==H) continue; const c=p.celulas[L.key]; if(!c) continue; if(chave(c.res)==='CANCELADA') continue; if(chave(c.c1)===nk||chave(c.c2)===nk||chave(c.c3)===nk){ presente=true; break; } }
+    for(const L of linhas){ 
+      if(+L.HH!==H) continue; 
+      const c=p.celulas[L.key]; if(!c) continue; if(chave(c.res)==='CANCELADA') continue; 
+      // Busca na C1, C2 ou se o nome aparece misturado na C3
+      if(chave(c.c1)===nk || chave(c.c2)===nk || chave(c.c3).includes(nk)){ presente=true; break; } 
+    }
     if(!p.dia.gab) p.dia.gab={};
     const arr=p.dia.gab[pe.id]||(p.dia.gab[pe.id]=[]);
     const i=arr.indexOf(H);
@@ -1448,7 +1474,16 @@ async function renderPauta(id){
     if(dia==='Sab'||dia==='Dom'){ host.innerHTML='<div class="gab-empty">A pauta é em '+DIA_FULL[dia]+'. A equipe é cadastrada de segunda a sexta — use <b>Equipe do dia</b> para incluir alguém manualmente.</div>'; return; }
     const ppl=gabOrdena(gabaritoPessoas(p));
     let colsSet=new Set(); linhas.forEach(L=>colsSet.add(+L.HH)); ppl.forEach(x=>x.horas.forEach(h=>colsSet.add(h))); let cols=[...colsSet].sort((a,b)=>a-b); if(!cols.length) cols=[13,14,15,16,17];
-    const aus=p.dia.aus||{}; let ausN=0; const ausNomes=[]; (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{ const e=aus[pe.id]; if(e&&e!=='prova'){ ausN++; ausNomes.push(pe.nome+' - '+(AUS_LABEL[e]||e)); } });
+    
+    // ATUALIZAÇÃO 1: Evita que supervisores/iniciantes sejam contados como "ausentes" no resumo
+    const aus=p.dia.aus||{}; let ausN=0; const ausNomes=[]; 
+    (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{ 
+      const e=aus[pe.id]; 
+      if(e && !['prova','supervisao','iniciante'].includes(e)){ 
+        ausN++; ausNomes.push(pe.nome+' - '+(AUS_LABEL[e]||e)); 
+      } 
+    });
+    
     let totColoc=0, comExtra=0; ppl.forEach(x=>{ const g=(p.dia.gab[x.pe.id]||[]); totColoc+=g.length; if(g.length>limiteEfetivo(x.horas,x.ev)) comExtra++; });
     let html='<div class="gab-resumo">'+
       `<span class="gab-rb"><b>${ppl.length}</b> disponíveis</span>`+
@@ -1467,7 +1502,12 @@ async function renderPauta(id){
       grp.forEach(x=>{ const pe=x.pe; const g=(p.dia.gab[pe.id]||[]); const lim=limiteEfetivo(x.horas,x.ev); const tot=g.length; const over=tot>lim; const peKey=chave(pe.nome);
         x.horas.forEach(h=>{ if(dispH[h]!==undefined) dispH[h]++; }); g.forEach(h=>{ if(onH[h]!==undefined) onH[h]++; });
         let cells=''; cols.forEach(h=>{ const isAv=x.horas.includes(h); const on=g.includes(h); const choque = on && peKey && contConflito[h] && contConflito[h][peKey]>=2; let cls,mk; if(choque){ cls='conf'; mk='!'; } else { cls=on?(isAv?'on':'onx'):(isAv?'av':'na'); mk=on?'✓':(isAv?'·':''); } cells+=`<td><div class="gcell ${cls}" data-gc="${pe.id}:${h}">${mk}</div></td>`; });
-        const tags=(x.extra?'<span class="gtag extra">extra</span>':'')+(x.ev==='prova'?'<span class="gtag prova">prova</span>':'');
+        
+        // ATUALIZAÇÃO 2: Renderiza as etiquetas (badges) bonitas ao lado do nome da pessoa
+        const tagSup = (x.ev==='supervisao' ? '<span class="gtag" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">supervisão</span>' : '');
+        const tagIni = (x.ev==='iniciante' ? '<span class="gtag" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">iniciante</span>' : '');
+        const tags = (x.extra?'<span class="gtag extra">extra</span>':'') + (x.ev==='prova'?'<span class="gtag prova">prova</span>':'') + tagSup + tagIni;
+        
         html+=`<tr><td class="l">${esc(pe.nome)||'<span class="faint">sem nome</span>'}${tags}</td><td class="glim">${lim}</td>${cells}<td class="gtot ${over?'over':''}" ${over?`title="Audiência a mais (${tot-lim} acima do limite de ${lim})"`:''}>${tot||'<span style=\"color:#cbd5e1\">0</span>'}</td></tr>`;
       });
     });
@@ -1475,6 +1515,7 @@ async function renderPauta(id){
     host.innerHTML=html;
     host.querySelectorAll('[data-gc]').forEach(c=>c.onclick=()=>{ const [id,h]=c.dataset.gc.split(':'); const hn=+h; const arr=p.dia.gab[id]||(p.dia.gab[id]=[]); const i=arr.indexOf(hn); if(i>=0)arr.splice(i,1); else arr.push(hn); agendaSalvar(); renderGabarito(); });
   }
+
   window._renderGabarito=renderGabarito;
   renderGabarito();
   document.getElementById('gabDia').onclick=()=>abrirDiaEdit();
@@ -1601,7 +1642,7 @@ async function renderPauta(id){
    EQUIPE DO DIA (ajustes exclusivos da pauta)
    ============================================================ */
 const DE_TIMES=[13,14,15,16,17,18];
-const DE_AUS=[['','Presente'],['ferias','Férias'],['prova','Prova (½)'],['atestado','Atestado'],['folga','Folga'],['afast','Afastamento']];
+const DE_AUS=[['','Presente'],['ferias','Férias'],['prova','Prova (½)'],['atestado','Atestado'],['folga','Folga'],['afast','Afastamento'],['supervisao','Supervisão'],['iniciante','Iniciante']];
 function deDia(){ return diaSemanaISO(pautaAtual&&pautaAtual.data); }
 function abrirDiaEdit(){
   if(!pautaAtual) return; diaInit(pautaAtual);
@@ -1695,7 +1736,9 @@ function escalaAutomatica(p){
   const conv = x => ({ id:x.pe.id, nome:x.pe.nome, tipo:x.pe.tipo, prova:x.ev==='prova',
                        horas:new Set(x.horas), limite:limiteEfetivo(x.horas,x.ev),
                        occ:new Set(), salaAt:{}, count:0 });
-  const todas       = gabaritoPessoas(p);
+                       
+  // MÁGICA AQUI: Removemos os supervisores e iniciantes do banco de dados da Escala Automática
+  const todas       = gabaritoPessoas(p).filter(x => x.ev !== 'supervisao' && x.ev !== 'iniciante');
   const servidores  = todas.filter(x=>x.pe.tipo==='servidor').map(conv);
   const voluntarios = todas.filter(x=>x.pe.tipo==='voluntario').map(conv);
   const estagiarios = todas.filter(x=>x.pe.tipo==='estagiario').map(conv);
@@ -1797,7 +1840,13 @@ function sincronizaGabarito(p){
   (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{
     const nk=chave(pe.nome); if(!nk) return;
     const horas=new Set();
-    linhas.forEach(L=>{ const c=p.celulas[L.key]; if(!c) return; if(chave(c.res)==='CANCELADA') return; if(chave(c.c1)===nk || chave(c.c2)===nk) horas.add(+L.HH); });
+    linhas.forEach(L=>{ 
+      const c=p.celulas[L.key]; if(!c) return; 
+      if(chave(c.res)==='CANCELADA') return; 
+      const c1k=chave(c.c1), c2k=chave(c.c2), c3k=chave(c.c3);
+      // Lê C1, C2 e vasculha se o nome foi injetado na coluna de Observações (C3)
+      if(c1k===nk || c2k===nk || c3k.includes(nk)) horas.add(+L.HH); 
+    });
     if(horas.size) novo[pe.id]=[...horas].sort((a,b)=>a-b);
   });
   p.dia.gab=novo;
@@ -1955,6 +2004,16 @@ function sincronizaGabarito(p){
       const p = pautaAtual;
       let alterou = false;
       
+      // 1) Limpa as tags geradas automaticamente na rodada anterior
+      // (Isso garante que se um estagiário/supervisor for retirado da regra, ele volte a ficar 'Presente')
+      (pautaEquipe || []).forEach(pe => {
+        if (p.dia.aus[pe.id] === 'supervisao' || p.dia.aus[pe.id] === 'iniciante') {
+          delete p.dia.aus[pe.id];
+          alterou = true;
+        }
+      });
+      
+      // 2) Processa Cancelamentos
       const cancelados = p.dia.cancelamentos.map(x => soDigitos(x)).filter(Boolean);
       const naoEncontradosCancel = [];
       
@@ -1976,10 +2035,19 @@ function sincronizaGabarito(p){
       }
 
       const dia = diaSemanaISO(p.data);
+      
+      // 3) Processa Supervisões e marca a Equipe do Dia
       const sups = (await DB.getSupConfig()) || [];
       const hojeSups = sups.filter(s => s.dia === dia && !s.inativa);
       
       hojeSups.forEach(s => {
+        // Aplica a eventualidade "Supervisão"
+        const pessoaSup = (pautaEquipe || []).find(pe => pe.nome === s.supervisor);
+        if (pessoaSup) {
+          p.dia.aus[pessoaSup.id] = 'supervisao';
+          alterou = true;
+        }
+
         const procInformado = p.dia.supervisoes_dados[s.id];
         if(procInformado && procInformado.trim()) {
           const digSup = soDigitos(procInformado);
@@ -1997,10 +2065,18 @@ function sincronizaGabarito(p){
         }
       });
 
+      // 4) Processa Audiências Simples e marca a Equipe do Dia
       const simples = (await DB.getSimplesConfig()) || [];
       const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia);
 
       hojeSimples.forEach(s => {
+        // Aplica a eventualidade "Iniciante"
+        const pessoaIni = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
+        if (pessoaIni) {
+          p.dia.aus[pessoaIni.id] = 'iniciante';
+          alterou = true;
+        }
+
         const procInformado = p.dia.supervisoes_dados[s.id];
         if(procInformado && procInformado.trim()) {
           const digSup = soDigitos(procInformado);
@@ -2009,7 +2085,7 @@ function sincronizaGabarito(p){
             if(c && soDigitos(c.proc) === digSup) {
               const pessoaInfo = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
               if(pessoaInfo && pessoaInfo.tipo === 'servidor') c.c1 = s.estagiario;
-              else c.c2 = s.estagiario; // Estagiários e Voluntários caem em c2
+              else c.c2 = s.estagiario; 
               
               let obsAtual = (c.c3 || '').trim();
               if (!obsAtual.includes('Aud. Simples')) c.c3 = obsAtual ? obsAtual + ' | Aud. Simples' : 'Aud. Simples';
@@ -2020,6 +2096,7 @@ function sincronizaGabarito(p){
       });
 
       if(alterou) {
+        sincronizaGabarito(p); // <- ISSO FAZ O GABARITO DESENHAR AS MARCAÇÕES VERDES DE IMEDIATO
         agendaSalvar();
         if(window._refreshEspelho) window._refreshEspelho();
       }

@@ -183,7 +183,7 @@
   .gcell{ width:40px;height:28px;border-radius:7px;margin:0 auto;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:800;font-size:13px;transition:.1s;user-select:none; }
   .gcell.av{ background:#eef2ff;color:#c7d2fe; } .gcell.av:hover{ outline:2px solid var(--brand);color:var(--brand); }
   .gcell.na{ background:#f8fafc;color:#e2e8f0;border:1px dashed #e2e8f0; } .gcell.na:hover{ outline:2px solid #2563eb;color:#2563eb; }
-  .gcell.on{ background:#15803d;color:#fff; } .gcell.onx{ background:#2563eb;color:#fff; }
+  .gcell.on{ background:#15803d;color:#fff; } .gcell.onx{ background:#2563eb;color:#fff; } .gcell.conf{ background:#fde047;color:#dc2626;font-weight:900; }
   .glim{ text-align:center;color:var(--faint);font-weight:700;font-variant-numeric:tabular-nums; }
   .gtot{ text-align:center;font-weight:800;font-variant-numeric:tabular-nums;font-size:15px; } .gtot.over{ color:#2563eb;cursor:help; }
   .gtag{ font-size:9.5px;font-weight:800;text-transform:uppercase;padding:1px 6px;border-radius:999px;margin-left:6px;white-space:nowrap; }
@@ -1024,6 +1024,7 @@ async function renderPauta(id){
             }
 
             inp.addEventListener('input',()=>{ 
+              const antes=cel[campo];
               cel[campo]=inp.value; 
               if(Array.isArray(p.dia.auto)){ 
                 const t=L.key+'::'+campo; 
@@ -1031,7 +1032,8 @@ async function renderPauta(id){
                 if(i>=0)p.dia.auto.splice(i,1); 
               } 
               agendaSalvar(); 
-              if(['proc','vara','c1','c2','c3'].includes(campo)) recalc(); 
+              if(['proc','vara','c1','c2','c3'].includes(campo)) recalc();
+              if(['c1','c2','c3'].includes(campo)){ const H=+L.HH; sincronizaCelulaPessoaHora(p, chave(antes), H); sincronizaCelulaPessoaHora(p, chave(inp.value), H); renderGabarito(); } 
             }); 
             
             return c; 
@@ -1041,6 +1043,9 @@ async function renderPauta(id){
       tr.appendChild(mk('proc','proc')); tr.appendChild(mk('vara')); tr.appendChild(mk('c1')); tr.appendChild(mk('c2')); tr.appendChild(mk('c3','obs')); tr.appendChild(mkRes());
       tb.appendChild(tr);
     });
+    // montarGrade() recria as células do zero (filtro de coluna, "só com processo"),
+    // então reaplica aqui o destaque de duplicidade — senão o amarelo sumiria até a próxima edição.
+    verificarDuplicidades();
   }
   montarGrade();
 
@@ -1113,6 +1118,20 @@ async function renderPauta(id){
   document.addEventListener('click', e => { if(!cw.contains(e.target)) cw.classList.remove('open'); });
   cw.querySelectorAll('.menu button').forEach(b=>b.onclick=()=>{ copiar(b.dataset.c); cw.classList.remove('open'); });
 
+  function sincronizaCelulaPessoaHora(p, nk, H){
+    if(!nk) return false;
+    const pe=(pautaEquipe||[]).concat(p.dia.extra||[]).find(x=>chave(x.nome)===nk);
+    if(!pe) return false;
+    let presente=false;
+    for(const L of linhas){ if(+L.HH!==H) continue; const c=p.celulas[L.key]; if(!c) continue; if(chave(c.res)==='CANCELADA') continue; if(chave(c.c1)===nk||chave(c.c2)===nk||chave(c.c3)===nk){ presente=true; break; } }
+    if(!p.dia.gab) p.dia.gab={};
+    const arr=p.dia.gab[pe.id]||(p.dia.gab[pe.id]=[]);
+    const i=arr.indexOf(H);
+    if(presente && i<0){ arr.push(H); arr.sort((a,b)=>a-b); return true; }
+    if(!presente && i>=0){ arr.splice(i,1); if(!arr.length) delete p.dia.gab[pe.id]; return true; }
+    return false;
+  }
+
   function renderGabarito(){
     const host=document.getElementById('gabWrap'); if(!host) return;
     const dia=diaSemanaISO(p.data);
@@ -1129,16 +1148,18 @@ async function renderPauta(id){
       `<span class="gab-rb ok"><b>${totColoc}</b> audiências preenchidas</span>`+
       (comExtra?`<span class="gab-rb warn"><b>${comExtra}</b> com audiência a mais</span>`:'')+
       (ausN?`<span class="gab-rb off"><b>${ausN}</b> ausentes hoje</span>`:'')+'</div>';
-    html+='<div class="gab-legend"><span class="lg"><span class="sw" style="background:#eef2ff;"></span> disponível</span><span class="lg"><span class="sw" style="background:#f8fafc;border-style:dashed;"></span> fora do expediente</span><span class="lg"><span class="sw" style="background:#15803d;"></span> colocado</span><span class="lg"><span class="sw" style="background:#2563eb;"></span> colocado fora do normal</span><span class="lg"><b style="color:#2563eb;">total azul</b> = audiência a mais</span></div>';
+    html+='<div class="gab-legend"><span class="lg"><span class="sw" style="background:#eef2ff;"></span> disponível</span><span class="lg"><span class="sw" style="background:#f8fafc;border-style:dashed;"></span> fora do expediente</span><span class="lg"><span class="sw" style="background:#15803d;"></span> colocado</span><span class="lg"><span class="sw" style="background:#2563eb;"></span> colocado fora do normal</span><span class="lg"><span class="sw" style="background:#fde047;color:#dc2626;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:11px;">!</span> 2+ no mesmo horário</span><span class="lg"><b style="color:#2563eb;">total azul</b> = audiência a mais</span></div>';
     if(!ppl.length){ html+='<div class="gab-empty">Ninguém disponível neste dia. Use <b>Equipe do dia</b> para incluir alguém.</div>'; host.innerHTML=html; return; }
     html+='<div style="overflow:auto;"><table class="gab"><thead><tr><th class="l">Pessoa</th><th>Limite</th>'+cols.map(h=>`<th>${h}h</th>`).join('')+'<th>Total</th></tr></thead><tbody>';
     const dispH={},onH={}; cols.forEach(h=>{dispH[h]=0;onH[h]=0;});
+    const contConflito={};
+    linhas.forEach(L=>{ const c=p.celulas[L.key]; if(!c) return; if(chave(c.res)==='CANCELADA') return; const H=+L.HH; if(!contConflito[H]) contConflito[H]={}; ['c1','c2','c3'].forEach(campo=>{ const k=chave(c[campo]); if(k && k!=='OUTRO' && k!=='OUTROADM') contConflito[H][k]=(contConflito[H][k]||0)+1; }); });
     ['servidor','estagiario','voluntario'].forEach(t=>{
       const grp=ppl.filter(x=>x.pe.tipo===t); if(!grp.length) return;
       html+=`<tr class="subt"><td colspan="${cols.length+3}"><span class="gdot ${t}"></span>${({servidor:'Servidores',estagiario:'Estagiários',voluntario:'Voluntários'})[t]} · ${grp.length}</td></tr>`;
-      grp.forEach(x=>{ const pe=x.pe; const g=(p.dia.gab[pe.id]||[]); const lim=limiteEfetivo(x.horas,x.ev); const tot=g.length; const over=tot>lim;
+      grp.forEach(x=>{ const pe=x.pe; const g=(p.dia.gab[pe.id]||[]); const lim=limiteEfetivo(x.horas,x.ev); const tot=g.length; const over=tot>lim; const peKey=chave(pe.nome);
         x.horas.forEach(h=>{ if(dispH[h]!==undefined) dispH[h]++; }); g.forEach(h=>{ if(onH[h]!==undefined) onH[h]++; });
-        let cells=''; cols.forEach(h=>{ const isAv=x.horas.includes(h); const on=g.includes(h); const cls=on?(isAv?'on':'onx'):(isAv?'av':'na'); const mk=on?'✓':(isAv?'·':''); cells+=`<td><div class="gcell ${cls}" data-gc="${pe.id}:${h}">${mk}</div></td>`; });
+        let cells=''; cols.forEach(h=>{ const isAv=x.horas.includes(h); const on=g.includes(h); const choque = on && peKey && contConflito[h] && contConflito[h][peKey]>=2; let cls,mk; if(choque){ cls='conf'; mk='!'; } else { cls=on?(isAv?'on':'onx'):(isAv?'av':'na'); mk=on?'✓':(isAv?'·':''); } cells+=`<td><div class="gcell ${cls}" data-gc="${pe.id}:${h}">${mk}</div></td>`; });
         const tags=(x.extra?'<span class="gtag extra">extra</span>':'')+(x.ev==='prova'?'<span class="gtag prova">prova</span>':'');
         html+=`<tr><td class="l">${esc(pe.nome)||'<span class="faint">sem nome</span>'}${tags}</td><td class="glim">${lim}</td>${cells}<td class="gtot ${over?'over':''}" ${over?`title="Audiência a mais (${tot-lim} acima do limite de ${lim})"`:''}>${tot||'<span style=\"color:#cbd5e1\">0</span>'}</td></tr>`;
       });

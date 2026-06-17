@@ -1141,13 +1141,13 @@ async function renderPauta(id){
     if(dia==='Sab'||dia==='Dom'){ host.innerHTML='<div class="gab-empty">A pauta é em '+DIA_FULL[dia]+'. A equipe é cadastrada de segunda a sexta — use <b>Equipe do dia</b> para incluir alguém manualmente.</div>'; return; }
     const ppl=gabOrdena(gabaritoPessoas(p));
     let colsSet=new Set(); linhas.forEach(L=>colsSet.add(+L.HH)); ppl.forEach(x=>x.horas.forEach(h=>colsSet.add(h))); let cols=[...colsSet].sort((a,b)=>a-b); if(!cols.length) cols=[13,14,15,16,17];
-    const aus=p.dia.aus||{}; let ausN=0; (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{ const e=aus[pe.id]; if(e&&e!=='prova') ausN++; });
+    const aus=p.dia.aus||{}; let ausN=0; const ausNomes=[]; (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{ const e=aus[pe.id]; if(e&&e!=='prova'){ ausN++; ausNomes.push(pe.nome+' - '+(AUS_LABEL[e]||e)); } });
     let totColoc=0, comExtra=0; ppl.forEach(x=>{ const g=(p.dia.gab[x.pe.id]||[]); totColoc+=g.length; if(g.length>limiteEfetivo(x.horas,x.ev)) comExtra++; });
     let html='<div class="gab-resumo">'+
       `<span class="gab-rb"><b>${ppl.length}</b> disponíveis</span>`+
+      (ausN?`<span class="gab-rb off" title="${esc(ausNomes.join('\n'))}"><b>${ausN}</b> ${ausN<=1?'ausente':'ausentes'} hoje</span>`:'')+
       `<span class="gab-rb ok"><b>${totColoc}</b> audiências preenchidas</span>`+
-      (comExtra?`<span class="gab-rb warn"><b>${comExtra}</b> com audiência a mais</span>`:'')+
-      (ausN?`<span class="gab-rb off"><b>${ausN}</b> ausentes hoje</span>`:'')+'</div>';
+      (comExtra?`<span class="gab-rb warn"><b>${comExtra}</b> com audiência a mais</span>`:'')+'</div>';
     html+='<div class="gab-legend"><span class="lg"><span class="sw" style="background:#eef2ff;"></span> disponível</span><span class="lg"><span class="sw" style="background:#f8fafc;border-style:dashed;"></span> fora do expediente</span><span class="lg"><span class="sw" style="background:#15803d;"></span> colocado</span><span class="lg"><span class="sw" style="background:#2563eb;"></span> colocado fora do normal</span><span class="lg"><span class="sw" style="background:#fde047;color:#dc2626;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:11px;">!</span> 2+ no mesmo horário</span><span class="lg"><b style="color:#2563eb;">total azul</b> = audiência a mais</span></div>';
     if(!ppl.length){ html+='<div class="gab-empty">Ninguém disponível neste dia. Use <b>Equipe do dia</b> para incluir alguém.</div>'; host.innerHTML=html; return; }
     html+='<div style="overflow:auto;"><table class="gab"><thead><tr><th class="l">Pessoa</th><th>Limite</th>'+cols.map(h=>`<th>${h}h</th>`).join('')+'<th>Total</th></tr></thead><tbody>';

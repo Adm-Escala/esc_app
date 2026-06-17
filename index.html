@@ -132,6 +132,41 @@
   .split.open .menu{ display:block; }
   .menu button{ width:100%; text-align:left; padding:9px 11px; border-radius:8px; font-size:13px; border:0; background:transparent; cursor:pointer; } .menu button:hover{ background:var(--brand-50); }
   .stat{ background:#f8fafc; border:1px solid var(--line); border-radius:var(--rad-s); padding:12px 14px; } .stat .n{ font-size:24px; font-weight:800; }
+  /* ===== Relatório de importação do PJe ===== */
+  .imp-statsline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .imp-okpill{ display:inline-flex; align-items:center; gap:6px; font-weight:700; color:#15803d; background:#dcfce7; border:1px solid #bbf7d0; border-radius:999px; padding:3px 11px; font-size:13px; }
+  .imp-ico{ width:15px; height:15px; flex:none; }
+  .imp-bar{ display:flex; align-items:center; gap:11px; background:#fef3c7; border:1px solid #fde68a; border-radius:11px; padding:11px 13px; cursor:pointer; user-select:none; }
+  .imp-tri{ width:30px; height:30px; border-radius:8px; background:#fde047; color:#92400e; display:flex; align-items:center; justify-content:center; flex:none; font-weight:900; }
+  .imp-tx{ flex:1; }
+  .imp-tt{ font-weight:800; font-size:14px; color:#92400e; }
+  .imp-sb{ font-size:12px; color:#b45309; }
+  .imp-caret{ transition:.18s; color:#b45309; }
+  .imp-bar.open .imp-caret{ transform:rotate(180deg); }
+  .imp-list{ display:none; margin-top:10px; border:1px solid var(--line); border-radius:11px; overflow:hidden; }
+  .imp-list.open{ display:block; }
+  .imp-item{ display:flex; align-items:center; gap:12px; padding:11px 13px; border-bottom:1px solid var(--line); }
+  .imp-item:last-child{ border-bottom:0; }
+  .imp-idx{ width:22px; height:22px; border-radius:50%; background:#fef3c7; color:#92400e; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex:none; }
+  .imp-grow{ flex:1; min-width:0; }
+  .imp-proc{ font-family:ui-monospace,Menlo,monospace; font-size:12.5px; }
+  .imp-l2{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:3px; }
+  .imp-chip{ display:inline-flex; align-items:center; font-size:11.5px; font-weight:700; border-radius:6px; padding:2px 8px; }
+  .imp-chip.sala{ background:var(--brand-50); color:var(--brand-d); }
+  .imp-chip.hora{ background:#ecfeff; color:#0e7490; }
+  .imp-reason{ font-size:11.5px; color:#dc2626; font-weight:600; }
+  .imp-live{ font-size:11.5px; color:var(--faint); margin-top:10px; display:flex; align-items:center; gap:6px; }
+  .imp-ov{ position:fixed; inset:0; background:rgba(15,23,42,.5); display:none; align-items:center; justify-content:center; padding:18px; z-index:60; }
+  .imp-ov.show{ display:flex; }
+  .imp-mini{ width:100%; max-width:400px; background:#fff; border-radius:16px; box-shadow:0 24px 60px rgba(15,23,42,.3); overflow:hidden; }
+  .imp-top{ display:flex; gap:13px; padding:18px 18px 6px; }
+  .imp-bang{ width:42px; height:42px; border-radius:11px; background:#fef3c7; color:#92400e; display:flex; align-items:center; justify-content:center; flex:none; font-size:22px; font-weight:900; }
+  .imp-h{ margin:2px 0 4px; font-size:16.5px; font-weight:800; }
+  .imp-p{ margin:0; font-size:13.5px; color:var(--muted); line-height:1.5; }
+  .imp-foot{ display:flex; gap:9px; padding:14px 18px 18px; justify-content:flex-end; }
+  .imp-foot button{ font:inherit; font-size:13.5px; font-weight:700; border-radius:9px; padding:9px 15px; cursor:pointer; border:1px solid var(--line2); background:#fff; color:var(--ink); }
+  .imp-bb{ background:var(--brand)!important; border-color:var(--brand)!important; color:#fff!important; }
+
 
   /* ===== Configurar equipe (isolado em #mEquipe) ===== */
   #mEquipe .seg.mini button{ padding:6px 11px; font-size:12.5px; }
@@ -430,6 +465,45 @@ async function configAtualOuPadrao(){ let c=await DB.getConfig(); if(!c){ c=conf
 async function mapaAliasGlobal(){ const cfg=await configAtualOuPadrao(); const m={}; cfg.forEach(s=>{ const k=chave(s.nome); m[k]=k; (s.aliases||[]).forEach(a=>{ const ak=chave(a); if(ak) m[ak]=k; }); }); return m; }
 function resolveKey(map,salaRaw,HH){ const k=chave(tiraSufixo(salaRaw)); return (map[k]||k)+'|'+HH; }
 
+/* ===== Relatório de importação do PJe: processos que não entraram ===== */
+const soDigitos=s=>(s??'').toString().replace(/\D/g,'');
+function impResolvido(p,proc){ const alvo=soDigitos(proc); if(!alvo) return false; return Object.values(p.celulas||{}).some(c=>soDigitos(c&&c.proc)===alvo); }
+let impAberto=false;
+function renderImpReport(p){
+  const host=document.getElementById('impReport'); if(!host) return;
+  const lista=Array.isArray(p.impErros)?p.impErros:null;
+  if(!lista){ host.innerHTML=''; return; }
+  const total=p.impTotal||0;
+  const pend=lista.filter(e=>!impResolvido(p,e.proc));
+  const entr=total-pend.length;
+  let html='<hr style="border:0;border-top:1px solid var(--line);margin:18px 0 16px;">';
+  html+='<div class="imp-statsline" style="margin-bottom:'+(pend.length?'12px':'0')+';"><span class="imp-okpill"><svg class="imp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg><b>'+entr+'</b>&nbsp;de&nbsp;<b>'+total+'</b>&nbsp;processos entraram</span></div>';
+  if(pend.length){
+    html+='<div class="imp-bar'+(impAberto?' open':'')+'" id="impBar"><span class="imp-tri">!</span><span class="imp-tx"><div class="imp-tt"><b>'+pend.length+'</b> '+(pend.length===1?'processo não entrou':'processos não entraram')+'</div><div class="imp-sb">toque para ver quais e por quê</div></span><svg class="imp-caret imp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></div>';
+    html+='<div class="imp-list'+(impAberto?' open':'')+'">'+pend.map(function(e,i){ return '<div class="imp-item"><span class="imp-idx">'+(i+1)+'</span><div class="imp-grow"><span class="imp-proc">'+esc(e.proc)+'</span><div class="imp-l2"><span class="imp-chip sala">'+esc(e.sala)+'</span><span class="imp-chip hora">'+esc(e.hora)+'</span><span class="imp-reason">'+esc(e.motivo)+'</span></div></div></div>'; }).join('')+'</div>';
+    html+='<div class="imp-live"><svg class="imp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/></svg> Some daqui quando você digitar o processo na tabela.</div>';
+  }
+  host.innerHTML=html;
+  const bar=document.getElementById('impBar'); if(bar) bar.onclick=function(){ impAberto=!impAberto; renderImpReport(p); };
+  if(p._avisoImport){ const n=p._avisoImport; delete p._avisoImport; try{ DB.save(p); }catch(_){ } mostrarAvisoImport(n); }
+}
+function mostrarAvisoImport(n){
+  let ov=document.getElementById('impAviso');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='impAviso'; ov.className='imp-ov';
+    ov.innerHTML='<div class="imp-mini"><div class="imp-top"><span class="imp-bang">!</span><div><div class="imp-h">Atenção</div><div class="imp-p" id="impAvisoTx"></div></div></div><div class="imp-foot"><button data-imp="fechar">Fechar</button><button class="imp-bb" data-imp="ver">Ver no resumo</button></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click',function(ev){
+      const a=(ev.target.getAttribute&&ev.target.getAttribute('data-imp'))||'';
+      if(ev.target===ov||a==='fechar'){ ov.classList.remove('show'); }
+      else if(a==='ver'){ ov.classList.remove('show'); impAberto=true; if(window._recalcPauta) window._recalcPauta(); const h=document.getElementById('impReport'); if(h) h.scrollIntoView({behavior:'smooth',block:'center'}); }
+    });
+  }
+  document.getElementById('impAvisoTx').textContent='Algum(ns) processo(s) não foi(ram) extraído(s) ('+n+'). Confira o relatório e o resumo nas estatísticas.';
+  ov.classList.add('show');
+}
+
+
 const app=()=>document.getElementById('app');
 let tT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),2700); }
 function openM(id){ document.getElementById(id).classList.add('open'); }
@@ -611,9 +685,12 @@ function lerPJe(file){
 async function criarPautaPJe(iso){
   const salas=JSON.parse(JSON.stringify(await configAtualOuPadrao()));
   const celulas={}; const map=await mapaAliasGlobal();
-  pjeImport.itens.forEach(it=>{ const key=resolveKey(map,it.salaRaw,it.HH); celulas[key]=Object.assign(celulas[key]||{proc:'',vara:'',c1:'',c2:''},{proc:it.proc,vara:it.vara}); });
-  const p={ id:uid(), nome:iso?('Pauta de '+isoParaBR(iso)):'Pauta importada', data:iso, codigo:pjeImport.token||codRand(), salas, celulas, status:'rascunho', origem:'pje', criadoEm:Date.now() };
-  await DB.save(p); pjeImport=null; toast('Pauta criada do PJe.'); abrirEmNovaAba(p.id); renderHome();
+  const validas=new Set(linhasDaPauta({salas}).map(L=>L.key));
+  const erros=[]; const usados=new Set(); let totalProc=0;
+  pjeImport.itens.forEach(it=>{ const proc=(it.proc||'').trim(); if(!proc) return; totalProc++; const key=resolveKey(map,it.salaRaw,it.HH); const horaTxt=it.HH?it.HH+'h':'sem horário'; if(!validas.has(key)){ erros.push({proc, sala:it.salaRaw||'(sem sala)', hora:horaTxt, motivo:'sala/horário fora da grade'}); return; } if(usados.has(key)){ erros.push({proc, sala:it.salaRaw, hora:horaTxt, motivo:'conflito de horário'}); return; } usados.add(key); celulas[key]=Object.assign(celulas[key]||{proc:'',vara:'',c1:'',c2:''},{proc, vara:it.vara}); });
+  const p={ id:uid(), nome:iso?('Pauta de '+isoParaBR(iso)):'Pauta importada', data:iso, codigo:pjeImport.token||codRand(), salas, celulas, status:'rascunho', origem:'pje', criadoEm:Date.now(), impTotal:totalProc, impErros:erros };
+  if(erros.length) p._avisoImport=erros.length;
+  await DB.save(p); pjeImport=null; toast('Pauta criada do PJe'+(erros.length?' · '+erros.length+' não entraram (ver resumo)':'')+'.'); abrirEmNovaAba(p.id); renderHome();
 }
 
 /* ============================================================
@@ -930,8 +1007,18 @@ async function renderPauta(id){
           <div class="stat"><div class="n tnums" id="stOutro" style="color:#b45309;">0</div><div class="faint" style="font-size:12px;">OUTRO (sem servidor)</div></div>
           <div class="stat"><div class="n tnums" id="stOutroAdm" style="color:#9333ea;">0</div><div class="faint" style="font-size:12px;">Outro (ADM)</div></div>
         </div>
-        <div style="font-size:13px;font-weight:700;color:var(--muted);margin:16px 0 8px;">Por horário</div><div id="stHora" class="row wrapf" style="gap:8px;"></div>
-        <div style="font-size:13px;font-weight:700;color:var(--muted);margin:16px 0 8px;">Por vara de origem</div><div id="stPorVara" style="font-size:14px;"></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);gap:0 22px;margin-top:18px;align-items:start;">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin:0 0 11px;">Volume por juizado</div>
+            <div id="stPorVara" style="font-size:14px;"></div>
+          </div>
+          <div style="background:var(--line);align-self:stretch;"></div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin:0 0 11px;">Intensidade por horário</div>
+            <div id="stHora"></div>
+          </div>
+        </div>
+        <div id="impReport"></div>
       </div>
       <div class="card" style="margin-top:16px;padding:18px;">
         <div class="row between wrapf" style="gap:10px;align-items:flex-start;">
@@ -1257,13 +1344,15 @@ async function renderPauta(id){
     linhasOrd().forEach(L=>{ const c=p.celulas[L.key]||{}; if(!(c.proc||'').trim()) return; tot++; if(ph[L.HH]!==undefined) ph[L.HH]++; const v=(c.vara||'').trim(); if(v){ cv++; pv[v]=(pv[v]||0)+1; } if(chave(c.res)==='CANCELADA') return; if(chave(c.c1)==='OUTRO') outroN++; if(chave(c.c2)==='OUTROADM') outroAdmN++; });
     document.getElementById('stTot').textContent=tot; document.getElementById('stVara').textContent=cv; document.getElementById('stSem').textContent=tot-cv; document.getElementById('stNv').textContent=Object.keys(pv).length;
     const eo=document.getElementById('stOutro'); if(eo) eo.textContent=outroN; const ea=document.getElementById('stOutroAdm'); if(ea) ea.textContent=outroAdmN;
-    const hc=document.getElementById('stHora'); hc.innerHTML=''; Object.keys(ph).forEach(h=>{ if(ph[h]===0 && h==='18') return; const s=document.createElement('span'); s.className='chip'; s.innerHTML='<b>'+h+'h</b> '+ph[h]; hc.appendChild(s); });
+    const hc=document.getElementById('stHora'); const hEnt=Object.keys(ph).map(h=>[h,ph[h]]).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]); const hMax=hEnt.length?Math.max.apply(null,hEnt.map(e=>e[1])):1;
+    hc.innerHTML = hEnt.length ? hEnt.map(([h,n])=>{ const w=Math.round(n/hMax*100); return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;"><span style="width:34px;color:var(--muted);font-weight:700;flex:none;">${h}h</span><span style="flex:1;height:10px;background:var(--brand-50);border-radius:999px;overflow:hidden;"><span style="display:block;height:100%;width:${w}%;background:var(--brand);border-radius:999px;"></span></span><b class="tnums" style="width:26px;text-align:right;flex:none;">${n}</b></div>`; }).join('') : '<span class="faint">— sem horários ainda —</span>';
     const vc=document.getElementById('stPorVara'); const ord=Object.entries(pv).sort((a,b)=>b[1]-a[1]);
-    vc.innerHTML = ord.length ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 18px;">'+ord.map(([v,n])=>`<div class="row between" style="border-bottom:1px dashed var(--line);padding:3px 0;"><span>${esc(v)}</span><b class="tnums">${n}</b></div>`).join('')+'</div>' : '<span class="faint">— nenhuma vara ainda —</span>';
+    vc.innerHTML = ord.length ? ord.map(([v,n])=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:7px 0;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(v)}</span><b class="tnums" style="flex:none;">${n}</b></div>`).join('') : '<span class="faint">— nenhuma vara ainda —</span>';
     const chip=document.getElementById('pSalvo'); if(chip) chip.textContent='salvo';
 
     // Dispara a verificação de alerta sempre que a grade é recalculada
     verificarDuplicidades();
+    renderImpReport(p);
   }
 
   window._recalcPauta=recalc;
@@ -1278,10 +1367,11 @@ async function renderPauta(id){
       const col=(...t)=>header.findIndex(h=>{const k=chave(h);return t.some(x=>k.includes(chave(x)));});
       const cSala=col('Sala'),cData=col('Data','Hora'),cProc=col('Processo'),cVara=col('Orgao julgador','Orgao','Vara');
       if(cSala===-1||cData===-1||cProc===-1){ toast('Colunas Sala/Data/Processo não encontradas.'); return; }
-      const map=await mapaAliasGlobal(); let n=0,fora=0;
+      const map=await mapaAliasGlobal(); let n=0; const erros=[]; const usados=new Set(); let totalProc=0;
       Object.values(p.celulas).forEach(c=>{ c.proc=''; c.vara=''; });
-      for(let i=hIdx+1;i<rows.length;i++){ const r=rows[i]; if(!r||!r.length) continue; const salaRaw=(r[cSala]??'').toString().trim(); const proc=(r[cProc]??'').toString().trim(); if(!salaRaw&&!proc) continue; const dr=r[cData]; const HH=(dr instanceof Date)?String(dr.getHours()).padStart(2,'0'):horaHH(dr); const key=resolveKey(map,salaRaw,HH); const c=p.celulas[key]; if(!c){ fora++; continue; } c.proc=proc; if(cVara!==-1) c.vara=(r[cVara]??'').toString().trim(); n++; }
-      DB.save(p); renderPauta(p.id); toast(n+' audiências importadas'+(fora?' · '+fora+' fora da grade (confira a correlação de nomes)':'')+'.');
+      for(let i=hIdx+1;i<rows.length;i++){ const r=rows[i]; if(!r||!r.length) continue; const salaRaw=(r[cSala]??'').toString().trim(); const proc=(r[cProc]??'').toString().trim(); if(!salaRaw&&!proc) continue; if(!proc) continue; totalProc++; const dr=r[cData]; const HH=(dr instanceof Date)?String(dr.getHours()).padStart(2,'0'):horaHH(dr); const horaTxt=HH?HH+'h':'sem horário'; const key=resolveKey(map,salaRaw,HH); const c=p.celulas[key]; if(!c){ erros.push({proc, sala:salaRaw||'(sem sala)', hora:horaTxt, motivo:'sala/horário fora da grade'}); continue; } if(usados.has(key)){ erros.push({proc, sala:salaRaw, hora:horaTxt, motivo:'conflito de horário'}); continue; } usados.add(key); c.proc=proc; if(cVara!==-1) c.vara=(r[cVara]??'').toString().trim(); n++; }
+      p.impTotal=totalProc; p.impErros=erros; if(erros.length) p._avisoImport=erros.length; else delete p._avisoImport;
+      DB.save(p); renderPauta(p.id); toast(n+' audiências importadas'+(erros.length?' · '+erros.length+' não entraram (ver resumo nas estatísticas)':'')+'.');
     };
     fr.readAsArrayBuffer(file);
   }

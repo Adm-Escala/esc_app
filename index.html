@@ -15,7 +15,7 @@
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   body{ font-family:var(--font); background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; line-height:1.45; }
-  .wrap{ max-width:1080px; margin:0 auto; padding:20px 16px 70px; }
+  .wrap{ max-width:1280px; margin:0 auto; padding:20px 24px 70px; }
   .wide{ max-width:none; padding-left:1.5cm; padding-right:1.5cm; }
   h1{ font-size:23px; font-weight:800; letter-spacing:-.02em; }
   .eyebrow{ font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--brand); }
@@ -44,7 +44,7 @@
   select.sel{ font:inherit; font-size:13.5px; border:1px solid var(--line2); border-radius:var(--rad-s); padding:8px 10px; background:#fff; cursor:pointer; }
 
   .navbar{ background:#1e293b; color:#fff; padding:13px 16px; box-shadow:0 2px 8px rgba(0,0,0,.18); position:sticky; top:0; z-index:40; }
-  .navbar .inner{ max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .navbar .inner{ max-width:1280px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .navbar .brand{ display:flex; align-items:center; gap:11px; }
   .navbar .brand .brand-ic{ color:#818cf8; }
   .navbar .brand h1{ font-size:20px; font-weight:800; letter-spacing:.03em; color:#fff; }
@@ -59,6 +59,23 @@
   table.t thead th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); font-weight:700; padding:11px 16px; border-bottom:1px solid var(--line); }
   table.t tbody td{ padding:13px 16px; border-bottom:1px solid #f1f5f9; }
   table.t tbody tr{ cursor:pointer; transition:.12s; } table.t tbody tr:hover{ background:#f6f8fc; } table.t tbody tr:last-child td{ border-bottom:0; }
+  table.t .action-btn { padding:7px; border-radius:8px; border:none; background:transparent; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; justify-content:center; }
+  table.t .action-open { color:var(--brand); }
+  table.t .action-open:hover { background:var(--brand-50); color:var(--brand-d); }
+  table.t .action-del { color:#ef4444; }
+  table.t .action-del:hover { background:#fee2e2; color:#b91c1c; }
+  table.t td.actions { text-align:right; white-space:nowrap; }
+  table.t td.actions .action-btn + .action-btn { margin-left:4px; }
+  /* Paginação, Busca e Ações em Lote */
+  .pagination-container { padding:14px 18px; text-align:center; border-top:1px solid var(--line); background:#fbfcfe; display:flex; justify-content:space-between; align-items:center; border-radius:0 0 var(--rad) var(--rad); }
+  .page-numbers { display:inline-flex; gap:4px; }
+  .page-num { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--muted); border:1px solid transparent; transition:.15s; user-select:none; }
+  .page-num:hover:not(.faint):not(.active) { background:var(--line); color:var(--ink); }
+  .page-num.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .cb-row, .cb-all { width:16px; height:16px; cursor:pointer; accent-color:var(--brand); }
+  .search-wrap { background:#fff; border:1px solid var(--line2); border-radius:8px; display:flex; align-items:center; padding:0 12px; height:36px; max-width:280px; width:100%; transition:.2s; }
+  .search-wrap:focus-within { border-color:var(--brand); box-shadow:0 0 0 2px var(--brand-50); }
+  .search-wrap input { border:none; outline:none; box-shadow:none; padding-left:8px; width:100%; font-size:13.5px; color:var(--ink); background:transparent; }
   /* mural */
   .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
   .pcard{ text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:var(--rad); padding:16px; cursor:pointer; transition:.15s; position:relative; }
@@ -87,6 +104,14 @@
   .hchip{ display:inline-flex; align-items:center; gap:5px; background:#f1f5f9; border:1px solid var(--line); border-radius:7px; padding:3px 5px 3px 8px; font-size:12px; font-weight:600; }
   .hchip button{ border:0; background:transparent; cursor:pointer; color:var(--faint); display:flex; padding:1px; border-radius:4px; } .hchip button:hover{ color:#ef4444; background:#fee2e2; }
   .addh{ border:1px dashed var(--line2); background:transparent; border-radius:7px; padding:3px 8px; font-size:12px; font-weight:600; color:var(--brand); cursor:pointer; }
+  /* Ícones Quadrados do Modal Salas */
+  .icon-sq { padding:8px; border-radius:8px; border:1px solid var(--line2); background:#fff; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); }
+  .icon-sq:hover { background:#f8fafc; border-color:var(--brand); color:var(--brand); }
+  .icon-sq-primary { background:var(--brand-50); border-color:var(--brand-100); color:var(--brand); }
+  .icon-sq-primary:hover { background:var(--brand-100); border-color:var(--brand); }
+  /* Efeito Hover para a Lixeira de Excluir Sala */
+  .btn-del-room { color:#ef4444 !important; border-color:#fecaca !important; background:transparent; }
+  .btn-del-room:hover { background:#fee2e2 !important; border-color:#fca5a5 !important; color:#b91c1c !important; }
   .sw{ position:relative; width:38px; height:22px; flex:none; cursor:pointer; }
   .sw input{ position:absolute; opacity:0; width:0; height:0; }
   .sw .tr{ position:absolute; inset:0; background:#cbd5e1; border-radius:999px; transition:.18s; }
@@ -183,7 +208,14 @@
   #mEquipe table.teq{ width:100%; border-collapse:collapse; font-size:14px; }
   #mEquipe table.teq thead th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); font-weight:700; padding:10px 14px; border-bottom:1px solid var(--line); background:#fff; position:sticky; top:0; z-index:2; }
   #mEquipe table.teq td{ padding:12px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-  #mEquipe table.teq tr.main{ cursor:pointer; } #mEquipe table.teq tr.main:hover{ background:#f6f8fc; }
+  #mEquipe table.teq tr.main{ cursor:pointer; transition:.15s; } 
+  #mEquipe table.teq tr.main:hover{ background:var(--brand-50); }
+  #mEquipe table.teq th.sortable{ cursor:pointer; transition:.15s; user-select:none; }
+  #mEquipe table.teq th.sortable:hover{ color:var(--brand); }
+  #mEquipe .eq-actions{ opacity:0; transition:.2s; display:flex; justify-content:flex-end; gap:4px; }
+  #mEquipe table.teq tr.main:hover .eq-actions{ opacity:1; }
+  #mEquipe table.teq tr.inativo{ opacity:.55; background:#f8fafc; }
+  #mEquipe table.teq tr.inativo:hover{ opacity:.9; background:#f1f5f9; }
   #mEquipe .ed-inline{ background:#fbfcfe; }
   #mEquipe .eqstat{ background:#f8fafc; border:1px solid var(--line); border-radius:9px; padding:9px 13px; } #mEquipe .eqstat .n{ font-size:18px; font-weight:800; }
   #mEquipe .ed input[data-nome]{ font-size:16px; font-weight:700; border:1px solid var(--line2); border-radius:9px; padding:8px 11px; width:100%; }
@@ -200,6 +232,32 @@
   #mEquipe .slotbtn.on{ background:var(--brand); border-color:var(--brand); color:#fff; }
   #mEquipe .diabtn.on{ background:#7c3aed; border-color:#7c3aed; color:#fff; }
   #mEquipe .slotbtn.add{ border-style:dashed; color:var(--brand); font-weight:600; }
+
+  /* ===== Modal de Edição de Pessoa (#mPessoaEdit) ===== */
+  #mPessoaEdit input[data-nome]{ font-size:16px; font-weight:700; border:1px solid var(--line2); border-radius:9px; padding:8px 11px; width:100%; margin-bottom:12px; }
+  #mPessoaEdit input[data-nome]:focus{ outline:2px solid var(--brand-100); border-color:var(--brand); }
+  #mPessoaEdit .ed-body{ margin-top:12px; display:flex; flex-direction:column; gap:12px; }
+  #mPessoaEdit .lbl{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+  #mPessoaEdit .hint{ font-size:12.5px; color:var(--faint); background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:8px 11px; line-height:1.45; }
+  #mPessoaEdit .hint.ok{ background:#ecfdf5; border-color:#bbf7d0; color:#15803d; }
+  #mPessoaEdit .calc{ font-size:13.5px; background:var(--brand-50); border:1px solid var(--brand-100); color:var(--brand-d); border-radius:8px; padding:8px 11px; }
+  #mPessoaEdit label.fld{ display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:700; color:var(--muted); }
+  #mPessoaEdit .slotrow, #mPessoaEdit .diasrow{ display:flex; flex-wrap:wrap; gap:7px; }
+  #mPessoaEdit .slotbtn, #mPessoaEdit .diabtn{ border:1px solid var(--line2); background:#fff; color:var(--muted); font:inherit; font-weight:700; font-size:13px; padding:7px 12px; border-radius:9px; cursor:pointer; transition:.12s; }
+  #mPessoaEdit .slotbtn:hover, #mPessoaEdit .diabtn:hover{ border-color:var(--brand); color:var(--brand-d); }
+  #mPessoaEdit .slotbtn.on{ background:var(--brand); border-color:var(--brand); color:#fff; }
+  #mPessoaEdit .diabtn.on{ background:#7c3aed; border-color:#7c3aed; color:#fff; }
+  #mPessoaEdit .slotbtn.add{ border-style:dashed; color:var(--brand); font-weight:600; }
+  #mPessoaEdit .gradeq{ border-collapse:separate; border-spacing:5px; font-size:12px; }
+  #mPessoaEdit .gradeq th{ font-weight:700; color:var(--muted); font-size:11px; text-align:center; padding:2px 0; }
+  #mPessoaEdit .gradeq th.cnr, #mPessoaEdit .gradeq td.cnr{ text-align:left; }
+  #mPessoaEdit .cellbtn{ width:36px; height:28px; border:1px solid var(--line2); border-radius:7px; background:#fff; cursor:pointer; transition:.1s; padding:0; }
+  #mPessoaEdit .cellbtn:hover{ border-color:var(--brand); } 
+  #mPessoaEdit .cellbtn.on{ background:var(--brand); border-color:var(--brand); box-shadow:inset 0 0 0 2.5px #fff; }
+  #mPessoaEdit .diatoggle{ border:1px solid var(--line2); background:#fff; color:var(--muted); font-weight:700; font-size:12px; padding:5px 11px; border-radius:8px; cursor:pointer; min-width:48px; text-align:center; }
+  #mPessoaEdit .diatoggle:hover{ border-color:var(--brand); } 
+  #mPessoaEdit .diatoggle.on{ background:var(--brand-50); border-color:var(--brand); color:var(--brand-d); }
+  #mPessoaEdit .gradehelp{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:9px; }
 
   /* ---- Gabarito do dia (grade por horário) ---- */
   .gab-empty{ padding:22px; text-align:center; color:var(--muted); font-size:14px; }
@@ -250,6 +308,16 @@
   #mEquipe .diatoggle:hover{ border-color:var(--brand); } #mEquipe .diatoggle.on{ background:var(--brand-50); border-color:var(--brand); color:var(--brand-d); }
   #mEquipe .gradehelp{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:9px; }
   #mEquipe .emptyeq{ text-align:center; color:var(--faint); padding:34px 20px; }
+
+  /* ===== Modal de Correlação PJe (Mestre-Detalhe) ===== */
+  .m4-layout { display:flex; height:100%; overflow:hidden; }
+  .m4-sidebar { width:280px; border-right:1px solid var(--line); background:#fff; overflow-y:auto; flex:none; }
+  .m4-item { padding:14px 18px; border-bottom:1px solid var(--line); cursor:pointer; transition:.15s; }
+  .m4-item:hover { background:#f8fafc; }
+  .m4-item.active { background:var(--brand-50); border-right:3px solid var(--brand); }
+  .m4-detail { flex:1; padding:24px; background:#f8fafc; overflow-y:auto; }
+  .m4-box { background:#fff; border:1px solid var(--line); padding:24px; border-radius:12px; }
+  .pje-chip-lg { display:flex; justify-content:space-between; align-items:center; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:8px; }
 
   .toast{ position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#0f172a; color:#fff; padding:11px 18px; border-radius:11px; font-size:13.5px; box-shadow:0 12px 30px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:.2s; z-index:80; }
   .toast.show{ opacity:1; bottom:32px; }
@@ -330,8 +398,8 @@
   <div class="modal-foot">
     <div class="row between" style="gap:8px;flex-wrap:wrap;">
       <div class="row" style="gap:8px;">
-        <button class="btn btn-sm" id="cfgAdd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar sala</button>
-        <button class="btn btn-sm" id="cfgAlias" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07L11.5 5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07L12.5 19"/></svg> Nomes no PJe</button>
+        <button class="icon-sq icon-sq-primary" id="cfgAdd" title="Adicionar sala"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 17h6m-3-3v6"/></svg></button>
+        <button class="icon-sq" id="cfgAlias" style="display:none;" title="Correlação de Nomes no PJe"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07L11.5 5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07L12.5 19"/></svg></button>
       </div>
       <div class="row"><button class="btn" id="cfgFechar">Fechar</button><button class="btn btn-primary" id="cfgSalvar">Salvar</button></div>
     </div>
@@ -339,22 +407,31 @@
 </div></div>
 
 <!-- ===== modal: correlação de nomes com o PJe ===== -->
-<div class="modal-bg keep-open" id="mAlias"><div class="modal md modal-flex">
+<div class="modal-bg keep-open" id="mAlias"><div class="modal lg modal-flex" style="max-width:850px; height:600px;">
   <div class="modal-head">
-    <div class="row between" style="align-items:flex-start;"><div><div style="font-size:19px;font-weight:800;">Correlação de nomes com o PJe</div><div class="muted" style="font-size:14px;">Como cada sala do sistema aparece no Excel do PJe.</div></div><button class="btn icon-btn" id="aliasFechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div style="font-size:12.5px;color:var(--faint);margin-top:6px;line-height:1.5;">O sistema já casa os nomes automaticamente ignorando acentos, espaços e o sufixo <b>“- 5NUV”</b> — por isso “Remarcaçõe s 01” e “SALA 01” funcionam sozinhos. <b>Só cadastre um nome aqui se o PJe passar a usar um nome bem diferente</b> (ex.: a SALA 01 virar “ECJ 1”). Pode dar mais de um nome por sala.</div>
+    <div class="row between" style="align-items:flex-start;">
+      <div>
+        <div style="font-size:19px;font-weight:800;">Correlação de nomes com o PJe</div>
+        <div class="muted" style="font-size:14px;margin-top:2px;">Como cada sala do sistema aparece no Excel do PJe.</div>
+      </div>
+      <button class="btn icon-btn" id="aliasFechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div style="font-size:12.5px;color:var(--faint);margin-top:8px;line-height:1.5;">O sistema já casa os nomes automaticamente ignorando acentos, espaços e o sufixo <b>"- 5NUV"</b>. <b>Só cadastre um nome aqui se o PJe passar a usar um nome bem diferente</b> (ex.: a SALA 01 virar "ECJ 1").</div>
   </div>
-  <div class="modal-body" id="aliasList"></div>
+  <div class="modal-body" id="aliasLayout" style="padding:0; overflow:hidden;">
+    </div>
   <div class="modal-foot">
     <div class="row between" style="gap:8px;">
-      <button class="btn" id="aliasVoltar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg> Voltar à estrutura</button>
-      <button class="btn btn-primary" id="aliasSalvar">Salvar</button>
+      <button class="btn" id="aliasVoltar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8l-4 4 4 4M16 12H8"/></svg> Voltar à estrutura
+      </button>
+      <button class="btn btn-primary" id="aliasSalvar">Salvar Correlações</button>
     </div>
   </div>
 </div></div>
 
 <!-- ===== modal: confirmar saída com alterações ===== -->
-<div class="modal-bg" id="mConfirm" style="z-index:90;"><div class="modal sm"><div class="mpad">
+<div class="modal-bg" id="mConfirm" style="z-index:9999;"><div class="modal sm"><div class="mpad">
   <div style="font-size:18px;font-weight:800;">Salvar alterações?</div>
   <div class="muted" id="confMsg" style="font-size:14px;margin-top:4px;">Você fez alterações que ainda não foram salvas.</div>
   <div class="row" style="justify-content:flex-end;margin-top:18px;gap:8px;flex-wrap:wrap;">
@@ -384,18 +461,42 @@
   </div>
   <div class="modal-body">
     <div class="row between wrapf" style="margin-bottom:10px;gap:10px;">
-      <div class="seg mini" id="eqF1"><button data-t="" class="active">Todos os tipos</button><button data-t="servidor">Servidores</button><button data-t="estagiario">Estagiários</button><button data-t="voluntario">Voluntários</button></div>
-      <button class="btn btn-primary btn-sm" id="eqAdd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar pessoa</button>
+      <div class="seg mini" id="eqF1"><button data-t="" class="active">Todos</button><button data-t="servidor">Servidores</button><button data-t="estagiario">Estagiários</button><button data-t="voluntario">Voluntários</button></div>
+      <div class="row" style="gap:8px; flex-wrap:nowrap;">
+        <input type="text" id="eqBusca" class="input" placeholder="Buscar por nome..." style="padding:6px 10px; font-size:13px; max-width:160px; width:100%;">
+        <button class="btn btn-primary icon-btn" id="eqAdd" title="Adicionar pessoa"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="M19 16v6"/><path d="M16 19h6"/></svg></button>
+      </div>
     </div>
     <div class="row wrapf" style="margin-bottom:12px;gap:10px;">
       <span class="faint" style="font-size:12.5px;font-weight:700;">Disponibilidade do dia:</span>
       <div class="seg dias" id="eqDiaBtns"><button data-d="" class="active">Todos</button><button data-d="Seg">Segunda</button><button data-d="Ter">Terça</button><button data-d="Qua">Quarta</button><button data-d="Qui">Quinta</button><button data-d="Sex">Sexta</button></div>
     </div>
-    <div class="card" style="overflow:hidden;"><table class="teq"><thead><tr><th style="width:26%;">Nome</th><th style="width:120px;">Tipo</th><th id="eqColDisp">Disponibilidade</th><th></th></tr></thead><tbody id="eqBody"></tbody></table></div>
+    <div class="card" style="overflow:hidden;"><table class="teq"><thead><tr><th style="width:26%;" class="sortable" id="thEqNome" title="Ordenar por Nome">Nome ↕</th><th style="width:120px;" class="sortable" id="thEqTipo" title="Ordenar por Tipo">Tipo ↕</th><th id="eqColDisp">Disponibilidade</th><th style="text-align:right;">Ações</th></tr></thead><tbody id="eqBody"></tbody></table></div>
     <div id="eqStat" class="row" style="gap:8px;margin-top:12px;"></div>
   </div>
   <div class="modal-foot"><div class="row between" style="gap:8px;flex-wrap:wrap;"><span class="faint" style="font-size:12px;">As alterações são salvas no seu navegador.</span><div class="row"><button class="btn" id="eqFechar">Fechar</button><button class="btn btn-primary" id="eqSalvar">Salvar</button></div></div></div>
 </div></div>
+
+<div class="modal-bg keep-open" id="mPessoaEdit" style="z-index: 9995;">
+  <div class="modal md modal-flex">
+    <div class="modal-head">
+      <div class="row between" style="align-items:flex-start;">
+        <div>
+          <div style="font-size:19px;font-weight:800;" id="peTitulo">Adicionar pessoa</div>
+          <div class="muted" style="font-size:13.5px;">Configure o vínculo e a disponibilidade semanal padrão.</div>
+        </div>
+        <button class="btn icon-btn" id="peX"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+    </div>
+    <div class="modal-body" id="peBody"></div>
+    <div class="modal-foot">
+      <div class="row between">
+        <button class="btn" id="peVoltar">Voltar</button>
+        <button class="btn btn-primary" id="peSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal-bg keep-open" id="mCancelSup"><div class="modal md modal-flex">
   <div class="modal-head">
@@ -624,7 +725,12 @@ function configPadrao(){
 async function configAtualOuPadrao(){ let c=await DB.getConfig(); if(!c){ c=configPadrao(); await DB.saveConfig(c); } c.forEach(s=>{ if(!s.aliases) s.aliases=[]; }); return c; }
 // Mapa de correlação PJe -> sala do sistema (global; usa a estrutura padrão)
 async function mapaAliasGlobal(){ const cfg=await configAtualOuPadrao(); const m={}; cfg.forEach(s=>{ const k=chave(s.nome); m[k]=k; (s.aliases||[]).forEach(a=>{ const ak=chave(a); if(ak) m[ak]=k; }); }); return m; }
-function resolveKey(map,salaRaw,HH){ const k=chave(tiraSufixo(salaRaw)); return (map[k]||k)+'|'+HH; }
+function resolveKey(map,salaRaw,HH){ const k=chave(tiraSufixo(salaRaw)); return (map[k]||k)+'|'+HH; }function resolveKey(map, salaRaw, HH) { 
+  const kFull = chave(salaRaw); 
+  if (map[kFull]) return map[kFull] + '|' + HH; 
+  const k = chave(tiraSufixo(salaRaw)); 
+  return (map[k] || k) + '|' + HH; 
+}
 
 /* ===== Relatório de importação do PJe: processos que não entraram ===== */
 const soDigitos=s=>(s??'').toString().replace(/\D/g,'');
@@ -700,12 +806,50 @@ document.getElementById('bkFile').addEventListener('change',e=>{ if(e.target.fil
 /* ============================================================
    TELA INICIAL (Tabela + Mural + filtro)
    ============================================================ */
-let vista='tabela', filtroAno='', filtroMes='';
+let vista='tabela', filtroAno='', filtroMes='', homeBusca='', homePg=1;
+const HOME_PP = 10;
+let homeSel = new Set();
+
+function buildPagination(total) {
+  if (total <= HOME_PP) return '';
+  const totalPgs = Math.ceil(total / HOME_PP);
+  const startIdx = ((homePg - 1) * HOME_PP) + 1;
+  const endIdx = Math.min(homePg * HOME_PP, total);
+
+  let pgs = `<span class="page-num" data-p="${homePg > 1 ? homePg - 1 : 1}">&lt;</span>`;
+  let startP = Math.max(1, homePg - 2);
+  let endP = Math.min(totalPgs, startP + 4);
+  if(endP - startP < 4) startP = Math.max(1, endP - 4);
+
+  if (startP > 1) pgs += `<span class="page-num" data-p="1">1</span>${startP > 2 ? '<span class="page-num faint" style="cursor:default;">...</span>' : ''}`;
+  for(let i=startP; i<=endP; i++) pgs += `<span class="page-num ${i===homePg ? 'active' : ''}" data-p="${i}">${i}</span>`;
+  if (endP < totalPgs) pgs += `${endP < totalPgs - 1 ? '<span class="page-num faint" style="cursor:default;">...</span>' : ''}<span class="page-num" data-p="${totalPgs}">${totalPgs}</span>`;
+  pgs += `<span class="page-num" data-p="${homePg < totalPgs ? homePg + 1 : totalPgs}">&gt;</span>`;
+
+  return `<div class="pagination-container"><span class="faint" style="font-size:13px;">Mostrando ${startIdx}-${endIdx} de ${total} pautas</span><div class="page-numbers">${pgs}</div></div>`;
+}
 async function renderHome(){
   const pautas=(await DB.list()).sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.editadoEm-a.editadoEm);
   const anos=[...new Set(pautas.map(p=>(p.data||'').slice(0,4)).filter(Boolean))].sort().reverse();
-  const filtra=p=>{ if(filtroAno && (p.data||'').slice(0,4)!==filtroAno) return false; if(filtroMes && (p.data||'').slice(5,7)!==filtroMes) return false; return true; };
-  const vis=pautas.filter(filtra);
+  
+  const filtra=p=>{ 
+    if(filtroAno && (p.data||'').slice(0,4)!==filtroAno) return false; 
+    if(filtroMes && (p.data||'').slice(5,7)!==filtroMes) return false; 
+    if(homeBusca) {
+      const t = homeBusca.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const tgt = ((p.nome||'')+' '+(p.codigo||'')+' '+isoParaBR(p.data)).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      if(!tgt.includes(t)) return false;
+    }
+    return true; 
+  };
+  
+  const visAll = pautas.filter(filtra);
+  const totalVis = visAll.length;
+  const totalPgs = Math.ceil(totalVis / HOME_PP) || 1;
+  if(homePg > totalPgs) homePg = totalPgs;
+  
+  const validIds = new Set(pautas.map(p=>p.id));
+  for(let id of homeSel) if(!validIds.has(id)) homeSel.delete(id);
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
@@ -722,12 +866,19 @@ async function renderHome(){
         <div><div class="eyebrow">ADM</div><h1 style="font-size:20px;">Pautas guardadas</h1></div>
       </div>
 
-      <div class="row between wrapf" style="margin-top:18px;gap:10px;">
+      <div class="row between wrapf" style="margin-top:18px;gap:10px;align-items:center;">
         <div class="seg" id="hVista"><button data-v="tabela" class="${vista==='tabela'?'active':''}">Tabela</button><button data-v="mural" class="${vista==='mural'?'active':''}">Mural</button></div>
-        <div class="row" style="gap:8px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
-          <select class="sel" id="fMes"><option value="">Todos os meses</option>${MESN.map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}" ${filtroMes===String(i+1).padStart(2,'0')?'selected':''}>${m}</option>`).join('')}</select>
-          <select class="sel" id="fAno"><option value="">Todos os anos</option>${anos.map(a=>`<option value="${a}" ${filtroAno===a?'selected':''}>${a}</option>`).join('')}</select>
+        
+        <div class="row wrapf" style="gap:8px;flex:1;justify-content:flex-end;">
+          <button class="btn btn-sm" id="btnBulkDel" style="display:${homeSel.size?'inline-flex':'none'}; color:#ef4444; border-color:#fecaca;" title="Excluir pautas selecionadas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Excluir (${homeSel.size})</button>
+
+          <div class="search-wrap" style="max-width:200px;">
+            <svg width="16" height="16" stroke="var(--faint)" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="hBusca" placeholder="Buscar pauta..." value="${esc(homeBusca)}">
+          </div>
+
+          <select class="sel" id="fMes" style="padding:7px 8px;font-size:13px;"><option value="">Mês</option>${MESN.map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}" ${filtroMes===String(i+1).padStart(2,'0')?'selected':''}>${m}</option>`).join('')}</select>
+          <select class="sel" id="fAno" style="padding:7px 8px;font-size:13px;"><option value="">Ano</option>${anos.map(a=>`<option value="${a}" ${filtroAno===a?'selected':''}>${a}</option>`).join('')}</select>
           ${(filtroAno||filtroMes)?'<button class="btn btn-sm" id="fLimpar">limpar</button>':''}
         </div>
       </div>
@@ -735,103 +886,211 @@ async function renderHome(){
       <div id="hConteudo" style="margin-top:16px;"></div>
     </div>`;
 
+  const iBusca = document.getElementById('hBusca');
+  if(iBusca) {
+    iBusca.addEventListener('input', e => { 
+      homeBusca = e.target.value; homePg = 1; renderHome(); 
+      setTimeout(() => { const el = document.getElementById('hBusca'); if(el) { el.focus(); el.selectionStart = el.value.length; } }, 10);
+    });
+  }
+
+  const bBulk = document.getElementById('btnBulkDel');
+  if(bBulk) {
+    bBulk.onclick = async () => {
+      if(confirm(`Excluir as ${homeSel.size} pautas selecionadas?\nEsta ação não pode ser desfeita.`)) {
+        for(let id of homeSel) await DB.remove(id);
+        homeSel.clear(); toast('Pautas excluídas em lote.'); renderHome();
+      }
+    };
+  }
+
   const cont=document.getElementById('hConteudo');
-  if(!vis.length){
-    const msg = (filtroAno||filtroMes) ? 'Não existe pauta cadastrada para este mês' : 'Nenhuma pauta ainda. Clique em “Nova pauta” para começar.';
+  if(!visAll.length){
+    const msg = (filtroAno||filtroMes||homeBusca) ? 'Nenhuma pauta encontrada para esta busca' : 'Nenhuma pauta ainda. Clique em “Nova pauta” para começar.';
     cont.innerHTML=`<div class="card"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--line2)" stroke-width="1.5" style="margin:0 auto 10px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg><div style="font-weight:600;color:var(--muted);">${msg}</div></div></div>`;
-  } else if(vista==='tabela'){ renderTabela(cont,vis); } else { renderMural(cont,vis); }
+  } else {
+    const pagedVis = visAll.slice((homePg - 1) * HOME_PP, homePg * HOME_PP);
+    if(vista==='tabela') renderTabela(cont, pagedVis, totalVis); else renderMural(cont, pagedVis, totalVis); 
+  }
 
   document.getElementById('hNova').onclick=()=>openM('mNova');
   document.getElementById('hConfig').onclick=()=>abrirConfig('default');
   document.getElementById('hBackup').onclick=()=>openM('mBackup');
   document.getElementById('hEquipe').onclick=()=>abrirEquipe();
   document.querySelectorAll('#hVista button').forEach(b=>b.onclick=()=>{ vista=b.dataset.v; renderHome(); });
-  document.getElementById('fMes').onchange=e=>{ filtroMes=e.target.value; renderHome(); };
-  document.getElementById('fAno').onchange=e=>{ filtroAno=e.target.value; renderHome(); };
+  document.getElementById('fMes').onchange=e=>{ filtroMes=e.target.value; homePg=1; renderHome(); };
+  document.getElementById('fAno').onchange=e=>{ filtroAno=e.target.value; homePg=1; renderHome(); };
   const fl=document.getElementById('fLimpar'); if(fl) fl.onclick=()=>{ filtroAno=''; filtroMes=''; renderHome(); };
 }
+
 function linhaInfo(p){ const status=p.status==='editando'?'<span class="badge b-open">aberta</span>':(audsDe(p)===0?'<span class="badge b-draft">rascunho</span>':''); return {auds:audsDe(p),status}; }
 
-    function renderTabela(cont,vis){
-      // Captura a data de hoje no formato YYYY-MM-DD
-      const t = new Date(); 
-      const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+    function renderTabela(cont, vis, totalVis){
+  const t = new Date(); 
+  const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
 
-      cont.innerHTML=`<div class="card shadow" style="overflow:hidden;"><table class="t"><thead><tr><th>Data</th><th>Nome</th><th style="text-align:center">Aud.</th><th>Código</th><th>Última edição</th><th></th></tr></thead><tbody></tbody></table></div>`;
-      const tb=cont.querySelector('tbody');
-      
-      vis.forEach(p=>{ 
-        const isHoje = (p.data === hoje);
-        const [y,m,d]=(p.data||'--- - -').split('-'); 
-        const i=linhaInfo(p); 
-        const tr=document.createElement('tr');
-        
-        // Destaque de fundo se for hoje
-        if (isHoje) tr.style.backgroundColor = '#eff6ff';
+  cont.innerHTML=`<div class="card shadow" style="overflow:hidden;"><table class="t"><thead><tr>
+    <th style="width:40px; text-align:center;"><input type="checkbox" class="cb-all" id="cbAll" title="Selecionar todas"></th>
+    <th>Data</th><th>Nome</th><th style="text-align:center">Aud.</th><th>Código</th><th>Última edição</th><th></th></tr></thead><tbody></tbody></table>
+    ${buildPagination(totalVis)}</div>`;
+    
+  const tb = cont.querySelector('tbody');
+  
+  vis.forEach(p => { 
+    const isHoje = (p.data === hoje);
+    const [y,m,d] = (p.data||'--- - -').split('-'); 
+    const i = linhaInfo(p); 
+    const tr = document.createElement('tr');
+    
+    if (isHoje) tr.style.backgroundColor = '#eff6ff';
 
-        const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-left:8px;">HOJE</span>` : '';
-        const dateBoxStyle = isHoje ? 'background:#3b82f6; border-color:#2563eb;' : 'background:#f1f5f9; border:1px solid var(--line);';
-        const dateCor = isHoje ? 'color:#fff;' : '';
-        const monthCor = isHoje ? 'color:#dbeafe;' : '';
+    const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-left:8px;">HOJE</span>` : '';
+    const dateBoxStyle = isHoje ? 'background:#3b82f6; border-color:#2563eb;' : 'background:#f1f5f9; border:1px solid var(--line);';
+    const dateCor = isHoje ? 'color:#fff;' : '';
+    const monthCor = isHoje ? 'color:#dbeafe;' : '';
+    const isChecked = homeSel.has(p.id) ? 'checked' : '';
 
-        tr.innerHTML=`<td><div class="row" style="gap:10px;"><div class="datebox" style="width:42px;height:42px;${dateBoxStyle}"><span class="d" style="font-size:15px;${dateCor}">${d||'—'}</span><span class="m ${isHoje?'':'faint'}" style="font-size:9px;${monthCor}">${m?M3A[+m-1]:''}</span></div><span class="mono faint" style="font-size:12px;${isHoje?'color:#1e3a8a;font-weight:700;':''}">${isoParaBR(p.data)}</span>${badgeHoje}</div></td>
-          <td style="font-weight:700; ${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)} ${i.status}</td>
-          <td style="text-align:center;"><span class="tnums" style="font-weight:700;${i.auds?'':'color:var(--faint)'}">${i.auds||'—'}</span></td>
-          <td><span class="mono faint" style="font-size:12px;">${esc(p.codigo||'—')}</span></td>
-          <td class="muted">${relTempo(p.editadoEm)}</td>
-          <td style="text-align:right;white-space:nowrap;"><span style="color:var(--brand);font-weight:700;font-size:12px;">Abrir →</span> <button class="btn icon-btn btn-sm del" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:transparent;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></td>`;
-        
-        tr.querySelector('.del').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
-        tr.onclick=()=>abrirPauta(p.id); 
-        tb.appendChild(tr); 
-      });
-    }
+    tr.innerHTML=`
+      <td style="text-align:center;" onclick="event.stopPropagation()">
+        <input type="checkbox" class="cb-row" value="${p.id}" ${isChecked}>
+      </td>
+      <td onclick="abrirPauta('${p.id}')"><div class="row" style="gap:10px;"><div class="datebox" style="width:42px;height:42px;${dateBoxStyle}"><span class="d" style="font-size:15px;${dateCor}">${d||'—'}</span><span class="m ${isHoje?'':'faint'}" style="font-size:9px;${monthCor}">${m?M3A[+m-1]:''}</span></div><span class="mono faint" style="font-size:12px;${isHoje?'color:#1e3a8a;font-weight:700;':''}">${isoParaBR(p.data)}</span>${badgeHoje}</div></td>
+      <td onclick="abrirPauta('${p.id}')" style="font-weight:700; ${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)} ${i.status}</td>
+      <td onclick="abrirPauta('${p.id}')" style="text-align:center;"><span class="tnums" style="font-weight:700;${i.auds?'':'color:var(--faint)'}">${i.auds||'—'}</span></td>
+      <td onclick="abrirPauta('${p.id}')"><span class="mono faint" style="font-size:12px;">${esc(p.codigo||'—')}</span></td>
+      <td onclick="abrirPauta('${p.id}')" class="muted">${relTempo(p.editadoEm)}</td>
+      <td class="actions">
+        <button class="action-btn action-open" title="Abrir pauta" onclick="abrirPauta('${p.id}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </button>
+        <button class="action-btn action-del del" data-id="${p.id}" title="Excluir pauta">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        </button>
+      </td>`;
+    
+    tr.querySelector('.del').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
+    tb.appendChild(tr); 
+  });
 
-    function renderMural(cont,vis){
-      // Captura a data de hoje no formato YYYY-MM-DD
-      const t = new Date(); 
-      const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  // Lógica de Seleção
+  const cbAll = cont.querySelector('#cbAll');
+  const cbRows = cont.querySelectorAll('.cb-row');
+  const updateBtn = () => {
+    const btn = document.getElementById('btnBulkDel');
+    if(btn) { btn.style.display = homeSel.size ? 'inline-flex' : 'none'; btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Excluir (${homeSel.size})`; }
+  };
+  const syncCbAll = () => { cbAll.checked = (vis.length > 0 && vis.every(p => homeSel.has(p.id))); };
+  syncCbAll();
 
-      cont.innerHTML=`<div class="grid"></div>`; const g=cont.querySelector('.grid');
-      
-      const nc=document.createElement('button'); nc.className='newcard'; nc.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:13px;">Nova pauta</span>'; nc.onclick=()=>openM('mNova'); g.appendChild(nc);
-      
-      vis.forEach(p=>{ 
-        const isHoje = (p.data === hoje);
-        const [y,m,d]=(p.data||'').split('-'); 
-        const i=linhaInfo(p); 
-        const isR=i.auds===0&&p.status!=='editando'; 
-        const c=document.createElement('button'); 
-        c.className='pcard';
-        
-        // Destaque de borda e sombra se for hoje
-        if (isHoje) {
-          c.style.borderColor = '#3b82f6';
-          c.style.backgroundColor = '#f8fafc';
-          c.style.boxShadow = '0 0 0 1px #3b82f6, 0 4px 14px rgba(59,130,246,0.15)';
-        }
+  cbAll.onchange = () => {
+    vis.forEach(p => { if(cbAll.checked) homeSel.add(p.id); else homeSel.delete(p.id); });
+    cbRows.forEach(cb => cb.checked = cbAll.checked);
+    updateBtn();
+  };
 
-        const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-top:4px;">HOJE</span>` : '';
-        const dateBoxStyle = isHoje ? 'background:#3b82f6; border:1px solid #2563eb;' : (isR?'background:#fffbeb;border:1px solid var(--amber-100);':'background:var(--brand-50);border:1px solid var(--brand-100);');
-        const dCor = isHoje ? 'color:#fff;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
-        const mCor = isHoje ? 'color:#dbeafe;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
+  cbRows.forEach(cb => {
+    cb.onchange = () => {
+      if(cb.checked) homeSel.add(cb.value); else homeSel.delete(cb.value);
+      syncCbAll(); updateBtn();
+    };
+  });
 
-        c.innerHTML=`<button class="btn icon-btn btn-sm del-x" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:#fff;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
-          <div class="row between" style="align-items:flex-start;">
-            <div class="row" style="gap:10px;">
-              <div class="datebox" style="width:54px;height:54px;${dateBoxStyle}"><span class="d" style="font-size:20px;${dCor}">${d||'—'}</span><span class="m" style="font-size:9px;${mCor}">${m?M3A[+m-1]:''}</span></div>
-              <div style="display:flex; flex-direction:column; align-items:flex-start;">${badgeHoje}</div>
-            </div>
-            ${i.status||'<span class="mono faint" style="font-size:11px;">'+esc(p.codigo||'')+'</span>'}
-          </div>
-          <div style="font-weight:700;margin-top:14px;${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)}</div><div class="faint" style="font-size:12px;margin-top:2px;">${relTempo(p.editadoEm)}</div>
-          <div class="row between" style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px;"><span class="muted" style="font-size:13px;">${i.auds?'<b class="tnums">'+i.auds+'</b> audiências':'<span class="faint">sem audiências</span>'}</span><span style="color:var(--brand);font-weight:700;font-size:12px;">abrir →</span></div>`;
-        
-        c.querySelector('.del-x').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
-        c.onclick=()=>abrirPauta(p.id); 
-        g.appendChild(c); 
-      });
-    }
+  // Lógica da Paginação
+  cont.querySelectorAll('.page-num').forEach(btn => {
+    btn.onclick = () => {
+      if(btn.classList.contains('faint') || btn.classList.contains('active')) return;
+      homePg = parseInt(btn.dataset.p); renderHome();
+    };
+  });
+}
+
+function renderMural(cont, vis, totalVis){
+  const t = new Date(); 
+  const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+
+  cont.innerHTML=`
+    <div class="row" style="justify-content:flex-end; margin-bottom:12px; padding:0 4px;">
+      <label class="row" style="cursor:pointer; font-size:13px; color:var(--muted); font-weight:600;"><input type="checkbox" id="cbAllMural" style="width:16px;height:16px;accent-color:var(--brand);"> Selecionar todas desta página</label>
+    </div>
+    <div class="grid"></div>
+    <div style="margin-top:20px; background:var(--surface); border-radius:var(--rad); border:1px solid var(--line);">${buildPagination(totalVis)}</div>`; 
+  
+  const g=cont.querySelector('.grid');
+  
+  if(homePg === 1) {
+    const nc=document.createElement('button'); nc.className='newcard'; nc.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:13px;">Nova pauta</span>'; nc.onclick=()=>openM('mNova'); g.appendChild(nc);
+  }
+  
+  vis.forEach(p=>{ 
+    const isHoje = (p.data === hoje);
+    const [y,m,d]=(p.data||'').split('-'); 
+    const i=linhaInfo(p); 
+    const isR=i.auds===0&&p.status!=='editando'; 
+    const c=document.createElement('button'); 
+    c.className='pcard';
+    
+    if (isHoje) { c.style.borderColor = '#3b82f6'; c.style.backgroundColor = '#f8fafc'; c.style.boxShadow = '0 0 0 1px #3b82f6, 0 4px 14px rgba(59,130,246,0.15)'; }
+
+    const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-top:4px;">HOJE</span>` : '';
+    const dateBoxStyle = isHoje ? 'background:#3b82f6; border:1px solid #2563eb;' : (isR?'background:#fffbeb;border:1px solid var(--amber-100);':'background:var(--brand-50);border:1px solid var(--brand-100);');
+    const dCor = isHoje ? 'color:#fff;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
+    const mCor = isHoje ? 'color:#dbeafe;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
+    const isChecked = homeSel.has(p.id) ? 'checked' : '';
+
+    c.innerHTML=`<button class="btn icon-btn btn-sm del-x" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:#fff;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+      <div class="row between" style="align-items:flex-start;">
+        <div class="row" style="gap:10px;">
+          <input type="checkbox" class="cb-mural" value="${p.id}" ${isChecked} style="width:18px;height:18px;accent-color:var(--brand);cursor:pointer;margin-right:2px;" onclick="event.stopPropagation()">
+          <div class="datebox" style="width:54px;height:54px;${dateBoxStyle}"><span class="d" style="font-size:20px;${dCor}">${d||'—'}</span><span class="m" style="font-size:9px;${mCor}">${m?M3A[+m-1]:''}</span></div>
+          <div style="display:flex; flex-direction:column; align-items:flex-start;">${badgeHoje}</div>
+        </div>
+        ${i.status||'<span class="mono faint" style="font-size:11px;">'+esc(p.codigo||'')+'</span>'}
+      </div>
+      <div style="font-weight:700;margin-top:14px;${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)}</div><div class="faint" style="font-size:12px;margin-top:2px;">${relTempo(p.editadoEm)}</div>
+      <div class="row between" style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px;">
+        <span class="muted" style="font-size:13px;">${i.auds?'<b class="tnums">'+i.auds+'</b> audiências':'<span class="faint">sem audiências</span>'}</span>
+        <div style="color:var(--brand); display:flex; align-items:center; gap:6px; font-weight:700; font-size:12px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </div>
+      </div>`;
+    
+    c.querySelector('.del-x').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
+    c.onclick=()=>abrirPauta(p.id); 
+    g.appendChild(c); 
+  });
+
+  const updateBtn = () => {
+    const btn = document.getElementById('btnBulkDel');
+    if(btn) { btn.style.display = homeSel.size ? 'inline-flex' : 'none'; btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Excluir (${homeSel.size})`; }
+  };
+
+  const cbAll = cont.querySelector('#cbAllMural');
+  const cbRows = cont.querySelectorAll('.cb-mural');
+  const syncCbAll = () => { if(cbAll) cbAll.checked = (vis.length > 0 && vis.every(p => homeSel.has(p.id))); };
+  syncCbAll();
+
+  if (cbAll) {
+    cbAll.onchange = () => {
+      vis.forEach(p => { if(cbAll.checked) homeSel.add(p.id); else homeSel.delete(p.id); });
+      cbRows.forEach(cb => cb.checked = cbAll.checked);
+      updateBtn();
+    };
+  }
+
+  cbRows.forEach(cb => {
+    cb.onchange = (ev) => {
+      if(cb.checked) homeSel.add(cb.value); else homeSel.delete(cb.value);
+      syncCbAll(); updateBtn();
+    };
+  });
+
+  cont.querySelectorAll('.page-num').forEach(btn => {
+    btn.onclick = () => {
+      if(btn.classList.contains('faint') || btn.classList.contains('active')) return;
+      homePg = parseInt(btn.dataset.p); renderHome();
+    };
+  });
+}
 
 async function excluirPauta(p){ if(!confirm('Excluir "'+p.nome+'"? Esta ação não pode ser desfeita.')) return; await DB.remove(p.id); toast('Pauta excluída.'); renderHome(); }
 
@@ -935,7 +1194,7 @@ function renderConfig(){
       <span class="swatch" style="background:${cor};" title="Clique para escolher a cor"><input type="color" value="${corHex(cor)}" data-cor="${idx}"></span>
       <div style="width:128px;font-weight:700;font-size:14px;">${esc(s.nome)}${s.ativa?'':' <span class="badge" style="background:#f1f5f9;color:var(--faint);">suspensa</span>'}${s.cor?' <button class="addh" data-corauto="'+idx+'" style="padding:0 6px;">cor auto</button>':''}</div>
       <div class="row wrapf" style="flex:1;gap:6px;">${chips}<button class="addh" data-addh="${idx}">+ horário</button></div>
-      <button class="btn icon-btn" data-del="${idx}" title="excluir" style="color:#ef4444;border-color:#fecaca;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>`;
+      <button class="btn icon-btn btn-del-room" data-del="${idx}" title="Excluir sala"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>`;
     box.appendChild(row);
     row.addEventListener('dragstart',e=>{ if(e.target.closest('input,button,.hchip,.sw,.addh,.swatch')){ e.preventDefault(); return; } dragIdx=idx; e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',String(idx));}catch(_){ } row.classList.add('arrastando'); });
     row.addEventListener('dragend',()=>{ row.classList.remove('arrastando'); dragIdx=null; box.querySelectorAll('.salarow').forEach(x=>{x.style.borderTop='';x.style.borderBottom='';}); });
@@ -947,7 +1206,14 @@ function renderConfig(){
   document.getElementById('cfgResumo').innerHTML=`<b>${ativas}</b> salas ativas · <b>${horas}</b> linhas de horário`;
   box.querySelectorAll('[data-tg]').forEach(c=>c.onchange=()=>{ cfgAlvo[+c.dataset.tg].ativa=c.checked; cfgDirty=true; renderConfig(); });
   box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ if(confirm('Excluir '+cfgAlvo[+b.dataset.del].nome+'?')){ cfgAlvo.splice(+b.dataset.del,1); cfgDirty=true; renderConfig(); } });
-  box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ const [i,hi]=b.dataset.rm.split(':').map(Number); cfgAlvo[i].horarios.splice(hi,1); cfgDirty=true; renderConfig(); });
+  box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ 
+    if(confirm('Tem certeza que deseja remover este horário desta sala?')) {
+      const [i,hi]=b.dataset.rm.split(':').map(Number); 
+      cfgAlvo[i].horarios.splice(hi,1); 
+      cfgDirty=true; 
+      renderConfig(); 
+    }
+  });
   box.querySelectorAll('[data-addh]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.addh; const falta=HORAS_POSS.filter(h=>!cfgAlvo[i].horarios.includes(h)); if(!falta.length){ toast('Todos os horários já estão nesta sala.'); return; } const h=prompt('Adicionar horário ('+falta.join(', ')+'):',falta[0]); if(h&&HORAS_POSS.includes(h.trim())){ cfgAlvo[i].horarios.push(h.trim()); cfgAlvo[i].horarios.sort(); cfgDirty=true; renderConfig(); } });
   box.querySelectorAll('[data-cor]').forEach(inp=>{ inp.oninput=()=>{ cfgAlvo[+inp.dataset.cor].cor=inp.value; cfgDirty=true; renderConfig(); }; });
   box.querySelectorAll('[data-corauto]').forEach(b=>b.onclick=()=>{ delete cfgAlvo[+b.dataset.corauto].cor; cfgDirty=true; renderConfig(); });
@@ -956,18 +1222,87 @@ document.getElementById('cfgAdd').onclick=()=>{ const n=prompt('Nome da nova sal
 document.getElementById('cfgSalvar').onclick=async()=>{ if(cfgSalvar) await cfgSalvar(); cfgDirty=false; closeM('mConfig'); };
 
 // ----- Correlação de nomes com o PJe -----
-function renderAlias(){
-  const box=document.getElementById('aliasList'); box.innerHTML='';
-  cfgAlvo.forEach((s,idx)=>{
-    s.aliases=s.aliases||[];
-    const row=document.createElement('div'); row.className='salarow';
-    const chips=s.aliases.map((a,ai)=>`<span class="hchip">${esc(a)}<button data-rma="${idx}:${ai}" title="remover"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join('');
-    row.innerHTML=`<div style="width:160px;flex:none;"><div style="font-weight:700;font-size:14px;">${esc(s.nome)}</div><div class="faint" style="font-size:11px;">casa como ${chave(s.nome)}</div></div>
-      <div class="row wrapf" style="flex:1;gap:6px;">${chips||'<span class="faint" style="font-size:12.5px;">— automático —</span>'}<button class="addh" data-adda="${idx}">+ nome do PJe</button></div>`;
-    box.appendChild(row);
+let aliasSalaAtiva = 0;
+
+function renderAlias() {
+  const layout = document.getElementById('aliasLayout');
+  if(!layout) return;
+  if (!cfgAlvo || cfgAlvo.length === 0) {
+    layout.innerHTML = '<div class="faint" style="padding:20px;">Nenhuma sala cadastrada.</div>';
+    return;
+  }
+  if (aliasSalaAtiva >= cfgAlvo.length) aliasSalaAtiva = 0;
+
+  // Renderiza Barra Lateral (Sidebar)
+  let listItems = cfgAlvo.map((s, i) => {
+    if(!s.aliases) s.aliases = [];
+    return `
+      <div class="m4-item ${i === aliasSalaAtiva ? 'active' : ''}" data-idx="${i}">
+        <div style="font-weight:700; font-size:13.5px; ${i === aliasSalaAtiva ? 'color:var(--brand);' : ''}">${esc(s.nome)}</div>
+        <div class="muted" style="font-size:11.5px; margin-top:2px;">${s.aliases.length ? s.aliases.length + ' regras ativas' : 'Automático'}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Renderiza Painel de Edição (Detail)
+  const sala = cfgAlvo[aliasSalaAtiva];
+  const chips = sala.aliases.map((a, ai) => `
+    <div class="pje-chip-lg">
+      <span style="font-weight:600; font-size:14px;">${esc(a)}</span>
+      <button class="btn icon-btn" data-rma="${aliasSalaAtiva}:${ai}" title="Remover apelido" style="color:var(--red-500); padding:4px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+    </div>
+  `).join('');
+
+  let detailPanel = `
+    <div class="m4-box">
+      <h3 style="font-size:20px; font-weight:800; margin-bottom:4px; color:var(--brand);">${esc(sala.nome)}</h3>
+      <div class="muted" style="font-size:13px; margin-bottom:24px;">Nome de busca nativa: <code style="background:var(--bg); padding:2px 6px; border-radius:4px;">${chave(sala.nome)}</code></div>
+      
+      <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:12px;">Apelidos no PJe</div>
+      ${chips || '<div class="faint" style="font-size:13px; margin-bottom:12px;">Mapeamento automático em uso.</div>'}
+      <button class="btn" data-adda="${aliasSalaAtiva}" style="width:100%; border-style:dashed; color:var(--brand); margin-top:8px; justify-content:center;">+ Adicionar novo nome de busca</button>
+    </div>
+  `;
+
+  // Injeta tudo no HTML
+  layout.innerHTML = `
+    <div class="m4-layout">
+      <div class="m4-sidebar">${listItems}</div>
+      <div class="m4-detail">${detailPanel}</div>
+    </div>
+  `;
+
+  // Adiciona eventos de clique na lista da esquerda
+  layout.querySelectorAll('.m4-item').forEach(el => {
+    el.onclick = () => { 
+      aliasSalaAtiva = parseInt(el.dataset.idx); 
+      renderAlias(); 
+    };
   });
-  box.querySelectorAll('[data-rma]').forEach(b=>b.onclick=()=>{ const [i,ai]=b.dataset.rma.split(':').map(Number); cfgAlvo[i].aliases.splice(ai,1); cfgDirty=true; renderAlias(); });
-  box.querySelectorAll('[data-adda]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.adda; const a=prompt('Nome desta sala no PJe (ex.: ECJ 1).\nNão precisa incluir o "- 5NUV"; acentos e espaços são ignorados.'); if(a&&a.trim()){ cfgAlvo[i].aliases.push(a.trim()); cfgDirty=true; renderAlias(); } });
+
+  // Adiciona eventos de excluir
+  layout.querySelectorAll('[data-rma]').forEach(b => {
+    b.onclick = () => {
+      const [i, ai] = b.dataset.rma.split(':').map(Number);
+      cfgAlvo[i].aliases.splice(ai, 1);
+      cfgDirty = true;
+      renderAlias();
+    };
+  });
+
+  // Adiciona eventos de Inserir Novo
+  const btnAdd = layout.querySelector('[data-adda]');
+  if(btnAdd) {
+    btnAdd.onclick = () => {
+      const i = parseInt(btnAdd.dataset.adda);
+      const a = prompt('Nome desta sala no PJe (ex.: ECJ 1).\\nNão precisa incluir o "- 5NUV"; acentos e espaços são ignorados.');
+      if(a && a.trim()) {
+        cfgAlvo[i].aliases.push(a.trim());
+        cfgDirty = true;
+        renderAlias();
+      }
+    };
+  }
 }
 function irParaEstrutura(){ closeM('mAlias'); renderConfig(); openM('mConfig'); }
 document.getElementById('cfgAlias').onclick=()=>{ closeM('mConfig'); renderAlias(); openM('mAlias'); };
@@ -1055,7 +1390,13 @@ function eqRenderEditor(box,p,onChange){
     else body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
   } else if(p.tipo==='estagiario'){
     const s=eqSlotsEstag(p);
-    body=`<div class="row" style="gap:12px;flex-wrap:wrap;"><label class="fld">Início do expediente<select data-inicio>${[13,14,15,16,17].map(h=>eqOpt(h,p.inicio)).join('')}</select></label><label class="fld">Fim do expediente<select data-fim>${[14,15,16,17,18].map(h=>eqOpt(h,p.fim)).join('')}</select></label></div><div class="calc">Disponível para <b>${s.length}</b> audiência(s): ${s.length?s.map(eqFmtH).join(', '):'—'} <span style="opacity:.7">(não entra na audiência do horário de término)</span></div><div><div class="lbl" style="margin-bottom:7px;">Dias no NPJ (não é escalado nesses dias)</div><div class="diasrow">${EQDIAS.map(d=>`<button class="diabtn ${p.npj.includes(d)?'on':''}" data-npj="${d}">${d}</button>`).join('')}</div></div>${p.npj.length?`<div class="hint ok">Com NPJ em <b>${p.npj.join(', ')}</b>, nos demais dias faz as <b>5 audiências</b> (13h–17h).</div>`:`<div class="hint">Em regra estagiários fazem 4 audiências. Marcando NPJ, nos outros dias fazem 5.</div>`}`;
+    body=`<div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line);">
+            <label class="fld" style="flex:1; min-width:140px;">Início do expediente<select class="sel" data-inicio>${[13,14,15,16,17].map(h=>eqOpt(h,p.inicio)).join('')}</select></label>
+            <label class="fld" style="flex:1; min-width:140px;">Fim do expediente<select class="sel" data-fim>${[14,15,16,17,18].map(h=>eqOpt(h,p.fim)).join('')}</select></label>
+          </div>
+          <div class="calc">Disponível para <b>${s.length}</b> audiência(s): ${s.length?s.map(eqFmtH).join(', '):'—'} <span style="opacity:.7">(não entra na audiência do horário de término)</span></div>
+          <div><div class="lbl" style="margin-bottom:7px;">Dias no NPJ (não é escalado nesses dias)</div><div class="diasrow">${EQDIAS.map(d=>`<button class="diabtn ${p.npj.includes(d)?'on':''}" data-npj="${d}">${d}</button>`).join('')}</div></div>
+          ${p.npj.length?`<div class="hint ok">Com NPJ em <b>${p.npj.join(', ')}</b>, nos demais dias faz as <b>5 audiências</b> (13h–17h).</div>`:`<div class="hint">Em regra estagiários fazem 4 audiências. Marcando NPJ, nos outros dias fazem 5.</div>`}`;
   } else {
     body=`<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Voluntário tem <b>horário flexível</b> — marque, em cada dia, os horários que pode atender.</div>${eqGradeMatrix(p)}</div>`;
   }
@@ -1073,47 +1414,177 @@ function eqRenderEditor(box,p,onChange){
   const fi=box.querySelector('[data-fim]'); if(fi) fi.onchange=()=>{ p.fim=+fi.value; if(p.fim<=p.inicio) p.inicio=p.fim-1; re(); onChange&&onChange(); };
   box.querySelectorAll('[data-npj]').forEach(b=>b.onclick=()=>{ const d=b.dataset.npj; const i=p.npj.indexOf(d); if(i>=0)p.npj.splice(i,1); else p.npj.push(d); eqOrdenaDias(p.npj); re(); onChange&&onChange(); });
 }
-function eqNovaPessoa(tipo){ const p={id:uid(), nome:'', tipo:tipo||'servidor', modo:'padrao', slots:[13,14,15,16,17], inicio:13, fim:17, npj:[], dias:[...EQDIAS]}; eqEnsureDefaults(p); eqAlvo.push(p); eqDirty=true; return p; }
-function eqOrdenada(){ return eqAlvo.slice().sort((a,b)=> (EQRANK[a.tipo]-EQRANK[b.tipo]) || (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'})); }
-function eqRender(){
-  document.getElementById('eqColDisp').textContent = eqDiaF ? ('Disponibilidade · '+EQDIA_NOME[eqDiaF]) : 'Disponibilidade';
-  const tb=document.getElementById('eqBody'); tb.innerHTML='';
-  if(!eqAlvo.length){ tb.innerHTML='<tr><td colspan="4"><div class="emptyeq">Nenhuma pessoa cadastrada ainda.<br>Clique em <b>Adicionar pessoa</b> para começar.</div></td></tr>'; eqRenderStat(); return; }
-  const vis=eqOrdenada().filter(p=>!eqF1||p.tipo===eqF1);
-  if(!vis.length){ tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--faint);padding:24px;">Ninguém deste tipo.</td></tr>'; }
-  vis.forEach(p=>{
-    const tr=document.createElement('tr'); tr.className='main';
-    tr.innerHTML=`<td style="font-weight:700;">${esc(p.nome)||'<span class="faint">sem nome</span>'}</td><td><span class="tag ${p.tipo}">${eqCap(p.tipo)}</span></td><td>${eqDispHTML(p,eqDiaF)}</td><td style="text-align:right;color:var(--brand);font-weight:700;font-size:12px;white-space:nowrap;">${eqExp===p.id?'fechar ▲':'editar ▾'}</td>`;
-    tr.onclick=()=>{ eqExp=(eqExp===p.id?null:p.id); eqRender(); };
-    tb.appendChild(tr);
-    if(eqExp===p.id){
-      const er=document.createElement('tr'); er.className='ed-inline'; const td=document.createElement('td'); td.colSpan=4; td.style.padding='16px 18px';
-      const box=document.createElement('div'); box.className='ed'; td.appendChild(box);
-      const foot=document.createElement('div'); foot.style.marginTop='14px'; td.appendChild(foot);
-      er.appendChild(td); tb.appendChild(er);
-      eqRenderEditor(box,p,()=>{ eqDirty=true; tr.children[0].innerHTML=esc(p.nome)||'<span class="faint">sem nome</span>'; tr.children[1].innerHTML=`<span class="tag ${p.tipo}">${eqCap(p.tipo)}</span>`; tr.children[2].innerHTML=eqDispHTML(p,eqDiaF); eqRenderStat(); });
-      const del=document.createElement('button'); del.className='btn btn-sm'; del.style.cssText='color:#ef4444;border-color:#fecaca;'; del.textContent='Remover pessoa';
-      del.onclick=()=>{ if(confirm('Remover '+(p.nome||'esta pessoa')+'?')){ eqAlvo=eqAlvo.filter(x=>x.id!==p.id); eqDirty=true; eqExp=null; eqRender(); } };
-      foot.appendChild(del);
+function eqNovaPessoa(tipo){ 
+  const p={id:uid(), nome:'', tipo:tipo||'servidor', modo:'padrao', slots:[13,14,15,16,17], inicio:13, fim:17, npj:[], dias:[...EQDIAS]}; 
+  eqEnsureDefaults(p); 
+  return p; 
+}
+// Variáveis Globais de Estado da Tabela
+let eqBusca = '', eqSortCol = 'tipo', eqSortDir = 1;
+
+function eqOrdenada() {
+  const t = eqBusca.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return eqAlvo.filter(p => {
+    if (t && !(p.nome||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(t)) return false;
+    if (eqF1 && p.tipo !== eqF1) return false;
+    return true;
+  }).sort((a,b) => {
+    let cmp = 0;
+    if (eqSortCol === 'tipo') {
+      cmp = (EQRANK[a.tipo] - EQRANK[b.tipo]) || (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'});
+    } else {
+      cmp = (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'});
     }
+    return cmp * eqSortDir;
+  });
+}
+
+function eqRender() {
+  document.getElementById('eqColDisp').textContent = eqDiaF ? ('Disponibilidade · '+EQDIA_NOME[eqDiaF]) : 'Disponibilidade';
+  const tb = document.getElementById('eqBody'); tb.innerHTML = '';
+  
+  // Atualizar Contadores Dinâmicos das Abas
+  const fBtns = document.querySelectorAll('#eqF1 button');
+  if (fBtns.length === 4) {
+    fBtns[0].textContent = `Todos (${eqAlvo.length})`;
+    fBtns[1].textContent = `Servidores (${eqAlvo.filter(p=>p.tipo==='servidor').length})`;
+    fBtns[2].textContent = `Estagiários (${eqAlvo.filter(p=>p.tipo==='estagiario').length})`;
+    fBtns[3].textContent = `Voluntários (${eqAlvo.filter(p=>p.tipo==='voluntario').length})`;
+  }
+
+  // Atualizar Setas de Ordenação
+  document.getElementById('thEqNome').textContent = 'Nome ' + (eqSortCol==='nome' ? (eqSortDir===1?'▲':'▼') : '↕');
+  document.getElementById('thEqTipo').textContent = 'Tipo ' + (eqSortCol==='tipo' ? (eqSortDir===1?'▲':'▼') : '↕');
+
+  if (!eqAlvo.length) { tb.innerHTML='<tr><td colspan="4"><div class="emptyeq">Nenhuma pessoa cadastrada ainda.</div></td></tr>'; eqRenderStat(); return; }
+  
+  const vis = eqOrdenada();
+  if (!vis.length) { tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--faint);padding:24px;">Nenhum resultado encontrado.</td></tr>'; }
+  
+  vis.forEach(p => {
+    const tr = document.createElement('tr'); 
+    tr.className = 'main' + (p.inativo ? ' inativo' : '');
+    
+    // Risco no nome caso Inativo
+    const nomeHtml = p.inativo 
+      ? `<span style="text-decoration:line-through; color:var(--muted);">${esc(p.nome)}</span> <span class="badge" style="background:#e2e8f0; color:#475569; margin-left:6px;">Inativo</span>`
+      : `${esc(p.nome)||'<span class="faint">sem nome</span>'}`;
+
+    tr.innerHTML = `
+      <td style="font-weight:700; vertical-align:middle;">${nomeHtml}</td>
+      <td style="vertical-align:middle;"><span class="tag ${p.tipo}">${eqCap(p.tipo)}</span></td>
+      <td style="vertical-align:middle;">${eqDispHTML(p,eqDiaF)}</td>
+      <td style="text-align:right; white-space:nowrap; vertical-align:middle;">
+        <div class="eq-actions">
+          <button class="btn icon-btn btn-sm" data-edit-p aria-label="Editar pessoa" title="Editar pessoa" style="color:var(--brand); border-color:transparent;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn icon-btn btn-sm" data-inativar-p aria-label="${p.inativo ? 'Reativar' : 'Inativar temporariamente'}" title="${p.inativo ? 'Reativar pessoa' : 'Inativar temporariamente'}" style="color:#d97706; border-color:transparent;">
+            ${p.inativo 
+              ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' 
+              : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'}
+          </button>
+          <button class="btn icon-btn btn-sm" data-del-p aria-label="Remover" title="Excluir do sistema" style="color:#ef4444; border-color:transparent;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+        </div>
+      </td>`;
+    
+    tb.appendChild(tr);
+
+    tr.querySelector('[data-edit-p]').onclick = (e) => { e.stopPropagation(); abrirModalPessoa(p); };
+    tr.querySelector('[data-inativar-p]').onclick = (e) => { 
+      e.stopPropagation(); 
+      p.inativo = !p.inativo;
+      eqDirty = true; 
+      eqRender(); 
+    };
+    tr.querySelector('[data-del-p]').onclick = (e) => { 
+      e.stopPropagation(); 
+      if(confirm(`Remover ${p.nome || 'esta pessoa'} de forma permanente da equipe?\n(Se ela for voltar no futuro, use o botão de Inativar).`)){ 
+        eqAlvo = eqAlvo.filter(x => x.id !== p.id); 
+        eqDirty = true; 
+        eqRender(); 
+      } 
+    };
   });
   eqRenderStat();
 }
 function eqRenderStat(){ const s=document.getElementById('eqStat'); const c=t=>eqAlvo.filter(p=>p.tipo===t).length; s.innerHTML=`<div class="eqstat"><div class="n">${eqAlvo.length}</div><div class="faint" style="font-size:12px;">na equipe</div></div><div class="eqstat"><div class="n" style="color:#0d9488">${c('servidor')}</div><div class="faint" style="font-size:12px;">servidores</div></div><div class="eqstat"><div class="n" style="color:#7c3aed">${c('estagiario')}</div><div class="faint" style="font-size:12px;">estagiários</div></div><div class="eqstat"><div class="n" style="color:#d97706">${c('voluntario')}</div><div class="faint" style="font-size:12px;">voluntários</div></div>`; }
 
+let pessoaEditando = null;
+let pessoaIsNova = false;
+let pessoaDirty = false;
+
+function abrirModalPessoa(pessoaOriginal) {
+  const box = document.getElementById('peBody');
+  pessoaDirty = false;
+
+  if (pessoaOriginal) {
+    pessoaEditando = JSON.parse(JSON.stringify(pessoaOriginal));
+    pessoaIsNova = false;
+    document.getElementById('peTitulo').textContent = 'Editar pessoa';
+    document.getElementById('peSalvar').textContent = 'Salvar';
+  } else {
+    pessoaEditando = eqNovaPessoa(eqF1 || 'servidor');
+    pessoaIsNova = true;
+    document.getElementById('peTitulo').textContent = 'Adicionar pessoa';
+    document.getElementById('peSalvar').textContent = 'Adicionar';
+  }
+
+  eqRenderEditor(box, pessoaEditando, () => { pessoaDirty = true; });
+  openM('mPessoaEdit');
+}
+
+function tentarFecharModalPessoa() {
+  if (pessoaDirty) {
+    pedirSalvar(
+      async () => { document.getElementById('peSalvar').click(); },
+      async () => { closeM('mPessoaEdit'); },
+      'Você fez alterações na disponibilidade da pessoa que ainda não foram salvas.'
+    );
+  } else {
+    closeM('mPessoaEdit');
+  }
+}
+
+document.getElementById('peX').onclick = tentarFecharModalPessoa;
+document.getElementById('peVoltar').onclick = tentarFecharModalPessoa;
+
+document.getElementById('peSalvar').onclick = () => {
+  if (!pessoaEditando.nome || !pessoaEditando.nome.trim()) { 
+    toast('O nome da pessoa não pode ficar vazio.'); 
+    return; 
+  }
+  
+  if (pessoaIsNova) {
+    eqAlvo.push(pessoaEditando);
+  } else {
+    const idx = eqAlvo.findIndex(x => x.id === pessoaEditando.id);
+    if (idx >= 0) eqAlvo[idx] = pessoaEditando;
+  }
+  
+  pessoaDirty = false;
+  eqDirty = true; 
+  eqRender();
+  closeM('mPessoaEdit');
+};
+
 async function abrirEquipe(){
   const d=await DB.getEquipe(); eqAlvo = d? JSON.parse(JSON.stringify(d)) : []; eqAlvo.forEach(eqEnsureDefaults);
-  eqDirty=false; eqExp=null; eqF1=''; eqDiaF='';
+  eqDirty=false; eqExp=null; eqF1=''; eqDiaF=''; eqBusca=''; eqSortCol='tipo'; eqSortDir=1;
+  document.getElementById('eqBusca').value = '';
   document.querySelectorAll('#eqF1 button').forEach(x=>x.classList.toggle('active', x.dataset.t===''));
   document.querySelectorAll('#eqDiaBtns button').forEach(x=>x.classList.toggle('active', x.dataset.d===''));
   eqRender(); openM('mEquipe');
 }
+
+// Ouvintes (Listeners) Globais de Tabela e Busca
+document.getElementById('eqBusca').addEventListener('input', (e) => { eqBusca = e.target.value.trim(); eqRender(); });
+document.getElementById('thEqNome').onclick = () => { if(eqSortCol==='nome') eqSortDir*=-1; else { eqSortCol='nome'; eqSortDir=1; } eqRender(); };
+document.getElementById('thEqTipo').onclick = () => { if(eqSortCol==='tipo') eqSortDir*=-1; else { eqSortCol='tipo'; eqSortDir=1; } eqRender(); };
 async function eqSalvar(){ await DB.saveEquipe(eqAlvo); eqDirty=false; toast('Equipe salva ('+eqAlvo.length+' pessoa(s)).'); }
 function eqFecharTudo(){ closeM('mEquipe'); }
 function saidaEquipe(destino){ if(eqDirty){ pedirSalvar(async()=>{ await eqSalvar(); destino(); }, async()=>{ const d=await DB.getEquipe(); eqAlvo=d?JSON.parse(JSON.stringify(d)):[]; eqAlvo.forEach(eqEnsureDefaults); eqDirty=false; destino(); }, 'Você fez alterações na equipe que ainda não foram salvas.'); } else destino(); }
 document.querySelectorAll('#eqF1 button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#eqF1 button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); eqF1=b.dataset.t; eqRender(); });
 document.querySelectorAll('#eqDiaBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#eqDiaBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); eqDiaF=b.dataset.d; eqRender(); });
-document.getElementById('eqAdd').onclick=()=>{ const p=eqNovaPessoa(eqF1||'servidor'); eqExp=p.id; eqRender(); };
+document.getElementById('eqAdd').onclick = () => abrirModalPessoa(null);
 document.getElementById('eqX').onclick=()=>saidaEquipe(eqFecharTudo);
 document.getElementById('eqFechar').onclick=()=>saidaEquipe(eqFecharTudo);
 document.getElementById('eqSalvar').onclick=async()=>{ await eqSalvar(); closeM('mEquipe'); };
@@ -1139,6 +1610,7 @@ function limiteEfetivo(horas,ev){ const b=horas.length; return ev==='prova'? Mat
 function gabaritoPessoas(p){
   const dia=diaSemanaISO(p.data); const aus=p.dia.aus||{}; const out=[];
   (pautaEquipe||[]).forEach(pe=>{
+    if(pe.inativo) return; // IGNORA COMPLETAMENTE INATIVOS AQUI
     const ev=aus[pe.id]||null;
     if(ev && !['prova','supervisao','iniciante'].includes(ev)) return;
     let horas=horasEfetivas(p,pe,dia,false);
@@ -1668,7 +2140,7 @@ function deRowHTML(pe,isExtra){
 let deF='';
 function deRender(){
   const dia=deDia(); const list=document.getElementById('deList'); if(!list) return;
-  let base=(pautaEquipe||[]).filter(pe=> dia && dia!=='Sab' && dia!=='Dom' && eqSlotsNoDia(pe,dia).length>0 );
+  let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!=='Dom' && eqSlotsNoDia(pe,dia).length>0 );
   if(deF) base=base.filter(pe=>pe.tipo===deF);
   base=base.slice().sort((a,b)=> (EQRANK[a.tipo]-EQRANK[b.tipo]) || (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'}));
   let html='';

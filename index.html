@@ -282,6 +282,19 @@
 
 <div id="app"></div>
 
+<div class="modal-bg keep-open" id="mLogin" style="z-index:9999; background:rgba(15,23,42,0.95);">
+  <div class="modal sm">
+    <div class="mpad">
+      <div style="font-size:19px;font-weight:800;text-align:center;">Acesso ao Sistema</div>
+      <div class="muted" style="font-size:14px;margin-bottom:16px;text-align:center;">Faça login para gerenciar as escalas.</div>
+      <input type="email" id="authEmail" class="input" placeholder="E-mail" style="margin-bottom:8px;">
+      <input type="password" id="authPass" class="input" placeholder="Senha" style="margin-bottom:16px;">
+      <button class="btn btn-primary" id="btnLogin" style="width:100%;justify-content:center;">Entrar</button>
+      <div id="authErro" style="color:#ef4444;font-size:13px;margin-top:12px;text-align:center;display:none;font-weight:600;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== modal: criar nova pauta ===== -->
 <div class="modal-bg" id="mNova"><div class="modal sm"><div class="mpad">
   <div class="row between" style="align-items:flex-start;"><div><div style="font-size:19px;font-weight:800;">Criar nova pauta</div><div class="muted" style="font-size:14px;">De onde vêm os dados?</div></div><button class="btn icon-btn" data-close="mNova"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
@@ -399,34 +412,74 @@
   <div class="modal-foot"><div class="row between" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="deReset" style="color:#ef4444;border-color:#fecaca;">Limpar ajustes do dia</button><button class="btn btn-primary" id="deFechar">Concluir</button></div></div>
 </div></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
 <script>
 /* ============================================================
-   CAMADA DE DADOS — IndexedDB (único ponto a trocar p/ nuvem)
+   CAMADA DE DADOS — FIREBASE (Nuvem)
    ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAxLj70grao8FKVXBMCRQV4po0U0_6ahFI",
+  authDomain: "adm-escala.firebaseapp.com",
+  projectId: "adm-escala",
+  storageBucket: "adm-escala.firebasestorage.app",
+  messagingSenderId: "512521401615",
+  appId: "1:512521401615:web:a4bb61d3a075b8411afa7a"
+};
+firebase.initializeApp(firebaseConfig);
+
 const DB = (function(){
-  const NAME='escala_adm', VER=1; let dbp=null;
-  function open(){
-    if(dbp) return dbp;
-    dbp=new Promise((res,rej)=>{
-      const r=indexedDB.open(NAME,VER);
-      r.onupgradeneeded=e=>{ const db=e.target.result;
-        if(!db.objectStoreNames.contains('pautas')) db.createObjectStore('pautas',{keyPath:'id'});
-        if(!db.objectStoreNames.contains('config')) db.createObjectStore('config',{keyPath:'k'}); };
-      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
-    }); return dbp;
+  const db = firebase.database();
+  let baseRef = null;
+
+  // Atualiza a referência do banco para apontar para um nó global
+  function getRef() {
+    const user = firebase.auth().currentUser;
+    if (!user) throw new Error("Usuário não autenticado.");
+    
+    // Tem que ser "shared" aqui para todo mundo acessar a mesma pasta
+    if (!baseRef) baseRef = db.ref('escala_adm/shared');
+    return baseRef;
   }
-  const reqP=p=>new Promise((res,rej)=>{ p.onsuccess=()=>res(p.result); p.onerror=()=>rej(p.error); });
-  async function st(store,mode){ const db=await open(); return db.transaction(store,mode).objectStore(store); }
+
   return {
-    async list(){ return await reqP((await st('pautas','readonly')).getAll()); },
-    async get(id){ return await reqP((await st('pautas','readonly')).get(id)); },
-    async save(rec){ rec.editadoEm=Date.now(); await reqP((await st('pautas','readwrite')).put(rec)); return rec; },
-    async remove(id){ await reqP((await st('pautas','readwrite')).delete(id)); },
-    async saveRaw(rec){ await reqP((await st('pautas','readwrite')).put(rec)); return rec; },
-    async getConfig(){ const r=await reqP((await st('config','readonly')).get('salas')); return r?r.salas:null; },
-    async saveConfig(salas){ await reqP((await st('config','readwrite')).put({k:'salas',salas})); },
-    async getEquipe(){ const r=await reqP((await st('config','readonly')).get('equipe')); return r?r.equipe:null; },
-    async saveEquipe(eq){ await reqP((await st('config','readwrite')).put({k:'equipe',equipe:eq})); }
+    async list(){ 
+      const snap = await getRef().child('pautas').once('value'); 
+      const val = snap.val();
+      return val ? Object.values(val) : []; 
+    },
+    async get(id){ 
+      const snap = await getRef().child('pautas').child(id).once('value'); 
+      return snap.val(); 
+    },
+    async save(rec){ 
+      rec.editadoEm = Date.now(); 
+      await getRef().child('pautas').child(rec.id).set(rec); 
+      return rec; 
+    },
+    async remove(id){ 
+      await getRef().child('pautas').child(id).remove(); 
+    },
+    async saveRaw(rec){ 
+      await getRef().child('pautas').child(rec.id).set(rec); 
+      return rec; 
+    },
+    async getConfig(){ 
+      const snap = await getRef().child('config/salas').once('value'); 
+      return snap.val(); 
+    },
+    async saveConfig(salas){ 
+      await getRef().child('config/salas').set(salas); 
+    },
+    async getEquipe(){ 
+      const snap = await getRef().child('config/equipe').once('value'); 
+      return snap.val(); 
+    },
+    async saveEquipe(eq){ 
+      await getRef().child('config/equipe').set(eq); 
+    }
   };
 })();
 
@@ -548,7 +601,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm</h1></div>
+      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.5</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" id="hEquipe" title="Configurar equipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 11a3 3 0 002-5.24"/></svg><span class="hide-sm">Equipe</span></button>
@@ -1587,12 +1640,44 @@ function sincronizaGabarito(p){
    ROTEADOR
    ============================================================ */
 function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$/); if(m) renderPauta(m[1]); else { document.body.classList.remove('so-com'); renderHome(); } }
-window.addEventListener('hashchange',route);
+//window.addEventListener('hashchange',route);
 
 /* carrega a biblioteca de Excel em segundo plano (só é usada na importação do PJe) */
 (function(){ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onerror=()=>{}; document.head.appendChild(s); })();
 
-route();
+//route();
+
+    /* ============================================================
+      AUTENTICAÇÃO & INICIALIZAÇÃO
+      ============================================================ */
+    window.addEventListener('hashchange', () => {
+      if (firebase.auth().currentUser) route();
+    });
+
+    // Listener de Login
+    document.getElementById('btnLogin').onclick = () => {
+      const e = document.getElementById('authEmail').value;
+      const p = document.getElementById('authPass').value;
+      const errEl = document.getElementById('authErro');
+      errEl.style.display = 'none';
+      
+      firebase.auth().signInWithEmailAndPassword(e, p).catch(err => {
+        errEl.textContent = 'Erro: ' + err.message;
+        errEl.style.display = 'block';
+      });
+    };
+
+    // Monitora o estado da sessão
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('mLogin').classList.remove('open');
+        route(); // Inicia o app apenas depois de logado
+      } else {
+        document.getElementById('app').innerHTML = ''; // Limpa a tela de fundo
+        document.getElementById('mLogin').classList.add('open');
+      }
+    });
+
 </script>
 </body>
 </html>

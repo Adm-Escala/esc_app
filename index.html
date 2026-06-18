@@ -44,7 +44,7 @@
   select.sel{ font:inherit; font-size:13.5px; border:1px solid var(--line2); border-radius:var(--rad-s); padding:8px 10px; background:#fff; cursor:pointer; }
 
   .navbar{ background:#1e293b; color:#fff; padding:13px 16px; box-shadow:0 2px 8px rgba(0,0,0,.18); position:sticky; top:0; z-index:40; }
-  .navbar .inner{ max-width:1280px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .navbar .inner{ max-width:1280px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
   .navbar .brand{ display:flex; align-items:center; gap:11px; }
   .navbar .brand .brand-ic{ color:#818cf8; }
   .navbar .brand h1{ font-size:20px; font-weight:800; letter-spacing:.03em; color:#fff; }
@@ -345,6 +345,57 @@
   .cfpop .cfsep{ height:1px; background:var(--line); margin:9px 0; }
   .cfpop .cfwipe{ width:100%; font-size:12.5px; font-weight:700; padding:8px 10px; border-radius:8px; cursor:pointer; border:1px solid #fecaca; background:#fef2f2; color:#b91c1c; }
   .cfpop .cfwipe:hover{ background:#fee2e2; }
+
+  /* ===== Indicador "Salvando..." (balãozinho flutuante) ===== */
+  .saver{ position:fixed; right:22px; bottom:22px; display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; padding:7px 13px; border-radius:999px; box-shadow:0 8px 22px rgba(15,23,42,.18); opacity:0; pointer-events:none; transform:translateY(6px); transition:.2s; z-index:80; }
+  .saver.show{ opacity:1; transform:translateY(0); }
+  .saver.saving{ background:var(--amber-100); color:var(--amber-700); }
+  .saver.saved{ background:var(--green-50); color:var(--green-700); }
+  .saver.err{ background:#fee2e2; color:#b91c1c; }
+  .saver .spin{ width:12px; height:12px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:saverspin .7s linear infinite; }
+  @keyframes saverspin{ to{ transform:rotate(360deg); } }
+  /*CELULAR — ajustes que valem só em telas pequenas (até 640px)*/
+  @media(max-width:640px){
+    .wrap{ padding:14px 12px 60px; }
+    .wide{ padding-left:10px; padding-right:10px; }
+    .navbar .inner{ gap:8px; }
+    .navbar .brand h1{ font-size:15px; }
+    table.t th:nth-child(5), table.t td:nth-child(5),
+    table.t th:nth-child(6), table.t td:nth-child(6){ display:none; }
+    table.t thead th, table.t tbody td{ padding:11px 10px; }
+    .mpad{ padding:16px; }
+    .modal-head{ padding:16px 16px 8px; }
+    .modal-body{ padding:6px 16px; }
+    .modal-foot{ padding:11px 16px; }
+  }
+
+  /*CELULARES PEQUENOS (até 400px, ex.: iPhone SE) — aperta um pouco mais*/
+  @media(max-width:400px){
+    table.t tbody td:nth-child(2) .mono{ display:none; }
+    table.t th:nth-child(1), table.t td:nth-child(1){ display:none; }
+    table.t thead th, table.t tbody td{ padding:10px 7px; }
+  }
+
+  /* CELULAR — empilha "Banco de Reservas" e "Audiências sem
+     conciliador" (no PC continuam lado a lado) */
+  @media(max-width:640px){
+    #painelAutoResumo{ grid-template-columns:1fr !important; gap:16px !important; }
+  }
+  /* CELULAR — título da barra sempre em 1 linha*/
+  @media(max-width:640px){
+    .navbar .brand h1{ white-space:nowrap; }
+  }
+
+  /*CABEÇALHO DA PAUTA — Modelo 2 (duas faixas com grupos)*/
+  .back-ic{ width:38px; height:38px; border-radius:50%; border:1px solid var(--line2); background:var(--surface); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; flex:none; text-decoration:none; transition:.15s; }
+  .back-ic:hover{ background:var(--brand-50); border-color:var(--brand); color:var(--brand); }
+
+  .ptoolbar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px; padding:6px 0; background:transparent; border:0; }
+  .ptoolbar .group-lbl{ font-size:10px; font-weight:700; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; }
+  .ptoolbar .divbar{ width:1px; height:24px; background:var(--line2); margin:0 4px; }
+  /* deixa o "Copiar" com a MESMA altura dos botões .btn-sm ao lado */
+  .ptoolbar .split .main{ padding:6px 11px; font-size:12.5px; }
+  .ptoolbar .split .car{ padding:6px 9px; font-size:12.5px; }
 </style>
 </head>
 <body>
@@ -605,6 +656,15 @@
     </div>
 </div></div></div>
 
+<div class="modal-bg" id="mProcBusca"><div class="modal sm"><div class="mpad">
+  <div class="row between" style="margin-bottom:4px;">
+    <div style="font-size:19px;font-weight:800;">Procurar processo</div>
+    <button class="btn btn-sm" onclick="closeM('mProcBusca')">Fechar</button>
+  </div>
+  <div class="muted" style="font-size:13.5px;margin-bottom:14px;">Digite o número (ou parte dele) e veja em qual pauta, sala e horário ele está.</div>
+  <input class="input" id="procBuscaInput" type="text" placeholder="Ex.: 0736020-10.2028.8.07.0016 ou parte do número" autocomplete="off">
+  <div id="procBuscaResultados" style="margin-top:10px;"></div>
+</div></div></div>
 <div class="toast" id="toast"></div>
 
 <div class="modal-bg keep-open" id="mDiaEdit"><div class="modal xl modal-flex">
@@ -738,11 +798,11 @@ function configPadrao(){
 async function configAtualOuPadrao(){ let c=await DB.getConfig(); if(!c){ c=configPadrao(); await DB.saveConfig(c); } c.forEach(s=>{ if(!s.aliases) s.aliases=[]; }); return c; }
 // Mapa de correlação PJe -> sala do sistema (global; usa a estrutura padrão)
 async function mapaAliasGlobal(){ const cfg=await configAtualOuPadrao(); const m={}; cfg.forEach(s=>{ const k=chave(s.nome); m[k]=k; (s.aliases||[]).forEach(a=>{ const ak=chave(a); if(ak) m[ak]=k; }); }); return m; }
-function resolveKey(map,salaRaw,HH){ const k=chave(tiraSufixo(salaRaw)); return (map[k]||k)+'|'+HH; }function resolveKey(map, salaRaw, HH) { 
-  const kFull = chave(salaRaw); 
-  if (map[kFull]) return map[kFull] + '|' + HH; 
-  const k = chave(tiraSufixo(salaRaw)); 
-  return (map[k] || k) + '|' + HH; 
+function resolveKey(map, salaRaw, HH) {
+  const kFull = chave(salaRaw);
+  if (map[kFull]) return map[kFull] + '|' + HH;
+  const k = chave(tiraSufixo(salaRaw));
+  return (map[k] || k) + '|' + HH;
 }
 
 /* ===== Relatório de importação do PJe: processos que não entraram ===== */
@@ -866,9 +926,10 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.9</h1></div>
+      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.10</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
+        <button class="btn btn-dark" onclick="abrirProcBusca()" title="Procurar um processo em todas as pautas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span class="hide-sm">Processo</span></button>
         <button class="btn btn-dark" id="hEquipe" title="Configurar equipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 11a3 3 0 002-5.24"/></svg><span class="hide-sm">Equipe</span></button>
         <button class="btn btn-dark" id="hConfig"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13M3 12h7M3 17h11"/><circle cx="19" cy="7" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg><span class="hide-sm">Estrutura da Pauta</span></button>
         <button class="btn btn-nav-primary" id="hNova"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nova pauta</button>
@@ -1403,12 +1464,12 @@ function eqEnsureGrade(p){ if(!p.grade) p.grade=eqGradeVazia(); EQDIAS.forEach(d
 function eqEnsureDefaults(p){
   if(!p.id) p.id=uid();
   if(p.tipo==='servidor'){ if(!p.modo) p.modo='padrao'; if(!p.slots||!p.slots.length) p.slots=[13,14,15,16,17]; if(p.grade) eqEnsureGrade(p); }
-  if(p.tipo==='estagiario'){ if(!p.inicio) p.inicio=13; if(!p.fim) p.fim=17; if(!p.npj) p.npj=[]; }
+  if(p.tipo==='estagiario'){ if(!p.modo) p.modo='padrao'; if(!p.inicio) p.inicio=13; if(!p.fim) p.fim=17; if(!p.npj) p.npj=[]; if(p.modo==='personalizado') eqEnsureGrade(p); }
   if(p.tipo==='voluntario'){ if(!p.grade){ p.grade=eqGradeVazia(); if(p.dias&&p.slots) p.dias.forEach(d=>{ p.grade[d]=p.slots.slice(); }); } eqEnsureGrade(p); }
 }
 function eqSlotsNoDia(p,dia){
   if(p.tipo==='servidor'){ if((p.modo||'padrao')==='padrao') return p.slots.slice(); eqEnsureGrade(p); return (p.grade[dia]||[]).slice(); }
-  if(p.tipo==='estagiario'){ if(p.npj.includes(dia)) return []; return eqSlotsEstag(p); }
+  if(p.tipo==='estagiario'){ if((p.modo||'padrao')==='personalizado'){ eqEnsureGrade(p); return (p.grade[dia]||[]).slice(); } if(p.npj.includes(dia)) return []; return eqSlotsEstag(p); }
   eqEnsureGrade(p); return (p.grade[dia]||[]).slice();
 }
 const eqEhNPJ=(p,dia)=> p.tipo==='estagiario' && p.npj.includes(dia);
@@ -1422,7 +1483,7 @@ function eqDispHTML(p,dia){
   }
   const linhas=EQDIAS.filter(d=>eqSlotsNoDia(p,d).length).map(d=>{ const s=eqSlotsNoDia(p,d); return `<div class="dline"><span class="diab">${d}</span><span>${eqPills(s)}</span><span class="sep">—</span>${eqTot(s.length)}</div>`; });
   let html=linhas.length? `<div class="dlist">${linhas.join('')}</div>` : '<span class="faint">— sem disponibilidade —</span>';
-  if(p.tipo==='estagiario' && p.npj.length) html += `<div class="npjnote">NPJ: ${p.npj.join(', ')}</div>`;
+  if(p.tipo==='estagiario' && (p.modo||'padrao')==='padrao' && p.npj.length) html += `<div class="npjnote">NPJ: ${p.npj.join(', ')}</div>`;
   return html;
 }
 function eqSlotToggles(slots){ return '<div class="slotrow">'+eqTimes.map(h=>`<button class="slotbtn ${slots.includes(h)?'on':''}" data-slot="${h}">${h}h</button>`).join('')+'<button class="slotbtn add" data-addslot>+ outro</button></div>'; }
@@ -1443,14 +1504,20 @@ function eqRenderEditor(box,p,onChange){
     if(modo==='padrao') body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Audiências que realiza (todos os dias)</div>'+eqSlotToggles(p.slots)+'</div><div class="hint">Em regra, servidores fazem <b>5 audiências</b> (13h–17h) — todos os dias. Para variar por dia, use <b>Personalizado</b>.</div>';
     else body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
   } else if(p.tipo==='estagiario'){
-    const s=eqSlotsEstag(p);
-    body=`<div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line);">
+    const modo=p.modo||'padrao';
+    const modoSeg='<div class="seg mini" style="width:fit-content;">'+[['padrao','Padrão'],['personalizado','Personalizado']].map(([v,t])=>`<button data-modo="${v}" class="${modo===v?'active':''}">${t}</button>`).join('')+'</div>';
+    if(modo==='padrao'){
+      const s=eqSlotsEstag(p);
+      body=modoSeg+`<div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line);">
             <label class="fld" style="flex:1; min-width:140px;">Início do expediente<select class="sel" data-inicio>${[13,14,15,16,17].map(h=>eqOpt(h,p.inicio)).join('')}</select></label>
             <label class="fld" style="flex:1; min-width:140px;">Fim do expediente<select class="sel" data-fim>${[14,15,16,17,18].map(h=>eqOpt(h,p.fim)).join('')}</select></label>
           </div>
           <div class="calc">Disponível para <b>${s.length}</b> audiência(s): ${s.length?s.map(eqFmtH).join(', '):'—'} <span style="opacity:.7">(não entra na audiência do horário de término)</span></div>
           <div><div class="lbl" style="margin-bottom:7px;">Dias no NPJ (não é escalado nesses dias)</div><div class="diasrow">${EQDIAS.map(d=>`<button class="diabtn ${p.npj.includes(d)?'on':''}" data-npj="${d}">${d}</button>`).join('')}</div></div>
           ${p.npj.length?`<div class="hint ok">Com NPJ em <b>${p.npj.join(', ')}</b>, nos demais dias faz as <b>5 audiências</b> (13h–17h).</div>`:`<div class="hint">Em regra estagiários fazem 4 audiências. Marcando NPJ, nos outros dias fazem 5.</div>`}`;
+    } else {
+      body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que o estagiário atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
+    }
   } else {
     body=`<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Voluntário tem <b>horário flexível</b> — marque, em cada dia, os horários que pode atender.</div>${eqGradeMatrix(p)}</div>`;
   }
@@ -1458,7 +1525,14 @@ function eqRenderEditor(box,p,onChange){
   const re=()=>eqRenderEditor(box,p,onChange);
   box.querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ p.tipo=b.dataset.tipo; eqEnsureDefaults(p); re(); onChange&&onChange(); });
   const nm=box.querySelector('[data-nome]'); nm.oninput=()=>{ p.nome=nm.value; onChange&&onChange(); };
-  box.querySelectorAll('[data-modo]').forEach(b=>b.onclick=()=>{ p.modo=b.dataset.modo; if(p.modo==='personalizado'&&!p.grade) p.grade=eqGradeFull(p.slots); re(); onChange&&onChange(); });
+  box.querySelectorAll('[data-modo]').forEach(b=>b.onclick=()=>{
+    p.modo=b.dataset.modo;
+    if(p.modo==='personalizado' && !p.grade){
+      if(p.tipo==='estagiario'){ p.grade=eqGradeVazia(); EQDIAS.forEach(d=>{ p.grade[d]= p.npj.includes(d)? [] : eqSlotsEstag(p).slice(); }); }
+      else p.grade=eqGradeFull(p.slots);
+    }
+    re(); onChange&&onChange();
+  });
   box.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{ const h=+b.dataset.slot; const i=p.slots.indexOf(h); if(i>=0)p.slots.splice(i,1); else p.slots.push(h); p.slots.sort((a,b)=>a-b); re(); onChange&&onChange(); });
   const ao=box.querySelector('[data-addslot]'); if(ao) ao.onclick=()=>{ const v=prompt('Outro horário (só a hora, ex.: 19):'); const h=parseInt(v,10); if(h>=0&&h<=23){ if(!eqTimes.includes(h)){ eqTimes.push(h); eqTimes.sort((a,b)=>a-b); } re(); onChange&&onChange(); } };
   box.querySelectorAll('[data-cell]').forEach(b=>b.onclick=()=>{ const [d,t]=b.dataset.cell.split(':'); const tt=+t; const a=p.grade[d]; const i=a.indexOf(tt); if(i>=0)a.splice(i,1); else { a.push(tt); a.sort((x,y)=>x-y); } re(); onChange&&onChange(); });
@@ -1650,7 +1724,40 @@ let pautaAtual=null, salvarTimer=null;
 function abrirEmNovaAba(id){ window.open(location.href.split('#')[0]+'#/pauta/'+id,'_blank'); }
 function abrirPauta(id){ location.hash='#/pauta/'+id; }
 function linhasDaPauta(p){ const out=[]; p.salas.filter(s=>s.ativa).forEach((s,si)=>{ const cor=corSala(s,si); s.horarios.forEach(h=>{ const HH=h.slice(0,2); out.push({sala:s.nome,hora:h,HH,key:chave(s.nome)+'|'+HH,cor}); }); }); return out; }
-function agendaSalvar(){ pautaAtual.status='editando'; clearTimeout(salvarTimer); salvarTimer=setTimeout(()=>DB.save(pautaAtual),450); }
+/* ===== Indicador "Salvando..." — cria o balãozinho e troca o texto ===== */
+let saverTimer;
+function saverEl(){
+  let el = document.getElementById('saver');
+  if(!el){ el = document.createElement('div'); el.id = 'saver'; el.className = 'saver'; document.body.appendChild(el); }
+  return el;
+}
+function saverSalvando(){
+  const el = saverEl();
+  el.className = 'saver saving show';
+  el.innerHTML = '<span class="spin"></span> Salvando…';
+  clearTimeout(saverTimer);
+}
+function saverSalvo(){
+  const el = saverEl();
+  el.className = 'saver saved show';
+  el.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Salvo';
+  clearTimeout(saverTimer);
+  saverTimer = setTimeout(()=> el.classList.remove('show'), 1600); // some sozinho depois de 1,6s
+}
+function saverErro(){
+  const el = saverEl();
+  el.className = 'saver err show';
+  el.textContent = '⚠ Não consegui salvar';
+  clearTimeout(saverTimer); // fica visível até a próxima edição, para você perceber
+}
+function agendaSalvar(){
+  pautaAtual.status = 'editando';
+  saverSalvando();                                   // mostra "Salvando…" assim que você edita
+  clearTimeout(salvarTimer);
+  salvarTimer = setTimeout(()=>{
+    Promise.resolve(DB.save(pautaAtual)).then(saverSalvo).catch(saverErro);
+  }, 450);
+}
 
 /* ---- Equipe disponível no dia (com ajustes exclusivos da pauta) ---- */
 let pautaEquipe=[];
@@ -1906,41 +2013,48 @@ async function renderPauta(id){
 
   app().innerHTML=`
     <div class="wrap wide">
-      <div class="row between wrapf">
-        <div class="row" style="gap:14px;">
-          <a class="btn" href="#/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg> Início</a>
-          <div><div class="row" style="gap:8px;"><input id="pNome" value="${esc(p.nome)}" style="font-size:20px;font-weight:800;border:0;background:transparent;outline:none;width:auto;min-width:120px;"></div>
-            <div class="row" style="gap:8px;margin-top:3px;">
+      <div class="phead">
+        <div class="row" style="gap:13px;">
+          <a class="back-ic" href="#/" title="Voltar ao início"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></a>
+          <div>
+            <div class="row" style="gap:8px;">
+              <input id="pNome" value="${esc(p.nome)}" style="font-size:21px;font-weight:800;border:0;background:transparent;outline:none;width:auto;min-width:120px;color:var(--ink);">
+            </div>
+            <div class="row" style="gap:7px;margin-top:6px;">
               <span class="chip" id="pDataChip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg> ${p.data?isoParaBR(p.data):'sem data'}</span>
               <span class="chip mono">${esc(p.codigo||'—')}</span>
               <span class="chip" id="pSalvo">salvo</span>
-            </div></div>
+            </div>
+          </div>
         </div>
-        <div class="row wrapf" style="gap:8px;">
-          <label class="row" style="gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="soCom"> só com processo</label>
-          <button class="btn" id="pConfig"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13M3 12h7M3 17h11"/><circle cx="19" cy="7" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg> Salas</button>
-          <button class="btn" id="pCancelSup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.58a1 1 0 0 1 .7.3l5.42 5.42a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z"/></svg> Cancelamentos e Supervisões</button>
-          <button class="btn" id="pDia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 14h.01M12 14h.01M16 14h.01"/></svg> Equipe do dia</button>
+
+        <div class="ptoolbar">
+          <span class="group-lbl">Ver</span>
+          <label class="btn btn-sm" style="gap:6px;cursor:pointer;"><input type="checkbox" id="soCom"> só com processo</label>
+          <span class="divbar"></span>
+          <span class="group-lbl">Configurar</span>
+          <button class="btn btn-sm" id="pConfig"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13M3 12h7M3 17h11"/><circle cx="19" cy="7" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg> Salas</button>
+          <button class="btn btn-sm" id="pDia"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 14h.01M12 14h.01M16 14h.01"/></svg> Equipe do dia</button>
+          <button class="btn btn-sm" id="pCancelSup"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.58a1 1 0 0 1 .7.3l5.42 5.42a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z"/></svg> Cancelamentos e Supervisões</button>
+          <span class="divbar"></span>
+          <span class="group-lbl">Dados</span>
           <input type="file" id="pjeFile" accept=".xlsx,.xls,.csv" style="display:none;">
-          <button class="btn" id="pImport"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg> Importar PJe</button>
-          <button class="btn btn-primary" id="pAutoTopo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg> Escala auto</button>
+          <button class="btn btn-sm" id="pImport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg> Importar PJe</button>
+          <button class="btn btn-sm btn-primary" id="pAutoTopo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg> Escala auto</button>
           <div class="split" id="copyWrap">
-
-  <button class="main" id="copyMain"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar p/ Excel</button><button class="car" id="copyCar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
-  <div class="menu" id="copyMenu" style="padding:10px; min-width:220px;">
-    <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px; padding-left:4px;">Colunas para copiar:</div>
-    <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="proc"> Processo</label>
-    <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="vara"> Vara de Origem</label>
-    <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c1" checked> 1º Conciliador</label>
-    <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c2" checked> 2º Conciliador</label>
-    <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c3" checked> Coconciliador / Obs</label>
-    <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="res"> Resultado</label>
-  </div>
-
-</div>
+            <button class="main" id="copyMain"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar p/ Excel</button><button class="car" id="copyCar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
+            <div class="menu" id="copyMenu" style="padding:10px; min-width:220px;">
+              <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px; padding-left:4px;">Colunas para copiar:</div>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="proc"> Processo</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="vara"> Vara de Origem</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c1" checked> 1º Conciliador</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c2" checked> 2º Conciliador</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c3" checked> Coconciliador / Obs</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="res"> Resultado</label>
+            </div>
+          </div>
         </div>
       </div>
-
       <div class="card shadow" id="gradeScroll" style="margin-top:16px;overflow:auto;max-height:65vh;">
         <table class="grade"><thead><tr><th data-col="sala" style="width:120px;">Salas</th><th data-col="hora" style="width:64px;text-align:center;">Horário</th><th data-col="proc">Processo</th><th data-col="vara">Vara de Origem</th><th data-col="c1" style="background:#1e3a8a;">1º Conciliador</th><th data-col="c2" style="background:#14532d;">2º Conciliador</th><th data-col="c3" style="background:#3730a3;min-width:200px;">Coconciliador / Observações</th><th style="width:40px;text-align:center;background:#475569;" title="Trocar conciliadores">🔄</th><th data-col="res" style="background:#92400e;width:150px;">Resultado</th></tr></thead><tbody id="gradeBody"></tbody></table>
       </div>
@@ -3522,6 +3636,71 @@ function sincronizaGabarito(p){
 /* ============================================================
    ROTEADOR
    ============================================================ */
+/* ============================================================
+   PROCURAR UM PROCESSO EM TODAS AS PAUTAS
+   ============================================================ */
+let _procCache=null;
+
+// monta um "tradutor" da chave interna (SALA|HH) para nome da sala + horário
+function _mapaChaveSalaHora(p){
+  const m={};
+  (p.salas||[]).forEach(s=>{
+    (s.horarios||[]).forEach(h=>{ m[chave(s.nome)+'|'+h.slice(0,2)]={sala:s.nome,hora:h}; });
+  });
+  return m;
+}
+
+// faz a busca usando as pautas já carregadas na memória (rápido)
+function procBuscaExecutar(termo){
+  const box=document.getElementById('procBuscaResultados');
+  const alvo=soDigitos(termo);                 // considera só os números digitados
+  if(!alvo){ box.innerHTML=''; return; }
+  const hits=[];
+  (_procCache||[]).forEach(p=>{
+    const mapa=_mapaChaveSalaHora(p);
+    for(const key in (p.celulas||{})){
+      const cel=p.celulas[key];
+      if(cel && soDigitos(cel.proc).includes(alvo)){
+        const loc=mapa[key]||{sala:(key.split('|')[0]||'?'),hora:(key.split('|')[1]||'')+'h'};
+        hits.push({nome:p.nome||'(sem nome)', id:p.id, sala:loc.sala, hora:loc.hora, proc:cel.proc, res:cel.res||''});
+      }
+    }
+  });
+  if(!hits.length){
+    box.innerHTML='<div style="padding:14px;text-align:center;color:var(--faint);font-size:13.5px;">Nenhum processo encontrado com esse número.</div>';
+    return;
+  }
+  box.innerHTML=hits.map(h=>`
+    <div onclick="procIr('${h.id}')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;cursor:pointer;" onmouseover="this.style.background='var(--brand-50)'" onmouseout="this.style.background='transparent'">
+      <div style="flex:1;min-width:0;">
+        <div class="mono" style="font-size:13px;font-weight:700;">${esc(h.proc)}</div>
+        <div class="row wrapf" style="gap:6px;margin-top:6px;">
+          <span style="font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 9px;background:var(--brand-50);color:var(--brand-d);">${esc(h.nome)}</span>
+          <span style="font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 9px;background:var(--amber-100);color:var(--amber-700);">${esc(h.sala)}</span>
+          <span style="font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 9px;background:var(--green-50);color:var(--green-700);">${esc(h.hora)}</span>
+          ${h.res?`<span style="font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 9px;background:#f1f5f9;color:var(--muted);">${esc(h.res)}</span>`:''}
+        </div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`).join('');
+}
+
+// abre a janela: carrega as pautas uma vez e prepara o campo de busca
+async function abrirProcBusca(){
+  openM('mProcBusca');
+  const inp=document.getElementById('procBuscaInput');
+  const box=document.getElementById('procBuscaResultados');
+  inp.value='';
+  box.innerHTML='<div style="padding:12px;text-align:center;color:var(--faint);font-size:13px;">Carregando pautas…</div>';
+  _procCache=await DB.list();
+  box.innerHTML='';
+  inp.oninput=()=>{ clearTimeout(window._procBuscaT); window._procBuscaT=setTimeout(()=>procBuscaExecutar(inp.value),200); };
+  setTimeout(()=>inp.focus(),50);
+}
+
+// ao clicar num resultado, fecha a janela e abre a pauta correspondente
+function procIr(id){ closeM('mProcBusca'); abrirPauta(id); }
+
 function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$/); if(m) renderPauta(m[1]); else { document.body.classList.remove('so-com'); renderHome(); } }
 //window.addEventListener('hashchange',route);
 

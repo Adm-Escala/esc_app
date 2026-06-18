@@ -592,6 +592,18 @@
   </div>
 </div></div>
 
+<div class="modal-bg" id="mPresence"><div class="modal sm"><div class="mpad">
+  <div class="row between" style="align-items:flex-start;">
+    <div>
+      <div style="font-size:19px;font-weight:800;">Acesso ao Sistema</div>
+      <div class="muted" style="font-size:14px;">Usuários online e últimos acessos.</div>
+    </div>
+    <button class="btn icon-btn" data-close="mPresence"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div id="presenceList" style="display:flex;flex-direction:column;gap:8px;margin-top:16px;max-height:60vh;overflow-y:auto;padding-right:4px;">
+    </div>
+</div></div></div>
+
 <div class="toast" id="toast"></div>
 
 <div class="modal-bg keep-open" id="mDiaEdit"><div class="modal xl modal-flex">
@@ -853,7 +865,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.8</h1></div>
+      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.9</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" id="hEquipe" title="Configurar equipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 11a3 3 0 002-5.24"/></svg><span class="hide-sm">Equipe</span></button>
@@ -913,6 +925,7 @@ async function renderHome(){
     if(vista==='tabela') renderTabela(cont, pagedVis, totalVis); else renderMural(cont, pagedVis, totalVis); 
   }
 
+  document.getElementById('btnPresence').onclick = abrirModalPresence;
   document.getElementById('hNova').onclick=()=>openM('mNova');
   document.getElementById('hConfig').onclick=()=>abrirConfig('default');
   document.getElementById('hBackup').onclick=()=>openM('mBackup');
@@ -921,6 +934,46 @@ async function renderHome(){
   document.getElementById('fMes').onchange=e=>{ filtroMes=e.target.value; homePg=1; renderHome(); };
   document.getElementById('fAno').onchange=e=>{ filtroAno=e.target.value; homePg=1; renderHome(); };
   const fl=document.getElementById('fLimpar'); if(fl) fl.onclick=()=>{ filtroAno=''; filtroMes=''; renderHome(); };
+}
+
+async function abrirModalPresence() {
+  openM('mPresence');
+  const box = document.getElementById('presenceList');
+  box.innerHTML = '<div class="faint" style="text-align:center; padding: 20px;">Carregando acessos...</div>';
+
+  try {
+    const snap = await firebase.database().ref('/escala_adm/shared/presence').once('value');
+    const dados = snap.val() || {};
+    
+    box.innerHTML = '';
+    // Converte para array e ordena do acesso mais recente para o mais antigo
+    const usuarios = Object.values(dados).sort((a,b) => b.last_changed - a.last_changed);
+
+    if (usuarios.length === 0) {
+       box.innerHTML = '<div class="faint" style="text-align:center; padding: 20px;">Nenhum registro de acesso encontrado.</div>';
+       return;
+    }
+
+    usuarios.forEach(u => {
+       const isOnline = u.state === 'online';
+       // Formata a data (ex: 24/10/2023, 14:30:00)
+       const dataFormato = new Date(u.last_changed).toLocaleString('pt-BR');
+       const statusCor = isOnline ? 'var(--green-700)' : 'var(--muted)';
+       const statusBg = isOnline ? 'var(--green-50)' : '#f1f5f9';
+
+       box.innerHTML += `
+         <div class="row between" style="padding:12px; border:1px solid var(--line); border-radius:8px;">
+           <div>
+             <div style="font-weight:700; font-size:14px; color:var(--ink);">${esc(u.email || 'Usuário')}</div>
+             <div class="faint" style="font-size:12.5px; margin-top:2px;">Último status: ${dataFormato}</div>
+           </div>
+           <span class="badge" style="background:${statusBg}; color:${statusCor}; padding:4px 8px;">${isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+         </div>
+       `;
+    });
+  } catch (err) {
+    box.innerHTML = '<div style="color:#ef4444; font-size:13px; text-align:center;">Erro ao carregar dados.</div>';
+  }
 }
 
 function linhaInfo(p){ const status=p.status==='editando'?'<span class="badge b-open">aberta</span>':(audsDe(p)===0?'<span class="badge b-draft">rascunho</span>':''); return {auds:audsDe(p),status}; }
@@ -1641,6 +1694,178 @@ async function renderPauta(id){
   if(!p){ app().innerHTML='<div class="wrap"><p>Pauta não encontrada. <a href="#/">Voltar ao início</a></p></div>'; return; }
   pautaAtual=p;
   if(!p.celulas) p.celulas={};
+  let swapSourceKey = null; // Guarda a linha selecionada para a troca
+
+    function handleSwapAction(targetKey) {
+        if (!swapSourceKey) {
+          swapSourceKey = targetKey;
+          toast('Selecione outra sala ou vaga de reserva para inverter os conciliadores.');
+          window._refreshEspelho();
+        } else if (swapSourceKey === targetKey) {
+          swapSourceKey = null;
+          window._refreshEspelho();
+        } else {
+          const isSrcReserva = swapSourceKey.startsWith('RESERVA|');
+          const isTgtReserva = targetKey.startsWith('RESERVA|');
+
+          // CASO 1: Troca entre duas vagas do Banco de Reservas
+          if (isSrcReserva && isTgtReserva) {
+            const hSrc = swapSourceKey.split('|')[1];
+            const hTgt = targetKey.split('|')[1];
+            p.dia.reservas = p.dia.reservas || {};
+            const tmp = p.dia.reservas[hSrc];
+            p.dia.reservas[hSrc] = p.dia.reservas[hTgt];
+            p.dia.reservas[hTgt] = tmp;
+          } 
+          // CASO 2: Inversão de uma vaga de Reserva com a coluna C2 de uma Sala da planilha
+          else if (isSrcReserva && !isTgtReserva) {
+            const hSrc = swapSourceKey.split('|')[1];
+            p.dia.reservas = p.dia.reservas || {};
+            const celTgt = p.celulas[targetKey];
+            if (celTgt) {
+              const tmp = p.dia.reservas[hSrc];
+              p.dia.reservas[hSrc] = celTgt.c2 || '';
+              celTgt.c2 = tmp;
+            }
+          } 
+          // CASO 3: Inversão de uma Sala da planilha com uma vaga de Reserva
+          else if (!isSrcReserva && isTgtReserva) {
+            const hTgt = targetKey.split('|')[1];
+            p.dia.reservas = p.dia.reservas || {};
+            const celSrc = p.celulas[swapSourceKey];
+            if (celSrc) {
+              const tmp = p.dia.reservas[hTgt];
+              p.dia.reservas[hTgt] = celSrc.c2 || '';
+              celSrc.c2 = tmp;
+            }
+          } 
+          // CASO 4: Troca padrão entre duas salas da Planilha (Inverte C1, C2 e C3 por completo)
+          else {
+            const cOrigem = p.celulas[swapSourceKey];
+            const cDestino = p.celulas[targetKey];
+            if (cOrigem && cDestino) {
+              const tempC1 = cOrigem.c1; const tempC2 = cOrigem.c2; const tempC3 = cOrigem.c3;
+              cOrigem.c1 = cDestino.c1; cOrigem.c2 = cDestino.c2; cOrigem.c3 = cDestino.c3;
+              cDestino.c1 = tempC1; cDestino.c2 = tempC2; cDestino.c3 = tempC3;
+            }
+          }
+
+          swapSourceKey = null;
+          agendaSalvar();
+          window._refreshEspelho();
+          toast('Inversão realizada com sucesso!');
+        }
+      }
+
+      function renderResumoAuto() {
+        const boxReserva = document.getElementById('autoReservaList');
+        const boxFaltas = document.getElementById('autoFaltasList');
+        if(!boxReserva || !boxFaltas) return;
+
+        // 1) Renderização da Coluna Esquerda: Banco de Reservas (Editável por Select)
+        boxReserva.innerHTML = '';
+        const horasAtivas = [...new Set(linhasDaPauta(p).map(L => +L.HH))].sort((a,b) => a-b);
+        p.dia.reservas = p.dia.reservas || {};
+
+        // Obtém a lista única de estagiários cadastrados para preencher o dropdown
+        const listaEstagiarios = [...new Set(gabaritoPessoas(p).filter(x => x.pe.tipo === 'estagiario').map(x => x.pe.nome))].sort();
+
+        horasAtivas.forEach(H => {
+          const nomeReserva = p.dia.reservas[H] || '';
+          
+          // Validação de Duplicidade: Verifica se o estagiário do banco já está em alguma audiência ATIVA deste mesmo horário
+          let temDuplicidade = false;
+          if (nomeReserva) {
+            temDuplicidade = linhasDaPauta(p).some(L => {
+              if (+L.HH !== H) return false;
+              const cel = p.celulas[L.key];
+              if (!cel || !cel.proc || cel.proc.trim() === '') return false;
+              if (cel.res && cel.res.trim().toLowerCase() === 'cancelada') return false;
+              return (cel.c1 || '').trim() === nomeReserva || (cel.c2 || '').trim() === nomeReserva;
+            });
+          }
+
+          const row = document.createElement('div');
+          row.className = 'row between';
+          row.style.cssText = 'padding:6px 12px; border:1px solid var(--line); border-radius:8px; align-items:center; margin-bottom:4px; transition: background 0.2s;';
+          
+          if (temDuplicidade) {
+            row.style.backgroundColor = '#fef08a'; // Amarelo padrão de duplicidade
+            row.style.borderColor = '#fef08a';
+          } else {
+            row.style.backgroundColor = '#f8fafc';
+          }
+
+          // Label do horário
+          const lbl = document.createElement('div');
+          lbl.innerHTML = `<b class="mono" style="color:${temDuplicidade ? '#854d0e' : 'var(--muted)'}; margin-right:8px;">${H}h00:</b>`;
+          
+          // Menu Dropdown de Seleção
+          const sel = document.createElement('select');
+          sel.style.cssText = 'padding:4px 8px; border-radius:6px; border:1px solid var(--line2); font-size:13px; font-weight:600; min-width:180px; background:#fff; cursor:pointer;';
+          
+          if (temDuplicidade) {
+            sel.style.color = '#854d0e';
+            sel.style.borderColor = '#eab308';
+          } else {
+            sel.style.color = 'var(--ink)';
+          }
+
+          // Opção vazia
+          const optVazio = document.createElement('option');
+          optVazio.value = '';
+          optVazio.textContent = '— Sem Reserva —';
+          if (!nomeReserva) optVazio.selected = true;
+          sel.appendChild(optVazio);
+
+          // Preenche as opções de estagiários
+          listaEstagiarios.forEach(est => {
+            const opt = document.createElement('option');
+            opt.value = est;
+            opt.textContent = est;
+            if (est === nomeReserva) opt.selected = true;
+            sel.appendChild(opt);
+          });
+
+          // Salva a alteração manual direto no banco de dados e atualiza a tela
+          sel.onchange = () => {
+            p.dia.reservas[H] = sel.value;
+            agendaSalvar();
+            if(window._refreshEspelho) window._refreshEspelho(); 
+          };
+
+          row.appendChild(lbl);
+          row.appendChild(sel);
+          boxReserva.appendChild(row);
+        });
+
+        // 2) Renderização da Coluna Direita: Audiências vagas (Sem alteração)
+        boxFaltas.innerHTML = '';
+        const audsAtivas = linhasDaPauta(p).map(L => ({ H: +L.HH, cel: p.celulas[L.key] }))
+                          .filter(a => a.cel && (a.cel.proc || '').trim() && chave(a.cel.res) !== 'CANCELADA');
+        
+        const contFaltas = {};
+        audsAtivas.forEach(a => {
+          if(EH_OUTRO(a.cel.c1) && EH_OUTROADM(a.cel.c2)) {
+            contFaltas[a.H] = (contFaltas[a.H] || 0) + 1;
+          }
+        });
+
+        const horasFaltas = Object.keys(contFaltas).map(Number).sort((a,b) => a-b);
+        if(horasFaltas.length === 0) {
+          boxFaltas.innerHTML = '<div style="color:#15803d; background:#ecfdf5; border:1px solid #bbf7d0; padding:12px; border-radius:10px; font-weight:800; text-align:center; font-size:13.5px;">✅ Tudo certo nesta pauta! Todas as sessões ativas possuem conciliador designado.</div>';
+        } else {
+          horasFaltas.forEach(H => {
+            const qtd = contFaltas[H];
+            const row = document.createElement('div');
+            row.className = 'row between';
+            row.style.cssText = 'padding:8px 14px; background:#fef2f2; border:1px solid #fecaca; border-radius:9px; color:#b91c1c; font-weight:700; font-size:13.5px;';
+            row.innerHTML = `<span>Horário das ${H}h00</span><span class="badge" style="background:#dc2626; color:#fff; font-size:11px; padding:3px 9px;">${qtd} ${qtd === 1 ? 'sessão desatendida' : 'sessões desatendidas'}</span>`;
+            boxFaltas.appendChild(row);
+          });
+        }
+      }
+
   pautaEquipe=(await DB.getEquipe())||[]; pautaEquipe.forEach(eqEnsureDefaults);
   diaInit(p);
 
@@ -1706,7 +1931,7 @@ async function renderPauta(id){
       </div>
 
       <div class="card shadow" id="gradeScroll" style="margin-top:16px;overflow:auto;max-height:65vh;">
-        <table class="grade"><thead><tr><th data-col="sala" style="width:120px;">Salas</th><th data-col="hora" style="width:64px;text-align:center;">Horário</th><th data-col="proc">Processo</th><th data-col="vara">Vara de Origem</th><th data-col="c1" style="background:#1e3a8a;">1º Conciliador</th><th data-col="c2" style="background:#14532d;">2º Conciliador</th><th data-col="c3" style="background:#3730a3;min-width:200px;">Coconciliador / Observações</th><th data-col="res" style="background:#92400e;width:150px;">Resultado</th></tr></thead><tbody id="gradeBody"></tbody></table>
+        <table class="grade"><thead><tr><th data-col="sala" style="width:120px;">Salas</th><th data-col="hora" style="width:64px;text-align:center;">Horário</th><th data-col="proc">Processo</th><th data-col="vara">Vara de Origem</th><th data-col="c1" style="background:#1e3a8a;">1º Conciliador</th><th data-col="c2" style="background:#14532d;">2º Conciliador</th><th data-col="c3" style="background:#3730a3;min-width:200px;">Coconciliador / Observações</th><th style="width:40px;text-align:center;background:#475569;" title="Trocar conciliadores">🔄</th><th data-col="res" style="background:#92400e;width:150px;">Resultado</th></tr></thead><tbody id="gradeBody"></tbody></table>
       </div>
 
       <div class="card" style="margin-top:16px;padding:18px;">
@@ -1732,6 +1957,24 @@ async function renderPauta(id){
         </div>
         <div id="impReport"></div>
       </div>
+
+      <div class="card" style="margin-top:16px; padding:18px; display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;" id="painelAutoResumo">
+        <div>
+          <div style="font-weight:800; font-size:16px; margin-bottom:12px; color:var(--brand); display:flex; align-items:center; gap:6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Banco de Reservas (Estagiários)
+          </div>
+          <div id="autoReservaList" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+        <div>
+          <div style="font-weight:800; font-size:16px; margin-bottom:12px; color:#dc2626; display:flex; align-items:center; gap:6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Audiências sem conciliador
+          </div>
+          <div id="autoFaltasList" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+      </div>
+
       <div class="card" style="margin-top:16px;padding:18px;">
         <div class="row between wrapf" style="gap:10px;align-items:flex-start;">
           <div><div style="font-weight:800;font-size:16px;">Disponíveis para escalar</div><div class="faint" style="font-size:12.5px;" id="gabSub">pessoas da equipe disponíveis neste dia</div></div>
@@ -1839,14 +2082,72 @@ async function renderPauta(id){
             };  
     
       const mkRes=()=>{ const c=document.createElement('td'); const sel=document.createElement('select'); sel.className='rescell'; RES_OPC.forEach(o=>{ const op=document.createElement('option'); op.value=o; op.textContent=o||'—'; if((cel.res||'')===o) op.selected=true; sel.appendChild(op); }); sel.setAttribute('data-res',cel.res||''); const aplica=v=>{ tr.classList.toggle('cancelada', v==='Cancelada'); }; aplica(cel.res||''); sel.onchange=()=>{ cel.res=sel.value; sel.setAttribute('data-res',sel.value); aplica(sel.value); agendaSalvar(); recalc(); }; c.appendChild(sel); return c; };
-      tr.appendChild(mk('proc','proc')); tr.appendChild(mk('vara')); tr.appendChild(mk('c1')); tr.appendChild(mk('c2')); tr.appendChild(mk('c3','obs')); tr.appendChild(mkRes());
+      
+      const mkSwap=()=>{
+        const c=document.createElement('td');
+        c.style.textAlign='center';
+        c.style.verticalAlign='middle';
+        
+        const btn=document.createElement('button');
+        btn.className='btn icon-btn btn-sm';
+        btn.title='Trocar conciliadores com outra audiência';
+        
+        // Se este for o botão clicado primeiro, destaca ele em azul
+        if(swapSourceKey === L.key){
+          btn.style.backgroundColor='var(--brand)';
+          btn.style.color='#fff';
+          btn.style.borderColor='var(--brand)';
+        } else {
+          btn.style.backgroundColor='#fff';
+          btn.style.color='var(--muted)';
+        }
+        
+        // Ícone de setas para cima/baixo
+        btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12m0 0l-4-4m4 4l4-4M17 14V2m0 0l-4 4m4-4l4 4"/></svg>';
+        
+        btn.onclick=()=>{
+          if(!swapSourceKey){
+            swapSourceKey = L.key;
+            toast('Selecione outra sala para trocar os conciliadores.');
+            window._refreshEspelho();
+          } else if(swapSourceKey === L.key){
+            swapSourceKey = null;
+            window._refreshEspelho();
+          } else {
+            const cOrigem = p.celulas[swapSourceKey];
+            const cDestino = cel;
+            if(cOrigem && cDestino){
+              const tempC1 = cOrigem.c1; const tempC2 = cOrigem.c2; const tempC3 = cOrigem.c3;
+              cOrigem.c1 = cDestino.c1; cOrigem.c2 = cDestino.c2; cOrigem.c3 = cDestino.c3;
+              cDestino.c1 = tempC1; cDestino.c2 = tempC2; cDestino.c3 = tempC3;
+            }
+            swapSourceKey = null;
+            agendaSalvar();
+            window._refreshEspelho();
+            toast('Conciliadores invertidos com sucesso!');
+          }
+        };
+
+        c.appendChild(btn);
+        return c;
+      };
+
+      tr.appendChild(mk('proc','proc')); 
+      tr.appendChild(mk('vara')); 
+      tr.appendChild(mk('c1')); 
+      tr.appendChild(mk('c2')); 
+      tr.appendChild(mk('c3','obs')); 
+      tr.appendChild(mkSwap()); // <--- AQUI FICA NOSSO BOTÃO!
+      tr.appendChild(mkRes());
       tb.appendChild(tr);
+
     });
     // montarGrade() recria as células do zero (filtro de coluna, "só com processo"),
     // então reaplica aqui o destaque de duplicidade — senão o amarelo sumiria até a próxima edição.
     verificarDuplicidades();
   }
   montarGrade();
+  renderResumoAuto();
 
   /* ---- funis de filtro nos cabeçalhos + ação de limpar coluna ---- */
   function cfHide(){ const pp=document.getElementById('cfPop'); if(pp){ pp.style.display='none'; pp.innerHTML=''; } }
@@ -2055,21 +2356,42 @@ async function renderPauta(id){
     const tbody = document.getElementById('gradeBody');
     if (!tbody) return;
     
-    // Varre os inputs pintando de amarelo os que tiverem contagem > 1 no horário
-    tbody.querySelectorAll('input.cell').forEach(inp => {
-      if (inp._campo && inp._HH) {
-        const val = inp.value.trim().toLowerCase();
-        if (val && val !== 'outro' && val !== 'outro (adm)' && mapa[inp._HH][val] > 1) {
-          inp.style.backgroundColor = '#fef08a';
-          inp.style.color = '#854d0e';
-          inp.title = 'Atenção: escalado(a) em mais de uma sala às ' + inp._HH + 'h';
-        } else {
-          inp.style.backgroundColor = '';
-          inp.style.color = '';
-          inp.title = '';
-        }
-      }
-    });
+    // Varre os inputs aplicando as regras de cores e alertas
+        tbody.querySelectorAll('input.cell').forEach(inp => {
+          if (inp._campo && inp._HH) {
+            const val = inp.value.trim().toLowerCase();
+            
+            // Verifica se a linha atual está marcada com a classe de cancelada
+            const tr = inp.closest('tr');
+            const isCancelada = tr ? tr.classList.contains('cancelada') : false;
+            
+            // 1º REGRA: Se for "Outro (ADM)" na coluna C2 ou C3 e a audiência NÃO estiver cancelada -> Vermelho Escuro
+            if ((inp._campo === 'c3' || inp._campo === 'c2') && val === 'outro (adm)' && !isCancelada) {
+              inp.style.backgroundColor = '#991b1b';
+              inp.style.color = '#ffffff';
+              inp.title = 'Atenção: Sessão ativa sem estagiário/voluntário designado!';
+            }
+            // 2º REGRA: Se for a coluna C3 e contiver "supervisão", fica SEMPRE azul claro
+            else if (inp._campo === 'c3' && val.includes('supervisão')) {
+              inp.style.backgroundColor = '#e0f2fe';
+              inp.style.color = '#0369a1';
+              inp.title = 'Supervisão registrada';
+            }
+            // 3º REGRA: Alerta de duplicidade em amarelo para os restantes casos do mesmo horário
+            else if (val && val !== 'outro' && val !== 'outro (adm)' && mapa[inp._HH][val] > 1) {
+              inp.style.backgroundColor = '#fef08a';
+              inp.style.color = '#854d0e';
+              inp.title = 'Atenção: escalado(a) em mais de uma sala às ' + inp._HH + 'h';
+            } 
+            // Sem destaques
+            else {
+              inp.style.backgroundColor = '';
+              inp.style.color = '';
+              inp.title = '';
+            }
+          }
+        });
+
   }
 
   function recalc(){
@@ -2089,7 +2411,7 @@ async function renderPauta(id){
   }
 
   window._recalcPauta=recalc;
-  window._refreshEspelho=()=>{ montarGrade(); recalc(); renderGabarito(); };
+  window._refreshEspelho = () => { montarGrade(); recalc(); renderGabarito(); renderResumoAuto(); };
   function importarNaPauta(file){
     const fr=new FileReader();
     fr.onload=async ev=>{
@@ -2196,115 +2518,172 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
         C2) Demais estagiários: horários mais críticos primeiro.
         Sobrou audiência sem 2º → "Outro (ADM)".
    ============================================================ */
-const EH_OUTRO    = s => chave(s)==='OUTRO';
-const EH_OUTROADM = s => chave(s)==='OUTROADM';   // "Outro (ADM)" -> OUTROADM
+          const EH_OUTRO    = s => chave(s)==='OUTRO';
+          const EH_OUTROADM = s => chave(s)==='OUTROADM';
 
-function escalaAutomatica(p){
-  diaInit(p);
-  const dia = diaSemanaISO(p.data);
-  if(!dia || dia==='Sab' || dia==='Dom'){ toast('Defina uma data de dia útil para usar a escala automática.'); return; }
+          function escalaAutomatica(p){
+            diaInit(p);
+            const dia = diaSemanaISO(p.data);
+            if(!dia || dia==='Sab' || dia==='Dom'){ toast('Defina uma data de dia útil para usar a escala automática.'); return; }
 
-  // Pessoas efetivas do dia (já com eventualidades/horários/extras do "Equipe do dia")
-  const conv = x => ({ id:x.pe.id, nome:x.pe.nome, tipo:x.pe.tipo, prova:x.ev==='prova',
-                       horas:new Set(x.horas), limite:limiteEfetivo(x.horas,x.ev),
-                       occ:new Set(), salaAt:{}, count:0 });
-                       
-  // MÁGICA AQUI: Removemos os supervisores e iniciantes do banco de dados da Escala Automática
-  const todas       = gabaritoPessoas(p).filter(x => x.ev !== 'supervisao' && x.ev !== 'iniciante');
-  const servidores  = todas.filter(x=>x.pe.tipo==='servidor').map(conv);
-  const voluntarios = todas.filter(x=>x.pe.tipo==='voluntario').map(conv);
-  const estagiarios = todas.filter(x=>x.pe.tipo==='estagiario').map(conv);
+            // Adicionamos "limiteAtual" e "foiReserva" na conversão para manipular a cota dinamicamente
+            const conv = x => ({ id:x.pe.id, nome:x.pe.nome, tipo:x.pe.tipo, prova:x.ev==='prova',
+                                horas:new Set(x.horas), limite:limiteEfetivo(x.horas,x.ev),
+                                limiteAtual: limiteEfetivo(x.horas,x.ev),
+                                occ:new Set(), salaAt:{}, count:0, foiReserva: false });
+                                
+            const todas       = gabaritoPessoas(p).filter(x => x.ev !== 'supervisao' && x.ev !== 'iniciante');
+            const servidores  = todas.filter(x=>x.pe.tipo==='servidor').map(conv);
+            const voluntarios = todas.filter(x=>x.pe.tipo==='voluntario').map(conv);
+            const estagiarios = todas.filter(x=>x.pe.tipo==='estagiario').map(conv);
 
-  // REGRA 2 — audiências válidas (com processo, FORA as Canceladas)
-  const linhas = linhasDaPauta(p);
-  const auds = linhas.map(L=>({ key:L.key, sala:L.sala, H:+L.HH, cel:p.celulas[L.key] }))
-                     .filter(a=> a.cel && (a.cel.proc||'').trim() && chave(a.cel.res)!=='CANCELADA');
+            const linhas = linhasDaPauta(p);
+            const auds = linhas.map(L=>({ key:L.key, sala:L.sala, H:+L.HH, cel:p.celulas[L.key] }))
+                              .filter(a=> a.cel && (a.cel.proc||'').trim() && chave(a.cel.res)!=='CANCELADA');
 
-  // Limpa o que a PRÓPRIA escala automática preencheu antes (mantém o manual da REGRA 5)
-  if(Array.isArray(p.dia.auto)) p.dia.auto.forEach(tok=>{ const i=tok.indexOf('::'); const k=tok.slice(0,i), f=tok.slice(i+2); const c=p.celulas[k]; if(c && c[f]!==undefined) c[f]=''; });
-  p.dia.auto=[];
-  const marcaAuto = (a,campo,val)=>{ a.cel[campo]=val; p.dia.auto.push(a.key+'::'+campo); };
+            if(Array.isArray(p.dia.auto)) p.dia.auto.forEach(tok=>{ const i=tok.indexOf('::'); const k=tok.slice(0,i), f=tok.slice(i+2); const c=p.celulas[k]; if(c && c[f]!==undefined) c[f]=''; });
+            p.dia.auto=[];
+            const marcaAuto = (a,campo,val)=>{ a.cel[campo]=val; p.dia.auto.push(a.key+'::'+campo); };
 
-  // REGRA 5 — pré-carrega a ocupação do que já está preenchido À MÃO (não é da escala automática)
-  auds.forEach(a=>{
-    const c=a.cel;
-    if((c.c1||'').trim() && !EH_OUTRO(c.c1)){ const s=servidores.find(s=>chave(s.nome)===chave(c.c1)); if(s){ s.occ.add(a.H); s.salaAt[a.H]=a.sala; s.count++; } }
-    if((c.c2||'').trim() && !EH_OUTROADM(c.c2)){ const s=[...voluntarios,...estagiarios].find(s=>chave(s.nome)===chave(c.c2)); if(s){ s.occ.add(a.H); s.salaAt[a.H]=a.sala; s.count++; } }
-  });
+            auds.forEach(a=>{
+              const c=a.cel;
+              if((c.c1||'').trim() && !EH_OUTRO(c.c1)){ const s=servidores.find(s=>chave(s.nome)===chave(c.c1)); if(s){ s.occ.add(a.H); s.salaAt[a.H]=a.sala; s.count++; } }
+              if((c.c2||'').trim() && !EH_OUTROADM(c.c2)){ const s=[...voluntarios,...estagiarios].find(s=>chave(s.nome)===chave(c.c2)); if(s){ s.occ.add(a.H); s.salaAt[a.H]=a.sala; s.count++; } }
+            });
 
-  // REGRAS 1 e 4 — só pode usar a pessoa se ela atende o horário, está livre nele e ainda tem limite
-  const podeUsar = (s,H)=> s.horas.has(H) && !s.occ.has(H) && s.count < s.limite;
-  const ocupa    = (s,a,campo)=>{ marcaAuto(a,campo,s.nome); s.occ.add(a.H); s.salaAt[a.H]=a.sala; s.count++; };
-  // REGRA 3 — ordena horários do mais crítico (mais audiências) para o menos
-  const ordemCritica = list => { const cnt={}; list.forEach(a=>cnt[a.H]=(cnt[a.H]||0)+1); return [...new Set(list.map(a=>a.H))].sort((x,y)=> (cnt[y]-cnt[x]) || (x-y) ); };
-  // melhor candidato "comum": preferir quem tem mais limite restante (equilibra a carga)
-  const melhorPorFolga = cands => cands.sort((x,y)=> ((y.limite-y.count)-(x.limite-x.count)) || x.nome.localeCompare(y.nome,'pt'))[0];
+            const podeUsar = (s,H)=> s.horas.has(H) && !s.occ.has(H) && s.count < s.limiteAtual;
+            const ocupa    = (s,a,campo)=>{ marcaAuto(a,campo,s.nome); s.occ.add(a.H); s.salaAt[a.H]=a.sala; s.count++; };
+            const ordemCritica = list => { const cnt={}; list.forEach(a=>cnt[a.H]=(cnt[a.H]||0)+1); return [...new Set(list.map(a=>a.H))].sort((x,y)=> (cnt[y]-cnt[x]) || (x-y) ); };
+            const melhorPorFolga = cands => cands.sort((x,y)=> ((y.limiteAtual-y.count)-(x.limiteAtual-x.count)) || x.nome.localeCompare(y.nome,'pt'))[0];
 
-  // ===== ETAPA A — SERVIDORES → 1º Conciliador =====
-  const need1 = auds.filter(a=> !(a.cel.c1||'').trim());                 // só 1º vazio (REGRA 5)
-  ordemCritica(need1).forEach(H=>{                                       // REGRA 3
-    const noH = need1.filter(a=>a.H===H && !(a.cel.c1||'').trim());
-    noH.sort((a,b)=> a.sala.localeCompare(b.sala,'pt'));                  // agrupa por sala
-    noH.forEach(a=>{
-      const cands = servidores.filter(s=>podeUsar(s,H));                 // REGRAS 1 e 4
-      if(!cands.length) return;
-      // preferência: MESMA SALA em sequência (servidor já posto nessa sala em H-1 ou H+1)
-      let pick = cands.find(s=> s.salaAt[H-1]===a.sala || s.salaAt[H+1]===a.sala );
-      if(!pick) pick = melhorPorFolga(cands);
-      ocupa(pick,a,'c1');                                                // REGRA 6 (1º = servidor)
-    });
-  });
-  // REGRA A final — audiência sem servidor recebe "OUTRO" no 1º
-  auds.forEach(a=>{ if(!(a.cel.c1||'').trim()) marcaAuto(a,'c1','OUTRO'); });
+            // ===== ETAPA A — SERVIDORES → 1º Conciliador =====
+            const need1 = auds.filter(a=> !(a.cel.c1||'').trim());
+            ordemCritica(need1).forEach(H=>{
+              const noH = need1.filter(a=>a.H===H && !(a.cel.c1||'').trim());
+              noH.sort((a,b)=> a.sala.localeCompare(b.sala,'pt'));
+              noH.forEach(a=>{
+                const cands = servidores.filter(s=>podeUsar(s,H));
+                if(!cands.length) return;
+                let pick = cands.find(s=> s.salaAt[H-1]===a.sala || s.salaAt[H+1]===a.sala );
+                if(!pick) pick = melhorPorFolga(cands);
+                ocupa(pick,a,'c1');
+              });
+            });
+            auds.forEach(a=>{ if(!(a.cel.c1||'').trim()) marcaAuto(a,'c1','OUTRO'); });
 
-  // Precisam de 2º: as que NÃO têm servidor real (1º = OUTRO) e o 2º está vazio (REGRAS 6.1 e 5)
-  const need2 = auds.filter(a=> EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim());
+            // ===== ETAPA B — VOLUNTÁRIOS → 2º Conciliador =====
+            const need2 = auds.filter(a=> EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim());
+            ordemCritica(need2).forEach(H=>{
+              need2.filter(a=>a.H===H && !(a.cel.c2||'').trim()).forEach(a=>{
+                const cands = voluntarios.filter(s=>podeUsar(s,H));
+                if(cands.length) ocupa(melhorPorFolga(cands),a,'c2');
+              });
+            });
 
-  // ===== ETAPA B — VOLUNTÁRIOS → 2º Conciliador =====
-  ordemCritica(need2).forEach(H=>{                                       // REGRA 3
-    need2.filter(a=>a.H===H && !(a.cel.c2||'').trim()).forEach(a=>{
-      const cands = voluntarios.filter(s=>podeUsar(s,H));
-      if(cands.length) ocupa(melhorPorFolga(cands),a,'c2');
-    });
-  });
+            // ===== ETAPA C — ESTAGIÁRIOS =====
+            // C1) PROVA: 2 audiências
+            estagiarios.filter(s=>s.prova).forEach(s=>{
+              if(s.count>=s.limiteAtual) return;
+              const hs=[...s.horas].sort((a,b)=>a-b);
+              let melhor=null, peso=-1;
+              for(let i=0;i<hs.length-1;i++){
+                const h1=hs[i], h2=hs[i+1];
+                if(h2!==h1+1) continue;
+                if(s.occ.has(h1)||s.occ.has(h2)) continue;
+                const a1=need2.find(a=>a.H===h1 && !(a.cel.c2||'').trim());
+                const a2=need2.find(a=>a.H===h2 && !(a.cel.c2||'').trim());
+                if(!a1||!a2) continue;
+                const w = need2.filter(a=>a.H===h1).length + need2.filter(a=>a.H===h2).length;
+                if(w>peso){ peso=w; melhor=[a1,a2]; }
+              }
+              if(melhor){ ocupa(s,melhor[0],'c2'); ocupa(s,melhor[1],'c2'); }
+            });
 
-  // ===== ETAPA C — ESTAGIÁRIOS → 2º Conciliador =====
-  // C1) PROVA: 2 audiências CONSECUTIVAS, no par de horários mais cheio dentro do expediente
-  estagiarios.filter(s=>s.prova).forEach(s=>{
-    if(s.count>=s.limite) return;                                        // limite de prova = 2
-    const hs=[...s.horas].sort((a,b)=>a-b);
-    let melhor=null, peso=-1;
-    for(let i=0;i<hs.length-1;i++){
-      const h1=hs[i], h2=hs[i+1];
-      if(h2!==h1+1) continue;                                            // tem que ser consecutivo
-      if(s.occ.has(h1)||s.occ.has(h2)) continue;                         // REGRA 1
-      const a1=need2.find(a=>a.H===h1 && !(a.cel.c2||'').trim());
-      const a2=need2.find(a=>a.H===h2 && !(a.cel.c2||'').trim());
-      if(!a1||!a2) continue;
-      const w = need2.filter(a=>a.H===h1).length + need2.filter(a=>a.H===h2).length; // REGRA 3 (par mais cheio)
-      if(w>peso){ peso=w; melhor=[a1,a2]; }
-    }
-    if(melhor){ ocupa(s,melhor[0],'c2'); ocupa(s,melhor[1],'c2'); }
-  });
-  // C2) Estagiários normais (não-prova): horários mais críticos primeiro
-  const estagN = estagiarios.filter(s=>!s.prova);
-  ordemCritica(need2).forEach(H=>{                                       // REGRA 3
-    need2.filter(a=>a.H===H && !(a.cel.c2||'').trim()).forEach(a=>{
-      const cands = estagN.filter(s=>podeUsar(s,H));
-      if(cands.length) ocupa(melhorPorFolga(cands),a,'c2');
-    });
-  });
-  // REGRA C final — audiência (sem servidor real) que ficou sem 2º recebe "Outro (ADM)"
-  auds.forEach(a=>{ if(EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim()) marcaAuto(a,'c2','Outro (ADM)'); });
+            // C2) ESTAGIÁRIOS NORMAIS & BANCO DE RESERVAS
+            const estagN = estagiarios.filter(s=>!s.prova);
+            const need2_remaining = need2.filter(a => !(a.cel.c2||'').trim());
+            const horasAtivas = [...new Set(auds.map(a=>a.H))].sort((a,b)=>a-b);
 
-  // Reflete o resultado na grade (gabarito) e salva
-  sincronizaGabarito(p);
-  DB.save(p);
-  if(window._refreshEspelho) window._refreshEspelho();
-  const semServ = auds.filter(a=>EH_OUTRO(a.cel.c1)).length;
-  const semAdm  = auds.filter(a=>EH_OUTROADM(a.cel.c2)).length;
-  toast('Escala automática concluída.'+(semServ?' · '+semServ+' sem servidor (OUTRO)':'')+(semAdm?' · '+semAdm+' Outro (ADM)':''));
-}
+            // Calcula capacidade SOFT e HARD
+            let capSoft = 0; let capHard = 0;
+            estagN.forEach(s => {
+                const folgaHard = Math.max(0, s.limite - s.count);
+                const folgaSoft = Math.max(0, (s.limite - 1) - s.count);
+                capHard += folgaHard; capSoft += folgaSoft;
+            });
+
+            // Decide se usa limite total (Hard) ou tolerante (Soft) para TODOS OS ESTAGIÁRIOS
+            const demanda = need2_remaining.length + horasAtivas.length; // Audiências + 1 reserva por horário
+            const usarHardLimit = (demanda > capSoft);
+
+            estagN.forEach(s => {
+                s.limiteAtual = usarHardLimit ? s.limite : Math.max(1, s.limite - 1);
+            });
+
+            // ALOCAÇÃO DO BANCO DE RESERVAS (1 por horário)
+            let msgReservas = [];
+            p.dia.reservas = {}; // Inicializa ou limpa o banco de reservas do dia
+            
+            horasAtivas.forEach(H => {
+                // Tenta achar alguém que tenha folga e AINDA NÃO FOI reserva
+                let cands = estagN.filter(s => s.horas.has(H) && !s.occ.has(H) && s.count < s.limiteAtual && !s.foiReserva);
+                
+                if(cands.length > 0) {
+                    let pick = cands[Math.floor(Math.random() * cands.length)]; // Sorteia aleatório
+                    pick.foiReserva = true;
+                    pick.occ.add(H);
+                    pick.count++;
+                    p.dia.reservas[H] = pick.nome; // Salva o estagiário na pauta
+                    msgReservas.push(`${H}h: ${pick.nome}`);
+                } else {
+                    // Se não houver inéditos, repete alguém disponível para garantir o banco
+                    let candsRep = estagN.filter(s => s.horas.has(H) && !s.occ.has(H) && s.count < s.limiteAtual);
+                    if(candsRep.length > 0) {
+                        let pick = candsRep[Math.floor(Math.random() * candsRep.length)];
+                        pick.occ.add(H);
+                        pick.count++;
+                        p.dia.reservas[H] = pick.nome; // Salva o estagiário repetido na pauta
+                        msgReservas.push(`${H}h: ${pick.nome} (Repetiu no Banco)`);
+                    } else {
+                        p.dia.reservas[H] = ''; // Sem ninguém disponível
+                        msgReservas.push(`${H}h: (Nenhum estagiário disponível)`);
+                    }
+                }
+            });
+
+            // ALOCAÇÃO DAS AUDIÊNCIAS RESTANTES
+            ordemCritica(need2_remaining).forEach(H => {
+                need2_remaining.filter(a => a.H === H && !(a.cel.c2||'').trim()).forEach(a => {
+                    const cands = estagN.filter(s => podeUsar(s, H));
+                    if(cands.length) ocupa(melhorPorFolga(cands), a, 'c2');
+                });
+            });
+
+            // Preenchimentos Finais
+            auds.forEach(a=>{ if(EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim()) marcaAuto(a,'c2','Outro (ADM)'); });
+
+            sincronizaGabarito(p);
+            DB.save(p);
+            if(window._refreshEspelho) window._refreshEspelho();
+
+            const semServ = auds.filter(a=>EH_OUTRO(a.cel.c1)).length;
+            const semAdm  = auds.filter(a=>EH_OUTROADM(a.cel.c2)).length;
+            
+            // Monta a mensagem de Resumo e Exibe o Toast + Alert
+            let msgFim = 'Escala automática concluída!\n';
+            if (usarHardLimit) msgFim += '\n⚠️ Alta demanda: Estagiários escalados no limite máximo (4/5 sessões).';
+            else msgFim += '\n✅ Demanda controlada: Estagiários com limite reduzido (3/4 sessões).';
+            
+            if (msgReservas.length) msgFim += '\n\n🏦 BANCO DE RESERVAS (1 por hora):\n' + msgReservas.join('\n');
+            
+            if (semServ > 0) msgFim += `\n\nFaltaram servidores em ${semServ} audiências (OUTRO).`;
+            if (semAdm > 0) msgFim += `\nFaltaram estagiários/vol. em ${semAdm} audiências (Outro ADM).`;
+
+            toast('Escala automática concluída. Verifique o resumo.');
+            
+            // Um pequeno timeout garante que a grade seja desenhada no fundo antes do alerta pular na tela
+            setTimeout(() => alert(msgFim), 300); 
+          }
 
 // Reconstrói a grade do dia (gabarito) a partir dos nomes que ficaram no espelho
 function sincronizaGabarito(p){
@@ -2526,8 +2905,15 @@ function sincronizaGabarito(p){
           linhasDaPauta(p).forEach(L => {
             const c = p.celulas[L.key];
             if(c && soDigitos(c.proc) === digSup) {
-              if(s.tipo === 'servidor') c.c1 = s.supervisor;
-              else c.c2 = s.supervisor;
+              if(s.tipo === 'servidor') {
+                c.c1 = s.supervisor;
+              } else {
+                c.c2 = s.supervisor;
+                // Se for voluntário e o 1º Conciliador estiver em branco, preenche com "OUTRO"
+                if (s.tipo === 'voluntario' && (!c.c1 || c.c1.trim() === '')) {
+                  c.c1 = 'OUTRO';
+                }
+              }
               
               let obsAtual = (c.c3 || '').trim();
               if (!obsAtual.includes('Supervisão')) c.c3 = obsAtual ? obsAtual + ' | Supervisão' : 'Supervisão';
@@ -2551,16 +2937,23 @@ function sincronizaGabarito(p){
 
         const procInformado = p.dia.supervisoes_dados[s.id];
         if(procInformado && procInformado.trim()) {
-          const digSup = soDigitos(procInformado);
-          linhasDaPauta(p).forEach(L => {
-            const c = p.celulas[L.key];
-            if(c && soDigitos(c.proc) === digSup) {
-              const pessoaInfo = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
-              if(pessoaInfo && pessoaInfo.tipo === 'servidor') c.c1 = s.estagiario;
-              else c.c2 = s.estagiario; 
-              
-              let obsAtual = (c.c3 || '').trim();
-              if (!obsAtual.includes('Aud. Simples')) c.c3 = obsAtual ? obsAtual + ' | Aud. Simples' : 'Aud. Simples';
+                  const digSup = soDigitos(procInformado);
+                  linhasDaPauta(p).forEach(L => {
+                    const c = p.celulas[L.key];
+                    if(c && soDigitos(c.proc) === digSup) {
+                      const pessoaInfo = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
+                      if(pessoaInfo && pessoaInfo.tipo === 'servidor') {
+                        c.c1 = s.estagiario;
+                      } else {
+                        c.c2 = s.estagiario;
+                        // Se o 1º Conciliador estiver em branco, garante o preenchimento com "OUTRO"
+                        if (!c.c1 || c.c1.trim() === '') {
+                          c.c1 = 'OUTRO';
+                        }
+                      }
+                      
+                      let obsAtual = (c.c3 || '').trim();
+              if (!obsAtual.includes('')) c.c3 = obsAtual ? obsAtual + '' : '';
               alterou = true;
             }
           });
@@ -3026,9 +3419,36 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
     };
 
     // Monitora o estado da sessão
+    // Monitora o estado da sessão e gerencia a Presença
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
         document.getElementById('mLogin').classList.remove('open');
+        
+        // --- SISTEMA DE PRESENÇA FIREBASE ---
+        const userStatusDatabaseRef = firebase.database().ref('/escala_adm/shared/presence/' + user.uid);
+        
+        const isOfflineForDatabase = {
+            state: 'offline',
+            last_changed: firebase.database.ServerValue.TIMESTAMP,
+            email: user.email
+        };
+        const isOnlineForDatabase = {
+            state: 'online',
+            last_changed: firebase.database.ServerValue.TIMESTAMP,
+            email: user.email
+        };
+
+        // Escuta a conexão local do cliente com o servidor Firebase
+        firebase.database().ref('.info/connected').on('value', function(snapshot) {
+            if (snapshot.val() == false) return;
+            
+            // onDisconnect() é engatilhado no servidor quando o cliente perde a conexão ou fecha a aba
+            userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+                userStatusDatabaseRef.set(isOnlineForDatabase);
+            });
+        });
+        // ------------------------------------
+
         route(); // Inicia o app apenas depois de logado
       } else {
         document.getElementById('app').innerHTML = ''; // Limpa a tela de fundo

@@ -140,12 +140,13 @@
   select.rescell{ width:100%; border:0; outline:0; background:transparent; padding:6px 8px; font:inherit; color:#64748b; font-weight:600; cursor:pointer; }
   select.rescell[data-res="Realizada"]{ color:#1d4ed8; font-weight:800; }
   select.rescell[data-res="Acordo"]{ color:#15803d; font-weight:800; }
-  select.rescell[data-res="Sem acordo"]{ color:#b45309; font-weight:800; }
+  select.rescell[data-res="Sem acordo"]{ color:#F08080; font-weight:800; }
   select.rescell[data-res="Cancelada"]{ color:#b91c1c; font-weight:800; }
   select.rescell[data-res="Não compareceu"]{ color:#9333ea; font-weight:800; }
   select.rescell[data-res="Remarcada"]{ color:#0e7490; font-weight:800; }
   select.rescell[data-res="Suspensa"]{ color:#475569; font-weight:800; }
   table.grade tr.cancelada input.cell{ text-decoration:line-through; color:#94a3b8; }
+  table.grade tr.cancelada td { background-color: #EB9B9B !important; }
   input.cell:focus{ background:#fff; box-shadow:0 0 0 2px #93c5fd inset; border-radius:5px; }
   input.cell.proc{ font-family:ui-monospace,Menlo,monospace; font-size:12px; }
   body.so-com tr.vazia{ display:none; }
@@ -1802,12 +1803,21 @@ async function renderPauta(id){
           
           // Menu Dropdown de Seleção
           const sel = document.createElement('select');
-          sel.style.cssText = 'padding:4px 8px; border-radius:6px; border:1px solid var(--line2); font-size:13px; font-weight:600; min-width:180px; background:#fff; cursor:pointer;';
+          // Removi o background:#fff fixo do cssText para podermos controlar via JS
+          sel.style.cssText = 'padding:4px 8px; border-radius:6px; border:1px solid var(--line2); font-size:13px; font-weight:600; min-width:180px; cursor:pointer; transition: 0.2s;';
           
           if (temDuplicidade) {
+            sel.style.backgroundColor = '#fff';
             sel.style.color = '#854d0e';
             sel.style.borderColor = '#eab308';
+          } else if (!nomeReserva) {
+            // SE NÃO TIVER NINGUÉM: Fundo vermelho clarinho, texto vermelho escuro
+            sel.style.backgroundColor = '#fee2e2';
+            sel.style.color = '#b91c1c';
+            sel.style.borderColor = '#fca5a5';
           } else {
+            // SE TIVER ESTAGIÁRIO SELECIONADO: Volta ao normal
+            sel.style.backgroundColor = '#fff';
             sel.style.color = 'var(--ink)';
           }
 
@@ -1913,6 +1923,7 @@ async function renderPauta(id){
           <button class="btn" id="pDia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 14h.01M12 14h.01M16 14h.01"/></svg> Equipe do dia</button>
           <input type="file" id="pjeFile" accept=".xlsx,.xls,.csv" style="display:none;">
           <button class="btn" id="pImport"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg> Importar PJe</button>
+          <button class="btn btn-primary" id="pAutoTopo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg> Escala auto</button>
           <div class="split" id="copyWrap">
 
   <button class="main" id="copyMain"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar p/ Excel</button><button class="car" id="copyCar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -2211,6 +2222,10 @@ async function renderPauta(id){
   document.getElementById('pCancelSup').onclick=()=>abrirCancelSup();
   document.getElementById('pImport').onclick=()=>document.getElementById('pjeFile').click();
   document.getElementById('pjeFile').addEventListener('change',e=>{ if(e.target.files[0]) importarNaPauta(e.target.files[0]); e.target.value=''; });
+  
+  const btnAutoTopo = document.getElementById('pAutoTopo');
+  if(btnAutoTopo) btnAutoTopo.onclick = () => document.getElementById('gabAuto').click();
+  
   const cw=document.getElementById('copyWrap');
 // Eventos do menu
   document.getElementById('copyMain').onclick = () => copiarDynamic();
@@ -2239,54 +2254,74 @@ async function renderPauta(id){
   }
 
   function renderGabarito(){
-    const host=document.getElementById('gabWrap'); if(!host) return;
-    const dia=diaSemanaISO(p.data);
-    const sub=document.getElementById('gabSub'); if(sub) sub.textContent = dia&&DIA_FULL[dia] ? ('disponíveis na '+DIA_FULL[dia]+' · clique nas células para marcar onde colocou a pessoa') : 'pessoas da equipe disponíveis neste dia';
-    if(!pautaEquipe.length){ host.innerHTML='<div class="gab-empty">Cadastre a <b>equipe</b> para usar esta seção.<br><button class="btn btn-sm" id="gabIrEquipe" style="margin-top:8px;">Configurar equipe</button></div>'; const b=document.getElementById('gabIrEquipe'); if(b) b.onclick=()=>abrirEquipe(); return; }
-    if(!dia){ host.innerHTML='<div class="gab-empty">Defina a <b>data</b> da pauta para ver quem está disponível.</div>'; return; }
-    if(dia==='Sab'||dia==='Dom'){ host.innerHTML='<div class="gab-empty">A pauta é em '+DIA_FULL[dia]+'. A equipe é cadastrada de segunda a sexta — use <b>Equipe do dia</b> para incluir alguém manualmente.</div>'; return; }
-    const ppl=gabOrdena(gabaritoPessoas(p));
-    let colsSet=new Set(); linhas.forEach(L=>colsSet.add(+L.HH)); ppl.forEach(x=>x.horas.forEach(h=>colsSet.add(h))); let cols=[...colsSet].sort((a,b)=>a-b); if(!cols.length) cols=[13,14,15,16,17];
-    
-    // ATUALIZAÇÃO 1: Evita que supervisores/iniciantes sejam contados como "ausentes" no resumo
-    const aus=p.dia.aus||{}; let ausN=0; const ausNomes=[]; 
-    (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{ 
-      const e=aus[pe.id]; 
-      if(e && !['prova','supervisao','iniciante'].includes(e)){ 
-        ausN++; ausNomes.push(pe.nome+' - '+(AUS_LABEL[e]||e)); 
-      } 
-    });
-    
-    let totColoc=0, comExtra=0; ppl.forEach(x=>{ const g=(p.dia.gab[x.pe.id]||[]); totColoc+=g.length; if(g.length>limiteEfetivo(x.horas,x.ev)) comExtra++; });
-    let html='<div class="gab-resumo">'+
-      `<span class="gab-rb"><b>${ppl.length}</b> disponíveis</span>`+
-      (ausN?`<span class="gab-rb off" title="${esc(ausNomes.join('\n'))}"><b>${ausN}</b> ${ausN<=1?'ausente':'ausentes'} hoje</span>`:'')+
-      `<span class="gab-rb ok"><b>${totColoc}</b> audiências preenchidas</span>`+
-      (comExtra?`<span class="gab-rb warn"><b>${comExtra}</b> com audiência a mais</span>`:'')+'</div>';
-    html+='<div class="gab-legend"><span class="lg"><span class="sw" style="background:#eef2ff;"></span> disponível</span><span class="lg"><span class="sw" style="background:#f8fafc;border-style:dashed;"></span> fora do expediente</span><span class="lg"><span class="sw" style="background:#15803d;"></span> colocado</span><span class="lg"><span class="sw" style="background:#2563eb;"></span> colocado fora do normal</span><span class="lg"><span class="sw" style="background:#fde047;color:#dc2626;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:11px;">!</span> 2+ no mesmo horário</span><span class="lg"><b style="color:#2563eb;">total azul</b> = audiência a mais</span></div>';
-    if(!ppl.length){ html+='<div class="gab-empty">Ninguém disponível neste dia. Use <b>Equipe do dia</b> para incluir alguém.</div>'; host.innerHTML=html; return; }
-    html+='<div style="overflow:auto;"><table class="gab"><thead><tr><th class="l">Pessoa</th><th>Limite</th>'+cols.map(h=>`<th>${h}h</th>`).join('')+'<th>Total</th></tr></thead><tbody>';
-    const dispH={},onH={}; cols.forEach(h=>{dispH[h]=0;onH[h]=0;});
-    const contConflito={};
-    linhas.forEach(L=>{ const c=p.celulas[L.key]; if(!c) return; if(chave(c.res)==='CANCELADA') return; const H=+L.HH; if(!contConflito[H]) contConflito[H]={}; ['c1','c2','c3'].forEach(campo=>{ const k=chave(c[campo]); if(k && k!=='OUTRO' && k!=='OUTROADM') contConflito[H][k]=(contConflito[H][k]||0)+1; }); });
-    ['servidor','estagiario','voluntario'].forEach(t=>{
-      const grp=ppl.filter(x=>x.pe.tipo===t); if(!grp.length) return;
-      html+=`<tr class="subt"><td colspan="${cols.length+3}"><span class="gdot ${t}"></span>${({servidor:'Servidores',estagiario:'Estagiários',voluntario:'Voluntários'})[t]} · ${grp.length}</td></tr>`;
-      grp.forEach(x=>{ const pe=x.pe; const g=(p.dia.gab[pe.id]||[]); const lim=limiteEfetivo(x.horas,x.ev); const tot=g.length; const over=tot>lim; const peKey=chave(pe.nome);
-        x.horas.forEach(h=>{ if(dispH[h]!==undefined) dispH[h]++; }); g.forEach(h=>{ if(onH[h]!==undefined) onH[h]++; });
-        let cells=''; cols.forEach(h=>{ const isAv=x.horas.includes(h); const on=g.includes(h); const choque = on && peKey && contConflito[h] && contConflito[h][peKey]>=2; let cls,mk; if(choque){ cls='conf'; mk='!'; } else { cls=on?(isAv?'on':'onx'):(isAv?'av':'na'); mk=on?'✓':(isAv?'·':''); } cells+=`<td><div class="gcell ${cls}" data-gc="${pe.id}:${h}">${mk}</div></td>`; });
-        
-        // ATUALIZAÇÃO 2: Renderiza as etiquetas (badges) bonitas ao lado do nome da pessoa
-        const tagSup = (x.ev==='supervisao' ? '<span class="gtag" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">supervisão</span>' : '');
-        const tagIni = (x.ev==='iniciante' ? '<span class="gtag" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">iniciante</span>' : '');
-        const tags = (x.extra?'<span class="gtag extra">extra</span>':'') + (x.ev==='prova'?'<span class="gtag prova">prova</span>':'') + tagSup + tagIni;
-        
-        html+=`<tr><td class="l">${esc(pe.nome)||'<span class="faint">sem nome</span>'}${tags}</td><td class="glim">${lim}</td>${cells}<td class="gtot ${over?'over':''}" ${over?`title="Audiência a mais (${tot-lim} acima do limite de ${lim})"`:''}>${tot||'<span style=\"color:#cbd5e1\">0</span>'}</td></tr>`;
-      });
-    });
-    html+='</tbody><tfoot><tr class="gab-foot"><td class="l" style="text-align:left;color:var(--ink);">Preenchidos / disponíveis</td><td></td>'+cols.map(h=>`<td>${onH[h]}/${dispH[h]}</td>`).join('')+'<td></td></tr></tfoot></table></div>';
-    host.innerHTML=html;
-    host.querySelectorAll('[data-gc]').forEach(c=>c.onclick=()=>{ const [id,h]=c.dataset.gc.split(':'); const hn=+h; const arr=p.dia.gab[id]||(p.dia.gab[id]=[]); const i=arr.indexOf(hn); if(i>=0)arr.splice(i,1); else arr.push(hn); agendaSalvar(); renderGabarito(); });
+            const host=document.getElementById('gabWrap'); if(!host) return;
+            const dia=diaSemanaISO(p.data);
+            const sub=document.getElementById('gabSub'); if(sub) sub.textContent = dia&&DIA_FULL[dia] ? ('disponíveis na '+DIA_FULL[dia]+' · clique nas células para marcar onde colocou a pessoa') : 'pessoas da equipe disponíveis neste dia';
+            if(!pautaEquipe.length){ host.innerHTML='<div class="gab-empty">Cadastre a <b>equipe</b> para usar esta seção.<br><button class="btn btn-sm" id="gabIrEquipe" style="margin-top:8px;">Configurar equipe</button></div>'; const b=document.getElementById('gabIrEquipe'); if(b) b.onclick=()=>abrirEquipe(); return; }
+            if(!dia){ host.innerHTML='<div class="gab-empty">Defina a <b>data</b> da pauta para ver quem está disponível.</div>'; return; }
+            if(dia==='Sab'||dia==='Dom'){ host.innerHTML='<div class="gab-empty">A pauta é em '+DIA_FULL[dia]+'. A equipe é cadastrada de segunda a sexta — use <b>Equipe do dia</b> para incluir alguém manualmente.</div>'; return; }
+            const ppl=gabOrdena(gabaritoPessoas(p));
+            let colsSet=new Set(); linhas.forEach(L=>colsSet.add(+L.HH)); ppl.forEach(x=>x.horas.forEach(h=>colsSet.add(h))); let cols=[...colsSet].sort((a,b)=>a-b); if(!cols.length) cols=[13,14,15,16,17];
+            
+            // ATUALIZAÇÃO 1: Evita que supervisores/iniciantes sejam contados como "ausentes" no resumo
+            const aus=p.dia.aus||{}; let ausN=0; const ausNomes=[]; 
+            (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{ 
+              const e=aus[pe.id]; 
+              if(e && !['prova','supervisao','iniciante'].includes(e)){ 
+                ausN++; ausNomes.push(pe.nome+' - '+(AUS_LABEL[e]||e)); 
+              } 
+            });
+            
+            let totColoc=0, comExtra=0; ppl.forEach(x=>{ const g=(p.dia.gab[x.pe.id]||[]); totColoc+=g.length; if(g.length>limiteEfetivo(x.horas,x.ev)) comExtra++; });
+            let html='<div class="gab-resumo">'+
+              `<span class="gab-rb"><b>${ppl.length}</b> disponíveis</span>`+
+              (ausN?`<span class="gab-rb off" title="${esc(ausNomes.join('\n'))}"><b>${ausN}</b> ${ausN<=1?'ausente':'ausentes'} hoje</span>`:'')+
+              `<span class="gab-rb ok"><b>${totColoc}</b> audiências preenchidas</span>`+
+              (comExtra?`<span class="gab-rb warn"><b>${comExtra}</b> com audiência a mais</span>`:'')+'</div>';
+            
+            // NOVA LEGENDA: Inclui o item "A reserva"
+            html+='<div class="gab-legend"><span class="lg"><span class="sw" style="background:#eef2ff;"></span> disponível</span><span class="lg"><span class="sw" style="background:#f8fafc;border-style:dashed;"></span> fora do expediente</span><span class="lg"><span class="sw" style="background:#15803d;"></span> colocado</span><span class="lg"><span class="sw" style="background:#2563eb;"></span> colocado fora do normal</span><span class="lg"><span class="sw" style="background:#0ea5e9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;">A</span> reserva</span><span class="lg"><span class="sw" style="background:#fde047;color:#dc2626;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:11px;">!</span> 2+ no mesmo horário</span><span class="lg"><b style="color:#2563eb;">total azul</b> = audiência a mais</span></div>';
+            
+            if(!ppl.length){ html+='<div class="gab-empty">Ninguém disponível neste dia. Use <b>Equipe do dia</b> para incluir alguém.</div>'; host.innerHTML=html; return; }
+            html+='<div style="overflow:auto;"><table class="gab"><thead><tr><th class="l">Pessoa</th><th>Limite</th>'+cols.map(h=>`<th>${h}h</th>`).join('')+'<th>Total</th></tr></thead><tbody>';
+            const dispH={},onH={}; cols.forEach(h=>{dispH[h]=0;onH[h]=0;});
+            const contConflito={};
+            linhas.forEach(L=>{ const c=p.celulas[L.key]; if(!c) return; if(chave(c.res)==='CANCELADA') return; const H=+L.HH; if(!contConflito[H]) contConflito[H]={}; ['c1','c2','c3'].forEach(campo=>{ const k=chave(c[campo]); if(k && k!=='OUTRO' && k!=='OUTROADM') contConflito[H][k]=(contConflito[H][k]||0)+1; }); });
+            
+            ['servidor','estagiario','voluntario'].forEach(t=>{
+              const grp=ppl.filter(x=>x.pe.tipo===t); if(!grp.length) return;
+              html+=`<tr class="subt"><td colspan="${cols.length+3}"><span class="gdot ${t}"></span>${({servidor:'Servidores',estagiario:'Estagiários',voluntario:'Voluntários'})[t]} · ${grp.length}</td></tr>`;
+              grp.forEach(x=>{ const pe=x.pe; const g=(p.dia.gab[pe.id]||[]); const lim=limiteEfetivo(x.horas,x.ev); const tot=g.length; const over=tot>lim; const peKey=chave(pe.nome);
+                x.horas.forEach(h=>{ if(dispH[h]!==undefined) dispH[h]++; }); g.forEach(h=>{ if(onH[h]!==undefined) onH[h]++; });
+                let cells=''; cols.forEach(h=>{ 
+                  const isAv=x.horas.includes(h); 
+                  const on=g.includes(h); 
+                  const choque = on && peKey && contConflito[h] && contConflito[h][peKey]>=2; 
+                  
+                  // NOVA CHECAGEM: Verifica se o estagiário atual é o Reserva para este horário
+                  const isReserva = p.dia.reservas && p.dia.reservas[h] === pe.nome;
+
+                  let cls, mk, styleStr=''; 
+                  if(choque){ 
+                    cls='conf'; mk='!'; 
+                  } else if (isReserva && on) { // O "on" garante que a letra "A" só aparece se ele de fato foi escalado pela função/gabarito
+                    cls=''; mk='A'; styleStr='background:#0ea5e9; color:#fff; border:none;'; 
+                  } else { 
+                    cls=on?(isAv?'on':'onx'):(isAv?'av':'na'); mk=on?'✓':(isAv?'·':''); 
+                  } 
+                  cells+=`<td><div class="gcell ${cls}" style="${styleStr}" data-gc="${pe.id}:${h}">${mk}</div></td>`; 
+                });
+                
+                const tagSup = (x.ev==='supervisao' ? '<span class="gtag" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">supervisão</span>' : '');
+                const tagIni = (x.ev==='iniciante' ? '<span class="gtag" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">iniciante</span>' : '');
+                const tags = (x.extra?'<span class="gtag extra">extra</span>':'') + (x.ev==='prova'?'<span class="gtag prova">prova</span>':'') + tagSup + tagIni;
+                
+                html+=`<tr><td class="l">${esc(pe.nome)||'<span class="faint">sem nome</span>'}${tags}</td><td class="glim">${lim}</td>${cells}<td class="gtot ${over?'over':''}" ${over?`title="Audiência a mais (${tot-lim} acima do limite de ${lim})"`:''}>${tot||'<span style=\"color:#cbd5e1\">0</span>'}</td></tr>`;
+              });
+            });
+            html+='</tbody><tfoot><tr class="gab-foot"><td class="l" style="text-align:left;color:var(--ink);">Preenchidos / disponíveis</td><td></td>'+cols.map(h=>`<td>${onH[h]}/${dispH[h]}</td>`).join('')+'<td></td></tr></tfoot></table></div>';
+            host.innerHTML=html;
+            host.querySelectorAll('[data-gc]').forEach(c=>c.onclick=()=>{ const [id,h]=c.dataset.gc.split(':'); const hn=+h; const arr=p.dia.gab[id]||(p.dia.gab[id]=[]); const i=arr.indexOf(hn); if(i>=0)arr.splice(i,1); else arr.push(hn); agendaSalvar(); renderGabarito(); });
   }
 
   window._renderGabarito=renderGabarito;
@@ -2581,107 +2616,203 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
             });
 
             // ===== ETAPA C — ESTAGIÁRIOS =====
-            // C1) PROVA: 2 audiências
-            estagiarios.filter(s=>s.prova).forEach(s=>{
-              if(s.count>=s.limiteAtual) return;
-              const hs=[...s.horas].sort((a,b)=>a-b);
-              let melhor=null, peso=-1;
-              for(let i=0;i<hs.length-1;i++){
-                const h1=hs[i], h2=hs[i+1];
-                if(h2!==h1+1) continue;
-                if(s.occ.has(h1)||s.occ.has(h2)) continue;
-                const a1=need2.find(a=>a.H===h1 && !(a.cel.c2||'').trim());
-                const a2=need2.find(a=>a.H===h2 && !(a.cel.c2||'').trim());
-                if(!a1||!a2) continue;
-                const w = need2.filter(a=>a.H===h1).length + need2.filter(a=>a.H===h2).length;
-                if(w>peso){ peso=w; melhor=[a1,a2]; }
-              }
-              if(melhor){ ocupa(s,melhor[0],'c2'); ocupa(s,melhor[1],'c2'); }
-            });
-
-            // C2) ESTAGIÁRIOS NORMAIS & BANCO DE RESERVAS
-            const estagN = estagiarios.filter(s=>!s.prova);
-            const need2_remaining = need2.filter(a => !(a.cel.c2||'').trim());
-            const horasAtivas = [...new Set(auds.map(a=>a.H))].sort((a,b)=>a-b);
-
-            // Calcula capacidade SOFT e HARD
-            let capSoft = 0; let capHard = 0;
-            estagN.forEach(s => {
-                const folgaHard = Math.max(0, s.limite - s.count);
-                const folgaSoft = Math.max(0, (s.limite - 1) - s.count);
-                capHard += folgaHard; capSoft += folgaSoft;
-            });
-
-            // Decide se usa limite total (Hard) ou tolerante (Soft) para TODOS OS ESTAGIÁRIOS
-            const demanda = need2_remaining.length + horasAtivas.length; // Audiências + 1 reserva por horário
-            const usarHardLimit = (demanda > capSoft);
-
-            estagN.forEach(s => {
-                s.limiteAtual = usarHardLimit ? s.limite : Math.max(1, s.limite - 1);
-            });
-
-            // ALOCAÇÃO DO BANCO DE RESERVAS (1 por horário)
-            let msgReservas = [];
-            p.dia.reservas = {}; // Inicializa ou limpa o banco de reservas do dia
+            const estagN = estagiarios.filter(s => !s.prova);
+            const need2_after_vol = auds.filter(a => EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim());
+            const horasAtivas = [...new Set(auds.map(a => a.H))].sort((a,b) => a-b);
             
+            let msgReservas = [];
+            p.dia.reservas = {};
+
+            // C0) BANCO DE RESERVAS (1 por horário ativo)
             horasAtivas.forEach(H => {
-                // Tenta achar alguém que tenha folga e AINDA NÃO FOI reserva
-                let cands = estagN.filter(s => s.horas.has(H) && !s.occ.has(H) && s.count < s.limiteAtual && !s.foiReserva);
+              // Busca candidatos disponíveis no horário que ainda não são reservas
+              let cands = estagN.filter(s => s.horas.has(H) && !s.foiReserva);
+              if(!cands.length) cands = estagN.filter(s => s.horas.has(H)); // Aceita repetir se faltar
+              
+              if(cands.length > 0) {
+                // Tenta balancear pegando quem tem menos carga atual
+                cands.sort((a,b) => a.count - b.count);
+                let pick = cands[0];
+                pick.foiReserva = true;
                 
-                if(cands.length > 0) {
-                    let pick = cands[Math.floor(Math.random() * cands.length)]; // Sorteia aleatório
-                    pick.foiReserva = true;
-                    pick.occ.add(H);
-                    pick.count++;
-                    p.dia.reservas[H] = pick.nome; // Salva o estagiário na pauta
-                    msgReservas.push(`${H}h: ${pick.nome}`);
-                } else {
-                    // Se não houver inéditos, repete alguém disponível para garantir o banco
-                    let candsRep = estagN.filter(s => s.horas.has(H) && !s.occ.has(H) && s.count < s.limiteAtual);
-                    if(candsRep.length > 0) {
-                        let pick = candsRep[Math.floor(Math.random() * candsRep.length)];
-                        pick.occ.add(H);
-                        pick.count++;
-                        p.dia.reservas[H] = pick.nome; // Salva o estagiário repetido na pauta
-                        msgReservas.push(`${H}h: ${pick.nome} (Repetiu no Banco)`);
-                    } else {
-                        p.dia.reservas[H] = ''; // Sem ninguém disponível
-                        msgReservas.push(`${H}h: (Nenhum estagiário disponível)`);
-                    }
-                }
+                // Consome 1 espaço na cota e bloqueia o horário para não ser titular em outra sala
+                pick.occ.add(H);
+                pick.count++;
+                p.dia.reservas[H] = pick.nome;
+                msgReservas.push(`${H}h: ${pick.nome}`);
+              } else {
+                p.dia.reservas[H] = '';
+                msgReservas.push(`${H}h: (Nenhum estagiário disponível)`);
+              }
             });
 
-            // ALOCAÇÃO DAS AUDIÊNCIAS RESTANTES
+            // C1) PROVA: 2 audiências consecutivas
+            estagiarios.filter(s => s.prova).forEach(s => {
+              if(s.count >= s.limiteAtual) return;
+              const hs = [...s.horas].sort((a,b) => a-b);
+              let melhor = null, peso = -1;
+              
+              for(let i=0; i<hs.length-1; i++){
+                const h1 = hs[i], h2 = hs[i+1];
+                if(h2 !== h1+1) continue;
+                if(s.occ.has(h1) || s.occ.has(h2)) continue;
+                
+                const a1 = need2_after_vol.find(a => a.H === h1 && !(a.cel.c2||'').trim());
+                const a2 = need2_after_vol.find(a => a.H === h2 && !(a.cel.c2||'').trim());
+                if(!a1 || !a2) continue;
+                
+                const w = need2_after_vol.filter(a => a.H === h1).length + need2_after_vol.filter(a => a.H === h2).length;
+                if(w > peso){ peso = w; melhor = [a1,a2]; }
+              }
+              if(melhor){ ocupa(s, melhor[0], 'c2'); ocupa(s, melhor[1], 'c2'); }
+            });
+
+            // C2) ESTAGIÁRIOS NORMAIS: Preencher no modo confortável (limite - 1)
+            let need2_remaining = auds.filter(a => EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim());
             ordemCritica(need2_remaining).forEach(H => {
-                need2_remaining.filter(a => a.H === H && !(a.cel.c2||'').trim()).forEach(a => {
-                    const cands = estagN.filter(s => podeUsar(s, H));
-                    if(cands.length) ocupa(melhorPorFolga(cands), a, 'c2');
-                });
+              need2_remaining.filter(a => a.H === H && !(a.cel.c2||'').trim()).forEach(a => {
+                const cands = estagN.filter(s => s.horas.has(H) && !s.occ.has(H) && s.count < (s.limiteAtual - 1));
+                if(cands.length) ocupa(melhorPorFolga(cands), a, 'c2');
+              });
             });
 
-            // Preenchimentos Finais
-            auds.forEach(a=>{ if(EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim()) marcaAuto(a,'c2','Outro (ADM)'); });
+            // C3) ESTAGIÁRIOS NORMAIS: Tentar cobrir faltas até o limite máximo (+1)
+            need2_remaining = auds.filter(a => EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim());
+            let precisouAumentarLimite = need2_remaining.length > 0;
+            
+            ordemCritica(need2_remaining).forEach(H => {
+              need2_remaining.filter(a => a.H === H && !(a.cel.c2||'').trim()).forEach(a => {
+                const cands = estagN.filter(s => s.horas.has(H) && !s.occ.has(H) && s.count < s.limiteAtual);
+                if(cands.length) ocupa(melhorPorFolga(cands), a, 'c2');
+              });
+            });
+
+            // C4) SE AINDA FALTAR: Puxar estagiário do Banco de Reservas para assumir a sessão
+            need2_remaining = auds.filter(a => EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim());
+            need2_remaining.forEach(a => {
+              const nomeReserva = p.dia.reservas[a.H];
+              if(nomeReserva) {
+                const sReserva = estagN.find(s => s.nome === nomeReserva);
+                if(sReserva) {
+                  marcaAuto(a, 'c2', sReserva.nome);
+                  p.dia.reservas[a.H] = ''; // Esvazia o banco daquele horário, pois ele virou titular
+                  msgReservas = msgReservas.map(m => m.startsWith(`${a.H}h:`) ? `${a.H}h: (Foi para a sessão)` : m);
+                }
+              }
+            });
+
+            // C4.5) COCONCILIAÇÃO: Igualar a carga dos estagiários que ficaram com menos sessões
+            // Helper para contar quantos coconciliadores já estão na sessão
+            const countCo = (c3_str) => {
+              if (!c3_str) return 0;
+              return c3_str.split('|').map(x => x.trim()).filter(p => estagiarios.some(e => chave(e.nome) === chave(p))).length;
+            };
+
+            // Limpa co-conciliadores de rodadas automáticas anteriores preservando outras observações (ex: Supervisão)
+            auds.forEach(a => {
+              if (a.cel.c3) {
+                let partes = a.cel.c3.split('|').map(x => x.trim());
+                partes = partes.filter(p => !estagiarios.some(e => chave(e.nome) === chave(p)));
+                a.cel.c3 = partes.join(' | ');
+              }
+            });
+
+            // --- INJEÇÃO DO BANCO DE RESERVAS NA C3 ---
+            // Garante que os estagiários de reserva ganhem uma sala real para atuar como coconciliadores e apareçam no Gabarito
+            Object.keys(p.dia.reservas).forEach(H_str => {
+              const H = parseInt(H_str);
+              const nomeReserva = p.dia.reservas[H];
+              if (nomeReserva) {
+                let audsElegiveis = auds.filter(a => a.H === H && !EH_OUTROADM(a.cel.c2) && !EH_OUTRO(a.cel.c2) && (a.cel.c2||'').trim());
+                if (audsElegiveis.length > 0) {
+                  audsElegiveis.sort((a, b) => countCo(a.cel.c3) - countCo(b.cel.c3));
+                  const aEscolha = audsElegiveis[0];
+                  let obsAtual = (aEscolha.cel.c3 || '').trim();
+                  let partes = obsAtual ? obsAtual.split('|').map(x => x.trim()) : [];
+                  if (!partes.includes(nomeReserva)) {
+                    aEscolha.cel.c3 = obsAtual ? obsAtual + ' | ' + nomeReserva : nomeReserva;
+                  }
+                }
+              }
+            });
+
+            let mudouCo = true;
+            while(mudouCo) {
+              mudouCo = false;
+              // Prioriza quem tem menos sessões no momento para garantir distribuição igualitária
+              estagN.sort((a,b) => a.count - b.count);
+              
+              for(let s of estagN) {
+                // ATENÇÃO: Mudamos para s.limite (HARD LIMIT). Isso ignora a redução "soft" e força o estagiário a bater a cota cheia!
+                if(s.count >= s.limite) continue;
+                
+                // Pega os horários onde ele está disponível, mas não está trabalhando na planilha nem no banco
+                const hsDispo = [...s.horas].filter(H => !s.occ.has(H));
+                
+                for(let H of hsDispo) {
+                  // Encontra sessões ativas nesse horário
+                  let audsElegiveis = auds.filter(a => {
+                    if (a.H !== H) return false;
+                    const c1k = chave(a.cel.c1);
+                    const c2k = chave(a.cel.c2);
+                    // Usa split para isolar os nomes exatos, evitando que "Carolina" conflite com "Carolina Pereira"
+                    const partesC3 = a.cel.c3 ? a.cel.c3.split('|').map(x => chave(x)) : [];
+                    const nk = chave(s.nome);
+                    
+                    // Só entra na C3 se já existir um conciliador principal na C2 (e que não seja um placeholder genérico)
+                    if (!c2k || EH_OUTROADM(c2k) || EH_OUTRO(c2k)) return false;
+                    
+                    // A própria pessoa não pode ser C1, C2, ou já estar na C3 desta sessão
+                    if (c1k === nk || c2k === nk || partesC3.includes(nk)) return false;
+                    
+                    return true;
+                  });
+
+                  if(audsElegiveis.length > 0) {
+                    // Prioriza salas que ainda não têm coconciliadores (para espalhar as duplas de forma uniforme)
+                    audsElegiveis.sort((a, b) => countCo(a.cel.c3) - countCo(b.cel.c3));
+                    
+                    const minCo = countCo(audsElegiveis[0].cel.c3);
+                    const melhores = audsElegiveis.filter(a => countCo(a.cel.c3) === minCo);
+                    
+                    // Seleciona uma das salas elegíveis aleatoriamente para balancear quem vai com quem
+                    const aEscolha = melhores[Math.floor(Math.random() * melhores.length)];
+                    
+                    let obsAtual = (aEscolha.cel.c3 || '').trim();
+                    aEscolha.cel.c3 = obsAtual ? obsAtual + ' | ' + s.nome : s.nome;
+                    
+                    s.occ.add(H);
+                    s.count++;
+                    mudouCo = true;
+                    break; // Sai do loop de horários para reordenar a fila pelo count atualizado
+                  }
+                }
+                if(mudouCo) break;
+              }
+            }
+
+            // C5) ULTIMA INSTÂNCIA: Preenchimentos Finais genéricos
+            auds.forEach(a => { 
+              if(EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim()) marcaAuto(a,'c2','Outro (ADM)'); 
+            });
 
             sincronizaGabarito(p);
             DB.save(p);
             if(window._refreshEspelho) window._refreshEspelho();
 
-            const semServ = auds.filter(a=>EH_OUTRO(a.cel.c1)).length;
-            const semAdm  = auds.filter(a=>EH_OUTROADM(a.cel.c2)).length;
+            const semServ = auds.filter(a => EH_OUTRO(a.cel.c1)).length;
+            const semAdm  = auds.filter(a => EH_OUTROADM(a.cel.c2)).length;
             
-            // Monta a mensagem de Resumo e Exibe o Toast + Alert
             let msgFim = 'Escala automática concluída!\n';
-            if (usarHardLimit) msgFim += '\n⚠️ Alta demanda: Estagiários escalados no limite máximo (4/5 sessões).';
-            else msgFim += '\n✅ Demanda controlada: Estagiários com limite reduzido (3/4 sessões).';
+            if (precisouAumentarLimite) msgFim += '\n⚠️ Alta demanda: Estagiários escalados no limite máximo.';
+            else msgFim += '\n✅ Demanda controlada: Estagiários escalados de forma confortável.';
             
-            if (msgReservas.length) msgFim += '\n\n🏦 BANCO DE RESERVAS (1 por hora):\n' + msgReservas.join('\n');
+            if (msgReservas.length) msgFim += '\n\n🏦 BANCO DE RESERVAS:\n' + msgReservas.join('\n');
             
             if (semServ > 0) msgFim += `\n\nFaltaram servidores em ${semServ} audiências (OUTRO).`;
             if (semAdm > 0) msgFim += `\nFaltaram estagiários/vol. em ${semAdm} audiências (Outro ADM).`;
 
             toast('Escala automática concluída. Verifique o resumo.');
-            
-            // Um pequeno timeout garante que a grade seja desenhada no fundo antes do alerta pular na tela
             setTimeout(() => alert(msgFim), 300); 
           }
 
@@ -2694,9 +2825,10 @@ function sincronizaGabarito(p){
     linhas.forEach(L=>{ 
       const c=p.celulas[L.key]; if(!c) return; 
       if(chave(c.res)==='CANCELADA') return; 
-      const c1k=chave(c.c1), c2k=chave(c.c2), c3k=chave(c.c3);
-      // Lê C1, C2 e vasculha se o nome foi injetado na coluna de Observações (C3)
-      if(c1k===nk || c2k===nk || c3k.includes(nk)) horas.add(+L.HH); 
+      const c1k=chave(c.c1), c2k=chave(c.c2);
+      // O split previne que strings menores deem 'true' dentro de strings maiores
+      const partesC3 = c.c3 ? c.c3.split('|').map(x => chave(x)) : [];
+      if(c1k===nk || c2k===nk || partesC3.includes(nk)) horas.add(+L.HH); 
     });
     if(horas.size) novo[pe.id]=[...horas].sort((a,b)=>a-b);
   });

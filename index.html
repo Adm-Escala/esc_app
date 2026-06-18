@@ -146,7 +146,7 @@
   select.rescell[data-res="Remarcada"]{ color:#0e7490; font-weight:800; }
   select.rescell[data-res="Suspensa"]{ color:#475569; font-weight:800; }
   table.grade tr.cancelada input.cell{ text-decoration:line-through; color:#94a3b8; }
-  table.grade tr.cancelada td { background-color: #EB9B9B !important; }
+  table.grade tr.cancelada td:not(.sala-merged) { background-color: #EB9B9B !important; }
   input.cell:focus{ background:#fff; box-shadow:0 0 0 2px #93c5fd inset; border-radius:5px; }
   input.cell.proc{ font-family:ui-monospace,Menlo,monospace; font-size:12px; }
   body.so-com tr.vazia{ display:none; }
@@ -396,6 +396,16 @@
   /* deixa o "Copiar" com a MESMA altura dos botões .btn-sm ao lado */
   .ptoolbar .split .main{ padding:6px 11px; font-size:12.5px; }
   .ptoolbar .split .car{ padding:6px 9px; font-size:12.5px; }
+
+  /* Post-it e Pendências */
+  .postit { position:fixed; top:85px; left:24px; background:#fef08a; border-left:4px solid #eab308; padding:14px 16px; box-shadow:0 10px 25px rgba(0,0,0,0.15); z-index:45; width:260px; font-size:13.5px; color:#854d0e; transform:rotate(-2deg); border-radius:3px 8px 8px 3px; line-height:1.45; }
+  .postit-close { position:absolute; top:4px; right:4px; border:0; background:transparent; font-size:16px; cursor:pointer; color:#a16207; padding:2px 6px; font-weight:bold; }
+  .postit-close:hover { color:#713f12; }
+  .prio-dot { width:12px; height:12px; border-radius:50%; display:inline-block; flex:none; }
+  .prio-3 { background:#ef4444; box-shadow:0 0 0 2px #fee2e2; } /* Alta */
+  .prio-2 { background:#f59e0b; box-shadow:0 0 0 2px #fef3c7; } /* Média */
+  .prio-1 { background:#10b981; box-shadow:0 0 0 2px #d1fae5; } /* Baixa */
+
 </style>
 </head>
 <body>
@@ -755,6 +765,12 @@ const DB = (function(){
     async saveSimplesConfig(data){ 
       await getRef().child('config/simples').set(data); 
     },
+    async getChecklist(){ const snap = await getRef().child('config/checklist').once('value'); return snap.val() || []; },
+    async saveChecklist(d){ await getRef().child('config/checklist').set(d); },
+    async getPendencias(){ const snap = await getRef().child('config/pendencias').once('value'); return snap.val() || []; },
+    async savePendencias(d){ await getRef().child('config/pendencias').set(d); },
+    async getExcep(){ const snap = await getRef().child('config/excep').once('value'); return snap.val() || {}; },
+    async saveExcep(d){ await getRef().child('config/excep').set(d); },
     async getEquipe(){ 
       const snap = await getRef().child('config/equipe').once('value'); 
       return snap.val(); 
@@ -926,7 +942,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.10</h1></div>
+      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.11</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" onclick="abrirProcBusca()" title="Procurar um processo em todas as pautas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span class="hide-sm">Processo</span></button>
@@ -937,7 +953,15 @@ async function renderHome(){
     </div></nav>
     <div class="wrap">
       <div class="row between wrapf" style="margin-bottom:2px;">
-        <div><div class="eyebrow">ADM</div><h1 style="font-size:20px;">Pautas guardadas</h1></div>
+        <div class="row between wrapf" style="margin-bottom:2px; width:100%;">
+          <div><div class="eyebrow">ADM</div><h1 style="font-size:20px;">Pautas guardadas</h1></div>
+          
+          <div class="row wrapf" style="gap:8px; margin-left:auto;">
+            <button class="btn btn-sm" onclick="abrirChecklist()" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Checklist</button>
+            <button class="btn btn-sm" onclick="abrirPendencias()" style="color:#d97706; border-color:#fef3c7; background:#fffbeb;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Pendências</button>
+            <button class="btn btn-sm" onclick="abrirExcep()" style="color:#059669; border-color:#d1fae5; background:#ecfdf5;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Sit. Excepcionais</button>
+          </div>
+        </div>
       </div>
 
       <div class="row between wrapf" style="margin-top:18px;gap:10px;align-items:center;">
@@ -1040,172 +1064,192 @@ async function abrirModalPresence() {
 
 function linhaInfo(p){ const status=p.status==='editando'?'<span class="badge b-open">aberta</span>':(audsDe(p)===0?'<span class="badge b-draft">rascunho</span>':''); return {auds:audsDe(p),status}; }
 
-    function renderTabela(cont, vis, totalVis){
-  const t = new Date(); 
-  const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+      function renderTabela(cont, vis, totalVis){
+        const t = new Date(); 
+        const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
 
-  cont.innerHTML=`<div class="card shadow" style="overflow:hidden;"><table class="t"><thead><tr>
-    <th style="width:40px; text-align:center;"><input type="checkbox" class="cb-all" id="cbAll" title="Selecionar todas"></th>
-    <th>Data</th><th>Nome</th><th style="text-align:center">Aud.</th><th>Código</th><th>Última edição</th><th></th></tr></thead><tbody></tbody></table>
-    ${buildPagination(totalVis)}</div>`;
-    
-  const tb = cont.querySelector('tbody');
-  
-  vis.forEach(p => { 
-    const isHoje = (p.data === hoje);
-    const [y,m,d] = (p.data||'--- - -').split('-'); 
-    const i = linhaInfo(p); 
-    const tr = document.createElement('tr');
-    
-    if (isHoje) tr.style.backgroundColor = '#eff6ff';
+        cont.innerHTML=`<div class="card shadow" style="overflow:hidden;"><table class="t"><thead><tr>
+          <th style="width:40px; text-align:center;"><input type="checkbox" class="cb-all" id="cbAll" title="Selecionar todas"></th>
+          <th>Data</th><th>Nome</th><th style="text-align:center">Aud.</th><th>Código</th><th>Última edição</th><th></th></tr></thead><tbody></tbody></table>
+          ${buildPagination(totalVis)}</div>`;
+          
+        const tb = cont.querySelector('tbody');
+        
+        vis.forEach(p => { 
+          const isHoje = (p.data === hoje);
+          const [y,m,d] = (p.data||'--- - -').split('-'); 
+          const i = linhaInfo(p); 
+          const tr = document.createElement('tr');
+          
+          // --- NOVA LÓGICA: Substitui a data pelo dia da semana no nome de exibição ---
+          let nomeExibicao = p.nome;
+          if (p.data && p.nome === 'Pauta de ' + isoParaBR(p.data)) {
+            const diaIso = diaSemanaISO(p.data);
+            if (diaIso && DIA_FULL[diaIso]) {
+              nomeExibicao = 'Pauta de ' + DIA_FULL[diaIso];
+            }
+          }
+          // -----------------------------------------------------------------------------
 
-    const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-left:8px;">HOJE</span>` : '';
-    const dateBoxStyle = isHoje ? 'background:#3b82f6; border-color:#2563eb;' : 'background:#f1f5f9; border:1px solid var(--line);';
-    const dateCor = isHoje ? 'color:#fff;' : '';
-    const monthCor = isHoje ? 'color:#dbeafe;' : '';
-    const isChecked = homeSel.has(p.id) ? 'checked' : '';
+          if (isHoje) tr.style.backgroundColor = '#eff6ff';
 
-    tr.innerHTML=`
-      <td style="text-align:center;" onclick="event.stopPropagation()">
-        <input type="checkbox" class="cb-row" value="${p.id}" ${isChecked}>
-      </td>
-      <td onclick="abrirPauta('${p.id}')"><div class="row" style="gap:10px;"><div class="datebox" style="width:42px;height:42px;${dateBoxStyle}"><span class="d" style="font-size:15px;${dateCor}">${d||'—'}</span><span class="m ${isHoje?'':'faint'}" style="font-size:9px;${monthCor}">${m?M3A[+m-1]:''}</span></div><span class="mono faint" style="font-size:12px;${isHoje?'color:#1e3a8a;font-weight:700;':''}">${isoParaBR(p.data)}</span>${badgeHoje}</div></td>
-      <td onclick="abrirPauta('${p.id}')" style="font-weight:700; ${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)} ${i.status}</td>
-      <td onclick="abrirPauta('${p.id}')" style="text-align:center;"><span class="tnums" style="font-weight:700;${i.auds?'':'color:var(--faint)'}">${i.auds||'—'}</span></td>
-      <td onclick="abrirPauta('${p.id}')"><span class="mono faint" style="font-size:12px;">${esc(p.codigo||'—')}</span></td>
-      <td onclick="abrirPauta('${p.id}')" class="muted">${relTempo(p.editadoEm)}</td>
-      <td class="actions">
-        <button class="action-btn action-open" title="Abrir pauta" onclick="abrirPauta('${p.id}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        </button>
-        <button class="action-btn action-del del" data-id="${p.id}" title="Excluir pauta">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-        </button>
-      </td>`;
-    
-    tr.querySelector('.del').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
-    tb.appendChild(tr); 
-  });
+          const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-left:8px;">HOJE</span>` : '';
+          const dateBoxStyle = isHoje ? 'background:#3b82f6; border-color:#2563eb;' : 'background:#f1f5f9; border:1px solid var(--line);';
+          const dateCor = isHoje ? 'color:#fff;' : '';
+          const monthCor = isHoje ? 'color:#dbeafe;' : '';
+          const isChecked = homeSel.has(p.id) ? 'checked' : '';
 
-  // Lógica de Seleção
-  const cbAll = cont.querySelector('#cbAll');
-  const cbRows = cont.querySelectorAll('.cb-row');
-  const updateBtn = () => {
-    const btn = document.getElementById('btnBulkDel');
-    if(btn) { btn.style.display = homeSel.size ? 'inline-flex' : 'none'; btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Excluir (${homeSel.size})`; }
-  };
-  const syncCbAll = () => { cbAll.checked = (vis.length > 0 && vis.every(p => homeSel.has(p.id))); };
-  syncCbAll();
+          tr.innerHTML=`
+            <td style="text-align:center;" onclick="event.stopPropagation()">
+              <input type="checkbox" class="cb-row" value="${p.id}" ${isChecked}>
+            </td>
+            <td onclick="abrirPauta('${p.id}')"><div class="row" style="gap:10px;"><div class="datebox" style="width:42px;height:42px;${dateBoxStyle}"><span class="d" style="font-size:15px;${dateCor}">${d||'—'}</span><span class="m ${isHoje?'':'faint'}" style="font-size:9px;${monthCor}">${m?M3A[+m-1]:''}</span></div><span class="mono faint" style="font-size:12px;${isHoje?'color:#1e3a8a;font-weight:700;':''}">${isoParaBR(p.data)}</span>${badgeHoje}</div></td>
+            <td onclick="abrirPauta('${p.id}')" style="font-weight:700; ${isHoje?'color:#1e3a8a;':''}">${esc(nomeExibicao)} ${i.status}</td>
+            <td onclick="abrirPauta('${p.id}')" style="text-align:center;"><span class="tnums" style="font-weight:700;${i.auds?'':'color:var(--faint)'}">${i.auds||'—'}</span></td>
+            <td onclick="abrirPauta('${p.id}')"><span class="mono faint" style="font-size:12px;">${esc(p.codigo||'—')}</span></td>
+            <td onclick="abrirPauta('${p.id}')" class="muted">${relTempo(p.editadoEm)}</td>
+            <td class="actions">
+              <button class="action-btn action-open" title="Abrir pauta" onclick="abrirPauta('${p.id}')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
+              <button class="action-btn action-del del" data-id="${p.id}" title="Excluir pauta">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+              </button>
+            </td>`;
+          
+          tr.querySelector('.del').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
+          tb.appendChild(tr); 
+        });
 
-  cbAll.onchange = () => {
-    vis.forEach(p => { if(cbAll.checked) homeSel.add(p.id); else homeSel.delete(p.id); });
-    cbRows.forEach(cb => cb.checked = cbAll.checked);
-    updateBtn();
-  };
+        // Lógica de Seleção
+        const cbAll = cont.querySelector('#cbAll');
+        const cbRows = cont.querySelectorAll('.cb-row');
+        const updateBtn = () => {
+          const btn = document.getElementById('btnBulkDel');
+          if(btn) { btn.style.display = homeSel.size ? 'inline-flex' : 'none'; btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Excluir (${homeSel.size})`; }
+        };
+        const syncCbAll = () => { cbAll.checked = (vis.length > 0 && vis.every(p => homeSel.has(p.id))); };
+        syncCbAll();
 
-  cbRows.forEach(cb => {
-    cb.onchange = () => {
-      if(cb.checked) homeSel.add(cb.value); else homeSel.delete(cb.value);
-      syncCbAll(); updateBtn();
-    };
-  });
+        cbAll.onchange = () => {
+          vis.forEach(p => { if(cbAll.checked) homeSel.add(p.id); else homeSel.delete(p.id); });
+          cbRows.forEach(cb => cb.checked = cbAll.checked);
+          updateBtn();
+        };
 
-  // Lógica da Paginação
-  cont.querySelectorAll('.page-num').forEach(btn => {
-    btn.onclick = () => {
-      if(btn.classList.contains('faint') || btn.classList.contains('active')) return;
-      homePg = parseInt(btn.dataset.p); renderHome();
-    };
-  });
-}
+        cbRows.forEach(cb => {
+          cb.onchange = () => {
+            if(cb.checked) homeSel.add(cb.value); else homeSel.delete(cb.value);
+            syncCbAll(); updateBtn();
+          };
+        });
 
-function renderMural(cont, vis, totalVis){
-  const t = new Date(); 
-  const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+        // Lógica da Paginação
+        cont.querySelectorAll('.page-num').forEach(btn => {
+          btn.onclick = () => {
+            if(btn.classList.contains('faint') || btn.classList.contains('active')) return;
+            homePg = parseInt(btn.dataset.p); renderHome();
+          };
+        });
+      }
 
-  cont.innerHTML=`
-    <div class="row" style="justify-content:flex-end; margin-bottom:12px; padding:0 4px;">
-      <label class="row" style="cursor:pointer; font-size:13px; color:var(--muted); font-weight:600;"><input type="checkbox" id="cbAllMural" style="width:16px;height:16px;accent-color:var(--brand);"> Selecionar todas desta página</label>
-    </div>
-    <div class="grid"></div>
-    <div style="margin-top:20px; background:var(--surface); border-radius:var(--rad); border:1px solid var(--line);">${buildPagination(totalVis)}</div>`; 
-  
-  const g=cont.querySelector('.grid');
-  
-  if(homePg === 1) {
-    const nc=document.createElement('button'); nc.className='newcard'; nc.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:13px;">Nova pauta</span>'; nc.onclick=()=>openM('mNova'); g.appendChild(nc);
-  }
-  
-  vis.forEach(p=>{ 
-    const isHoje = (p.data === hoje);
-    const [y,m,d]=(p.data||'').split('-'); 
-    const i=linhaInfo(p); 
-    const isR=i.auds===0&&p.status!=='editando'; 
-    const c=document.createElement('button'); 
-    c.className='pcard';
-    
-    if (isHoje) { c.style.borderColor = '#3b82f6'; c.style.backgroundColor = '#f8fafc'; c.style.boxShadow = '0 0 0 1px #3b82f6, 0 4px 14px rgba(59,130,246,0.15)'; }
+      function renderMural(cont, vis, totalVis){
+        const t = new Date(); 
+        const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
 
-    const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-top:4px;">HOJE</span>` : '';
-    const dateBoxStyle = isHoje ? 'background:#3b82f6; border:1px solid #2563eb;' : (isR?'background:#fffbeb;border:1px solid var(--amber-100);':'background:var(--brand-50);border:1px solid var(--brand-100);');
-    const dCor = isHoje ? 'color:#fff;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
-    const mCor = isHoje ? 'color:#dbeafe;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
-    const isChecked = homeSel.has(p.id) ? 'checked' : '';
+        cont.innerHTML=`
+          <div class="row" style="justify-content:flex-end; margin-bottom:12px; padding:0 4px;">
+            <label class="row" style="cursor:pointer; font-size:13px; color:var(--muted); font-weight:600;"><input type="checkbox" id="cbAllMural" style="width:16px;height:16px;accent-color:var(--brand);"> Selecionar todas desta página</label>
+          </div>
+          <div class="grid"></div>
+          <div style="margin-top:20px; background:var(--surface); border-radius:var(--rad); border:1px solid var(--line);">${buildPagination(totalVis)}</div>`; 
+        
+        const g=cont.querySelector('.grid');
+        
+        if(homePg === 1) {
+          const nc=document.createElement('button'); nc.className='newcard'; nc.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:13px;">Nova pauta</span>'; nc.onclick=()=>openM('mNova'); g.appendChild(nc);
+        }
+        
+        vis.forEach(p=>{ 
+          const isHoje = (p.data === hoje);
+          const [y,m,d]=(p.data||'').split('-'); 
+          const i=linhaInfo(p); 
+          const isR=i.auds===0&&p.status!=='editando'; 
+          const c=document.createElement('button'); 
+          c.className='pcard';
+          
+          // --- NOVA LÓGICA: Substitui a data pelo dia da semana no nome de exibição ---
+          let nomeExibicao = p.nome;
+          if (p.data && p.nome === 'Pauta de ' + isoParaBR(p.data)) {
+            const diaIso = diaSemanaISO(p.data);
+            if (diaIso && DIA_FULL[diaIso]) {
+              nomeExibicao = 'Pauta de ' + DIA_FULL[diaIso];
+            }
+          }
+          // -----------------------------------------------------------------------------
 
-    c.innerHTML=`<button class="btn icon-btn btn-sm del-x" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:#fff;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
-      <div class="row between" style="align-items:flex-start;">
-        <div class="row" style="gap:10px;">
-          <input type="checkbox" class="cb-mural" value="${p.id}" ${isChecked} style="width:18px;height:18px;accent-color:var(--brand);cursor:pointer;margin-right:2px;" onclick="event.stopPropagation()">
-          <div class="datebox" style="width:54px;height:54px;${dateBoxStyle}"><span class="d" style="font-size:20px;${dCor}">${d||'—'}</span><span class="m" style="font-size:9px;${mCor}">${m?M3A[+m-1]:''}</span></div>
-          <div style="display:flex; flex-direction:column; align-items:flex-start;">${badgeHoje}</div>
-        </div>
-        ${i.status||'<span class="mono faint" style="font-size:11px;">'+esc(p.codigo||'')+'</span>'}
-      </div>
-      <div style="font-weight:700;margin-top:14px;${isHoje?'color:#1e3a8a;':''}">${esc(p.nome)}</div><div class="faint" style="font-size:12px;margin-top:2px;">${relTempo(p.editadoEm)}</div>
-      <div class="row between" style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px;">
-        <span class="muted" style="font-size:13px;">${i.auds?'<b class="tnums">'+i.auds+'</b> audiências':'<span class="faint">sem audiências</span>'}</span>
-        <div style="color:var(--brand); display:flex; align-items:center; gap:6px; font-weight:700; font-size:12px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        </div>
-      </div>`;
-    
-    c.querySelector('.del-x').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
-    c.onclick=()=>abrirPauta(p.id); 
-    g.appendChild(c); 
-  });
+          if (isHoje) { c.style.borderColor = '#3b82f6'; c.style.backgroundColor = '#f8fafc'; c.style.boxShadow = '0 0 0 1px #3b82f6, 0 4px 14px rgba(59,130,246,0.15)'; }
 
-  const updateBtn = () => {
-    const btn = document.getElementById('btnBulkDel');
-    if(btn) { btn.style.display = homeSel.size ? 'inline-flex' : 'none'; btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Excluir (${homeSel.size})`; }
-  };
+          const badgeHoje = isHoje ? `<span class="badge" style="background:#3b82f6; color:#fff; margin-top:4px;">HOJE</span>` : '';
+          const dateBoxStyle = isHoje ? 'background:#3b82f6; border:1px solid #2563eb;' : (isR?'background:#fffbeb;border:1px solid var(--amber-100);':'background:var(--brand-50);border:1px solid var(--brand-100);');
+          const dCor = isHoje ? 'color:#fff;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
+          const mCor = isHoje ? 'color:#dbeafe;' : (isR?'color:var(--amber-700)':'color:var(--brand)');
+          const isChecked = homeSel.has(p.id) ? 'checked' : '';
 
-  const cbAll = cont.querySelector('#cbAllMural');
-  const cbRows = cont.querySelectorAll('.cb-mural');
-  const syncCbAll = () => { if(cbAll) cbAll.checked = (vis.length > 0 && vis.every(p => homeSel.has(p.id))); };
-  syncCbAll();
+          c.innerHTML=`<button class="btn icon-btn btn-sm del-x" data-id="${p.id}" title="excluir" style="color:#ef4444;border:0;background:#fff;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+            <div class="row between" style="align-items:flex-start;">
+              <div class="row" style="gap:10px;">
+                <input type="checkbox" class="cb-mural" value="${p.id}" ${isChecked} style="width:18px;height:18px;accent-color:var(--brand);cursor:pointer;margin-right:2px;" onclick="event.stopPropagation()">
+                <div class="datebox" style="width:54px;height:54px;${dateBoxStyle}"><span class="d" style="font-size:20px;${dCor}">${d||'—'}</span><span class="m" style="font-size:9px;${mCor}">${m?M3A[+m-1]:''}</span></div>
+                <div style="display:flex; flex-direction:column; align-items:flex-start;">${badgeHoje}</div>
+              </div>
+              ${i.status||'<span class="mono faint" style="font-size:11px;">'+esc(p.codigo||'')+'</span>'}
+            </div>
+            <div style="font-weight:700;margin-top:14px;${isHoje?'color:#1e3a8a;':''}">${esc(nomeExibicao)}</div><div class="faint" style="font-size:12px;margin-top:2px;">${relTempo(p.editadoEm)}</div>
+            <div class="row between" style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px;">
+              <span class="muted" style="font-size:13px;">${i.auds?'<b class="tnums">'+i.auds+'</b> audiências':'<span class="faint">sem audiências</span>'}</span>
+              <div style="color:var(--brand); display:flex; align-items:center; gap:6px; font-weight:700; font-size:12px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </div>
+            </div>`;
+          
+          c.querySelector('.del-x').onclick=ev=>{ ev.stopPropagation(); excluirPauta(p); };
+          c.onclick=()=>abrirPauta(p.id); 
+          g.appendChild(c); 
+        });
 
-  if (cbAll) {
-    cbAll.onchange = () => {
-      vis.forEach(p => { if(cbAll.checked) homeSel.add(p.id); else homeSel.delete(p.id); });
-      cbRows.forEach(cb => cb.checked = cbAll.checked);
-      updateBtn();
-    };
-  }
+        const updateBtn = () => {
+          const btn = document.getElementById('btnBulkDel');
+          if(btn) { btn.style.display = homeSel.size ? 'inline-flex' : 'none'; btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Excluir (${homeSel.size})`; }
+        };
 
-  cbRows.forEach(cb => {
-    cb.onchange = (ev) => {
-      if(cb.checked) homeSel.add(cb.value); else homeSel.delete(cb.value);
-      syncCbAll(); updateBtn();
-    };
-  });
+        const cbAll = cont.querySelector('#cbAllMural');
+        const cbRows = cont.querySelectorAll('.cb-mural');
+        const syncCbAll = () => { if(cbAll) cbAll.checked = (vis.length > 0 && vis.every(p => homeSel.has(p.id))); };
+        syncCbAll();
 
-  cont.querySelectorAll('.page-num').forEach(btn => {
-    btn.onclick = () => {
-      if(btn.classList.contains('faint') || btn.classList.contains('active')) return;
-      homePg = parseInt(btn.dataset.p); renderHome();
-    };
-  });
-}
+        if (cbAll) {
+          cbAll.onchange = () => {
+            vis.forEach(p => { if(cbAll.checked) homeSel.add(p.id); else homeSel.delete(p.id); });
+            cbRows.forEach(cb => cb.checked = cbAll.checked);
+            updateBtn();
+          };
+        }
+
+        cbRows.forEach(cb => {
+          cb.onchange = (ev) => {
+            if(cb.checked) homeSel.add(cb.value); else homeSel.delete(cb.value);
+            syncCbAll(); updateBtn();
+          };
+        });
+
+        cont.querySelectorAll('.page-num').forEach(btn => {
+          btn.onclick = () => {
+            if(btn.classList.contains('faint') || btn.classList.contains('active')) return;
+            homePg = parseInt(btn.dataset.p); renderHome();
+          };
+        });
+      }
 
 async function excluirPauta(p){ if(!confirm('Excluir "'+p.nome+'"? Esta ação não pode ser desfeita.')) return; await DB.remove(p.id); toast('Pauta excluída.'); renderHome(); }
 
@@ -1761,7 +1805,7 @@ function agendaSalvar(){
 
 /* ---- Equipe disponível no dia (com ajustes exclusivos da pauta) ---- */
 let pautaEquipe=[];
-const AUS_LABEL={ferias:'Férias',prova:'Prova',atestado:'Atestado',folga:'Folga',afast:'Afastamento',supervisao:'Supervisão',iniciante:'Iniciante'};
+const AUS_LABEL={ferias:'Férias',prova:'Prova',atestado:'Atestado',folga:'Folga',afast:'Afastamento',supervisao:'Supervisão',iniciante:'Iniciante',apoio:'Apoio Jurídico'};
 const DIA_FULL={Seg:'segunda-feira',Ter:'terça-feira',Qua:'quarta-feira',Qui:'quinta-feira',Sex:'sexta-feira',Sab:'sábado',Dom:'domingo'};
 function diaSemanaISO(iso){ const a=(iso||'').split('-').map(Number); if(a.length<3||!a[0]) return null; const d=new Date(a[0],a[1]-1,a[2]); return ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'][d.getDay()]; }
 function diaInit(p){ if(!p.dia) p.dia={}; if(!p.dia.gab) p.dia.gab={}; if(!p.dia.aus) p.dia.aus={}; if(!p.dia.hor) p.dia.hor={}; if(!Array.isArray(p.dia.extra)) p.dia.extra=[]; }
@@ -1946,7 +1990,13 @@ async function renderPauta(id){
 
           // Salva a alteração manual direto no banco de dados e atualiza a tela
           sel.onchange = () => {
+            const antes = p.dia.reservas[H];
             p.dia.reservas[H] = sel.value;
+            
+            // Força a sincronização do Gabarito para o estagiário que saiu e para o que entrou
+            if (antes) sincronizaCelulaPessoaHora(p, chave(antes), H);
+            if (sel.value) sincronizaCelulaPessoaHora(p, chave(sel.value), H);
+
             agendaSalvar();
             if(window._refreshEspelho) window._refreshEspelho(); 
           };
@@ -1986,6 +2036,9 @@ async function renderPauta(id){
   pautaEquipe=(await DB.getEquipe())||[]; pautaEquipe.forEach(eqEnsureDefaults);
   diaInit(p);
 
+  const excepMap = await DB.getExcep();
+  const txtExcep = p.data && excepMap[p.data] ? excepMap[p.data] : '';
+
   // --- CRIAÇÃO DOS DATALISTS DE AUTO-SUGESTÃO ---
   let dlServ = document.getElementById('list-servidores');
   if(!dlServ) { dlServ = document.createElement('datalist'); dlServ.id = 'list-servidores'; document.body.appendChild(dlServ); }
@@ -2011,14 +2064,35 @@ async function renderPauta(id){
 
   const linhas=linhasDaPauta(p);
 
+  // --- NOVA LÓGICA: Acrescenta o dia da semana no título da pauta ---
+  let nomePautaExibicao = p.nome;
+  if (p.data && p.nome === 'Pauta de ' + isoParaBR(p.data)) {
+    const diaIso = diaSemanaISO(p.data);
+    if (diaIso && DIA_FULL[diaIso]) {
+      nomePautaExibicao = p.nome + ' (' + DIA_FULL[diaIso] + ')';
+    }
+  }
+  // ------------------------------------------------------------------
+
   app().innerHTML=`
+
+      ${txtExcep ? `
+      <div class="postit" id="postitAviso">
+        <button class="postit-close" title="Dispensar aviso" onclick="document.getElementById('postitAviso').remove()">×</button>
+        <div style="font-weight:800; margin-bottom:6px; font-size:11.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Aviso (${isoParaBR(p.data)})
+        </div>
+        <div style="white-space:pre-wrap;">${esc(txtExcep)}</div>
+      </div>
+    ` : ''}
+
     <div class="wrap wide">
       <div class="phead">
         <div class="row" style="gap:13px;">
           <a class="back-ic" href="#/" title="Voltar ao início"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></a>
           <div>
             <div class="row" style="gap:8px;">
-              <input id="pNome" value="${esc(p.nome)}" style="font-size:21px;font-weight:800;border:0;background:transparent;outline:none;width:auto;min-width:120px;color:var(--ink);">
+              <input id="pNome" value="${esc(nomePautaExibicao)}" style="font-size:21px;font-weight:800;border:0;background:transparent;outline:none;width:100%;min-width:380px;color:var(--ink);">
             </div>
             <div class="row" style="gap:7px;margin-top:6px;">
               <span class="chip" id="pDataChip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg> ${p.data?isoParaBR(p.data):'sem data'}</span>
@@ -2085,9 +2159,12 @@ async function renderPauta(id){
 
       <div class="card" style="margin-top:16px; padding:18px; display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;" id="painelAutoResumo">
         <div>
-          <div style="font-weight:800; font-size:16px; margin-bottom:12px; color:var(--brand); display:flex; align-items:center; gap:6px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Banco de Reservas (Estagiários)
+          <div class="row between" style="margin-bottom:12px; align-items:center;">
+            <div style="font-weight:800; font-size:16px; color:var(--brand); display:flex; align-items:center; gap:6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Banco de Reservas (Estagiários)
+            </div>
+            <button class="btn btn-sm" id="btnCopyReservas" title="Copiar a coluna de reservas para colar no Excel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar</button>
           </div>
           <div id="autoReservaList" style="display:flex; flex-direction:column; gap:6px;"></div>
         </div>
@@ -2353,12 +2430,19 @@ async function renderPauta(id){
     const pe=(pautaEquipe||[]).concat(p.dia.extra||[]).find(x=>chave(x.nome)===nk);
     if(!pe) return false;
     let presente=false;
+    
+    // 1. Checa as células da grade
     for(const L of linhas){ 
       if(+L.HH!==H) continue; 
       const c=p.celulas[L.key]; if(!c) continue; if(chave(c.res)==='CANCELADA') continue; 
-      // Busca na C1, C2 ou se o nome aparece misturado na C3
       if(chave(c.c1)===nk || chave(c.c2)===nk || chave(c.c3).includes(nk)){ presente=true; break; } 
     }
+    
+    // 2. Checa o Banco de Reservas
+    if(!presente && p.dia.reservas && chave(p.dia.reservas[H]) === nk) {
+      presente = true;
+    }
+
     if(!p.dia.gab) p.dia.gab={};
     const arr=p.dia.gab[pe.id]||(p.dia.gab[pe.id]=[]);
     const i=arr.indexOf(H);
@@ -2440,6 +2524,40 @@ async function renderPauta(id){
 
   window._renderGabarito=renderGabarito;
   renderGabarito();
+  
+    // Lógica para Copiar o Banco de Reservas
+      const btnCopyRes = document.getElementById('btnCopyReservas');
+      if (btnCopyRes) {
+        btnCopyRes.onclick = () => {
+          // Pega os horários ativos na pauta e os ordena
+          const horasAtivas = [...new Set(linhasDaPauta(p).map(L => +L.HH))].sort((a,b) => a-b);
+          
+          // Mapeia o nome do estagiário de cada horário (ou fica em branco se não houver)
+          const valores = horasAtivas.map(H => p.dia.reservas && p.dia.reservas[H] ? p.dia.reservas[H] : '');
+          
+          // Junta com "pular linha", o que faz o Excel colar verticalmente em células separadas
+          const txt = valores.join('\n');
+          
+          const done = () => toast(`Banco de Reservas copiado! (${horasAtivas.length} horários). Cole no Excel.`);
+          
+          // Executa a cópia
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(txt).then(done).catch(() => fb(txt, done));
+          } else {
+            fb(txt, done);
+          }
+
+          // Função de segurança caso a API de Clipboard moderna seja bloqueada no navegador
+          function fb(text, cb) {
+            const ta = document.createElement('textarea'); ta.value = text; 
+            ta.style.position = 'fixed'; ta.style.top = '-1000px'; 
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); cb(); } catch (_) { alert('Copie manualmente.'); } 
+            document.body.removeChild(ta);
+          }
+        };
+      }
+
   document.getElementById('gabDia').onclick=()=>abrirDiaEdit();
   document.getElementById('pDia').onclick=()=>abrirDiaEdit();
   document.getElementById('gabAuto').onclick=()=>{ if(confirm('Preencher 1º e 2º Conciliador automaticamente?\n\n• Mantém o que você já preencheu à mão.\n• Onde faltar servidor: "OUTRO" no 1º.\n• Onde faltar estagiário/voluntário: "Outro (ADM)" no 2º.\n• Audiências marcadas como "Cancelada" são ignoradas.')) escalaAutomatica(pautaAtual); };
@@ -2585,7 +2703,7 @@ async function renderPauta(id){
    EQUIPE DO DIA (ajustes exclusivos da pauta)
    ============================================================ */
 const DE_TIMES=[13,14,15,16,17,18];
-const DE_AUS=[['','Presente'],['ferias','Férias'],['prova','Prova (½)'],['atestado','Atestado'],['folga','Folga'],['afast','Afastamento'],['supervisao','Supervisão'],['iniciante','Iniciante']];
+const DE_AUS=[['','Presente'],['ferias','Férias'],['prova','Prova (½)'],['atestado','Atestado'],['folga','Folga'],['afast','Afastamento'],['supervisao','Supervisão'],['iniciante','Iniciante'],['apoio','Apoio Jurídico']];
 function deDia(){ return diaSemanaISO(pautaAtual&&pautaAtual.data); }
 function abrirDiaEdit(){
   if(!pautaAtual) return; diaInit(pautaAtual);
@@ -2597,23 +2715,48 @@ function abrirDiaEdit(){
 function deSave(reRender){ agendaSalvar(); if(window._renderGabarito) window._renderGabarito(); if(reRender!==false) deRender(); }
 function dePessoaPorId(id){ const e=(pautaAtual.dia.extra||[]).find(x=>x.id===id); if(e) return {pe:e,extra:true}; const b=(pautaEquipe||[]).find(x=>x.id===id); return b?{pe:b,extra:false}:null; }
 function deToggleHora(id,h){ const r=dePessoaPorId(id); if(!r) return; const dia=deDia(); const base=r.extra?(r.pe.hor||[]):eqSlotsNoDia(r.pe,dia); let cur=pautaAtual.dia.hor[id]? pautaAtual.dia.hor[id].slice() : base.slice(); const i=cur.indexOf(h); if(i>=0)cur.splice(i,1); else { cur.push(h); cur.sort((a,b)=>a-b); } if(r.extra){ r.pe.hor=cur; } pautaAtual.dia.hor[id]=cur; deSave(); }
+
 function deRowHTML(pe,isExtra){
   const ev=pautaAtual.dia.aus[pe.id]||''; const off = ev && ev!=='prova';
   const horas=horasEfetivas(pautaAtual,pe,deDia(),isExtra);
   const opts=DE_AUS.map(([v,t])=>`<option value="${v}" ${v===ev?'selected':''}>${t}</option>`).join('');
+  
+  // Lógica das Cores de Fundo (Background Colors)
+  let bgStyle = 'border-radius:8px; padding:8px 10px; margin-bottom:4px; border:1px solid transparent; transition:0.2s;';
+  if (ev === 'prova') bgStyle += 'background-color:#fef9c3; border-color:#fef08a;'; // Amarelo
+  else if (ev === 'afast') bgStyle += 'background-color:#ffedd5; border-color:#fed7aa;'; // Laranja
+  else if (['ferias', 'atestado', 'folga'].includes(ev)) bgStyle += 'background-color:#fee2e2; border-color:#fecaca;'; // Vermelho
+  else if (ev === 'apoio') bgStyle += 'background-color:#dbeafe; border-color:#bfdbfe;'; // Azul
+  else bgStyle += 'border-bottom-color:var(--line); border-radius:0; padding:9px 2px; margin-bottom:0;'; // Padrão
+  
+  // Checkboxes de Atalho (P, F, A)
+  const btnP = pe.tipo === 'estagiario' ? `<label style="cursor:pointer; font-size:12px; font-weight:800; color:var(--muted); display:flex; align-items:center; gap:4px;" title="Prova"><input type="checkbox" data-dequick="${pe.id}:prova" ${ev==='prova'?'checked':''} style="accent-color:var(--brand); width:14px; height:14px; cursor:pointer;">P</label>` : '';
+  const btnF = `<label style="cursor:pointer; font-size:12px; font-weight:800; color:var(--muted); display:flex; align-items:center; gap:4px;" title="Férias"><input type="checkbox" data-dequick="${pe.id}:ferias" ${ev==='ferias'?'checked':''} style="accent-color:var(--brand); width:14px; height:14px; cursor:pointer;">F</label>`;
+  const btnA = `<label style="cursor:pointer; font-size:12px; font-weight:800; color:var(--muted); display:flex; align-items:center; gap:4px;" title="Afastamento"><input type="checkbox" data-dequick="${pe.id}:afast" ${ev==='afast'?'checked':''} style="accent-color:var(--brand); width:14px; height:14px; cursor:pointer;">A</label>`;
+  const quickToggles = `<div class="row" style="gap:12px; margin-right:8px; background:#fff; padding:6px 10px; border-radius:8px; border:1px solid var(--line2); box-shadow:0 1px 2px rgba(0,0,0,0.05);">${btnP}${btnF}${btnA}</div>`;
+
   const hrow = off? '<span class="faint" style="font-size:12px;">sem audiências hoje</span>' :
     '<div class="hrow">'+DE_TIMES.map(h=>`<button class="hbtn ${horas.includes(h)?'on':''}" data-deh="${pe.id}:${h}">${h}h</button>`).join('')+'</div>';
   const nome = isExtra? `<span class="de-nome"><input data-dename="${pe.id}" value="${esc(pe.nome)}" placeholder="Nome"></span>` : `<span class="de-nome">${esc(pe.nome)||'<span class="faint">sem nome</span>'}</span>`;
   const tipoSel = isExtra? `<select class="ev" data-detipo="${pe.id}">${['servidor','estagiario','voluntario'].map(t=>`<option value="${t}" ${pe.tipo===t?'selected':''}>${eqCap(t)}</option>`).join('')}</select>` : `<span class="de-tag ${pe.tipo}">${eqCap(pe.tipo)}</span>`;
   const rem = isExtra? `<button class="xrem" data-derem="${pe.id}">remover</button>` : '';
-  return `<div class="de-row ${off?'off':''}"><div class="de-id">${tipoSel}${nome}</div><div class="de-ctl"><select class="ev ${off?'on':''}" data-deev="${pe.id}">${opts}</select>${hrow}${rem}</div></div>`;
+  
+  return `<div class="de-row ${off?'off':''}" style="${bgStyle}"><div class="de-id">${tipoSel}${nome}</div><div class="de-ctl">${quickToggles}<select class="ev ${off?'on':''}" data-deev="${pe.id}">${opts}</select>${hrow}${rem}</div></div>`;
 }
+
 let deF='';
+
 function deRender(){
   const dia=deDia(); const list=document.getElementById('deList'); if(!list) return;
   let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!=='Dom' && eqSlotsNoDia(pe,dia).length>0 );
   if(deF) base=base.filter(pe=>pe.tipo===deF);
-  base=base.slice().sort((a,b)=> (EQRANK[a.tipo]-EQRANK[b.tipo]) || (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'}));
+ 
+  base = base.slice().sort((a,b) => {
+    if (a.tipo !== b.tipo) return EQRANK[a.tipo] - EQRANK[b.tipo]; // Agrupa por cargos
+    if (a.tipo === 'servidor') return (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'}); // Servidor = Alfabética
+    return (a.id||'~').localeCompare(b.id||'~'); // Estag/Volunt = Ordem de Inclusão no Sistema
+  });
+
   let html='';
   html+=`<div class="de-sec">Equipe disponível ${dia&&DIA_FULL[dia]?'· '+DIA_FULL[dia]:''}${deF?' · '+eqCap(deF)+'s':''}</div>`;
   if(!base.length) html+='<div class="faint" style="font-size:13px;padding:4px 2px;">Ninguém'+(deF?' deste tipo':' da equipe')+' disponível neste dia. Você pode incluir alguém abaixo.</div>';
@@ -2624,12 +2767,27 @@ function deRender(){
   extra.forEach(pe=>{ html+=deRowHTML(pe,true); });
   list.innerHTML=html;
   list.querySelectorAll('[data-deev]').forEach(s=>s.onchange=()=>{ const id=s.dataset.deev; if(s.value) pautaAtual.dia.aus[id]=s.value; else delete pautaAtual.dia.aus[id]; deSave(); });
+  
+  // Dispara o clique nas letras P, F, A
+  list.querySelectorAll('[data-dequick]').forEach(cb => {
+    cb.onchange = () => {
+      const [id, val] = cb.dataset.dequick.split(':');
+      if (cb.checked) {
+        pautaAtual.dia.aus[id] = val; // Se marcou, define o afastamento correspondente
+      } else {
+        delete pautaAtual.dia.aus[id]; // Se desmarcou, volta para Presente
+      }
+      deSave(); // Salva e redesenha a tela automaticamente
+    };
+  });
+  
   list.querySelectorAll('[data-deh]').forEach(b=>b.onclick=()=>{ const [id,h]=b.dataset.deh.split(':'); deToggleHora(id,+h); });
   list.querySelectorAll('[data-dename]').forEach(inp=>inp.oninput=()=>{ const pe=(pautaAtual.dia.extra||[]).find(x=>x.id===inp.dataset.dename); if(pe){ pe.nome=inp.value; deSave(false); } });
   list.querySelectorAll('[data-detipo]').forEach(s=>s.onchange=()=>{ const pe=(pautaAtual.dia.extra||[]).find(x=>x.id===s.dataset.detipo); if(pe){ pe.tipo=s.value; deSave(); } });
   list.querySelectorAll('[data-derem]').forEach(b=>b.onclick=()=>{ pautaAtual.dia.extra=(pautaAtual.dia.extra||[]).filter(x=>x.id!==b.dataset.derem); deSave(); });
   const add=document.getElementById('deAdd'); if(add) add.onclick=()=>{ pautaAtual.dia.extra.push({id:'x'+uid(), nome:'', tipo:(deF||'servidor'), hor:[13,14,15,16,17]}); deSave(); };
 }
+
 document.querySelectorAll('#deF button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#deF button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); deF=b.dataset.t; deRender(); });
 document.getElementById('deX').onclick=()=>closeM('mDiaEdit');
 document.getElementById('deFechar').onclick=()=>closeM('mDiaEdit');
@@ -2705,7 +2863,22 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
             const ordemCritica = list => { const cnt={}; list.forEach(a=>cnt[a.H]=(cnt[a.H]||0)+1); return [...new Set(list.map(a=>a.H))].sort((x,y)=> (cnt[y]-cnt[x]) || (x-y) ); };
             const melhorPorFolga = cands => cands.sort((x,y)=> ((y.limiteAtual-y.count)-(x.limiteAtual-x.count)) || x.nome.localeCompare(y.nome,'pt'))[0];
 
-            // ===== ETAPA A — SERVIDORES → 1º Conciliador =====
+            // ===== ETAPA A (NOVA) — VOLUNTÁRIOS (Prioridade) → 2º Conciliador =====
+            // Pega as audiências vazias (sem c1 nem c2) para garantir o horário do voluntário primeiro
+            const needVol = auds.filter(a=> !(a.cel.c1||'').trim() && !(a.cel.c2||'').trim());
+            ordemCritica(needVol).forEach(H=>{
+              needVol.filter(a=>a.H===H && !(a.cel.c2||'').trim()).forEach(a=>{
+                const cands = voluntarios.filter(s=>podeUsar(s,H));
+                if(cands.length) {
+                  ocupa(melhorPorFolga(cands), a, 'c2');
+                  // Regra Ouro: Onde tem voluntário, o 1º é "OUTRO" (sem servidor na mesma sessão)
+                  marcaAuto(a, 'c1', 'OUTRO');
+                }
+              });
+            });
+
+            // ===== ETAPA B (NOVA) — SERVIDORES → 1º Conciliador =====
+            // Pega as audiências que sobraram sem c1 definido (os voluntários não ocuparam)
             const need1 = auds.filter(a=> !(a.cel.c1||'').trim());
             ordemCritica(need1).forEach(H=>{
               const noH = need1.filter(a=>a.H===H && !(a.cel.c1||'').trim());
@@ -2718,16 +2891,8 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
                 ocupa(pick,a,'c1');
               });
             });
+            // O que sobrar definitivamente sem servidor, vira OUTRO para os estagiários preencherem na Etapa C
             auds.forEach(a=>{ if(!(a.cel.c1||'').trim()) marcaAuto(a,'c1','OUTRO'); });
-
-            // ===== ETAPA B — VOLUNTÁRIOS → 2º Conciliador =====
-            const need2 = auds.filter(a=> EH_OUTRO(a.cel.c1) && !(a.cel.c2||'').trim());
-            ordemCritica(need2).forEach(H=>{
-              need2.filter(a=>a.H===H && !(a.cel.c2||'').trim()).forEach(a=>{
-                const cands = voluntarios.filter(s=>podeUsar(s,H));
-                if(cands.length) ocupa(melhorPorFolga(cands),a,'c2');
-              });
-            });
 
             // ===== ETAPA C — ESTAGIÁRIOS =====
             const estagN = estagiarios.filter(s => !s.prova);
@@ -2761,6 +2926,15 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
             });
 
             // C1) PROVA: 2 audiências consecutivas
+            // Helper para calcular a "escassez" de um horário (Demanda / Oferta)
+            const getScarcity = (h) => {
+              const demand = need2_after_vol.filter(a => a.H === h && !(a.cel.c2||'').trim()).length;
+              const supply = estagN.filter(st => st.horas.has(h) && !st.occ.has(h) && st.count < st.limiteAtual).length;
+              if (demand === 0) return 0;
+              if (supply === 0) return demand * 100; // Peso bem alto se a demanda existir mas a oferta for zero
+              return demand / supply;
+            };
+
             estagiarios.filter(s => s.prova).forEach(s => {
               if(s.count >= s.limiteAtual) return;
               const hs = [...s.horas].sort((a,b) => a-b);
@@ -2775,7 +2949,8 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
                 const a2 = need2_after_vol.find(a => a.H === h2 && !(a.cel.c2||'').trim());
                 if(!a1 || !a2) continue;
                 
-                const w = need2_after_vol.filter(a => a.H === h1).length + need2_after_vol.filter(a => a.H === h2).length;
+                // O peso agora é a escassez combinada dos dois horários
+                const w = getScarcity(h1) + getScarcity(h2);
                 if(w > peso){ peso = w; melhor = [a1,a2]; }
               }
               if(melhor){ ocupa(s, melhor[0], 'c2'); ocupa(s, melhor[1], 'c2'); }
@@ -2831,25 +3006,6 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
               }
             });
 
-            // --- INJEÇÃO DO BANCO DE RESERVAS NA C3 ---
-            // Garante que os estagiários de reserva ganhem uma sala real para atuar como coconciliadores e apareçam no Gabarito
-            Object.keys(p.dia.reservas).forEach(H_str => {
-              const H = parseInt(H_str);
-              const nomeReserva = p.dia.reservas[H];
-              if (nomeReserva) {
-                let audsElegiveis = auds.filter(a => a.H === H && !EH_OUTROADM(a.cel.c2) && !EH_OUTRO(a.cel.c2) && (a.cel.c2||'').trim());
-                if (audsElegiveis.length > 0) {
-                  audsElegiveis.sort((a, b) => countCo(a.cel.c3) - countCo(b.cel.c3));
-                  const aEscolha = audsElegiveis[0];
-                  let obsAtual = (aEscolha.cel.c3 || '').trim();
-                  let partes = obsAtual ? obsAtual.split('|').map(x => x.trim()) : [];
-                  if (!partes.includes(nomeReserva)) {
-                    aEscolha.cel.c3 = obsAtual ? obsAtual + ' | ' + nomeReserva : nomeReserva;
-                  }
-                }
-              }
-            });
-
             let mudouCo = true;
             while(mudouCo) {
               mudouCo = false;
@@ -2857,10 +3013,9 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
               estagN.sort((a,b) => a.count - b.count);
               
               for(let s of estagN) {
-                // ATENÇÃO: Mudamos para s.limite (HARD LIMIT). Isso ignora a redução "soft" e força o estagiário a bater a cota cheia!
                 if(s.count >= s.limite) continue;
                 
-                // Pega os horários onde ele está disponível, mas não está trabalhando na planilha nem no banco
+                // Pega os horários onde ele está disponível, mas não está trabalhando (nem como reserva)
                 const hsDispo = [...s.horas].filter(H => !s.occ.has(H));
                 
                 for(let H of hsDispo) {
@@ -2869,27 +3024,34 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
                     if (a.H !== H) return false;
                     const c1k = chave(a.cel.c1);
                     const c2k = chave(a.cel.c2);
-                    // Usa split para isolar os nomes exatos, evitando que "Carolina" conflite com "Carolina Pereira"
                     const partesC3 = a.cel.c3 ? a.cel.c3.split('|').map(x => chave(x)) : [];
                     const nk = chave(s.nome);
                     
-                    // Só entra na C3 se já existir um conciliador principal na C2 (e que não seja um placeholder genérico)
+                    // Só entra na C3 se já existir um conciliador na C2 (e não genérico)
                     if (!c2k || EH_OUTROADM(c2k) || EH_OUTRO(c2k)) return false;
                     
-                    // A própria pessoa não pode ser C1, C2, ou já estar na C3 desta sessão
+                    // A própria pessoa não pode ser C1, C2, ou já estar na C3
                     if (c1k === nk || c2k === nk || partesC3.includes(nk)) return false;
+
+                    // CORREÇÃO 1: Só permite coconciliação se C2 for EXATAMENTE um estagiário e C1 for "OUTRO".
+                    // Isso blinda a escala e impede que voluntários ou servidores recebam coconciliadores.
+                    const c2IsEstagiario = estagiarios.some(e => chave(e.nome) === c2k);
+                    if (!c2IsEstagiario || !EH_OUTRO(c1k)) return false;
                     
+                    // CORREÇÃO 2: Limita a 1 coconciliador na C3 (Totalizando 2 na sessão: C2 + C3)
+                    if (countCo(a.cel.c3) >= 1) return false;
+
                     return true;
                   });
 
                   if(audsElegiveis.length > 0) {
-                    // Prioriza salas que ainda não têm coconciliadores (para espalhar as duplas de forma uniforme)
+                    // Prioriza salas que ainda não têm coconciliadores
                     audsElegiveis.sort((a, b) => countCo(a.cel.c3) - countCo(b.cel.c3));
                     
                     const minCo = countCo(audsElegiveis[0].cel.c3);
                     const melhores = audsElegiveis.filter(a => countCo(a.cel.c3) === minCo);
                     
-                    // Seleciona uma das salas elegíveis aleatoriamente para balancear quem vai com quem
+                    // Seleciona uma das salas elegíveis aleatoriamente
                     const aEscolha = melhores[Math.floor(Math.random() * melhores.length)];
                     
                     let obsAtual = (aEscolha.cel.c3 || '').trim();
@@ -2898,7 +3060,7 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
                     s.occ.add(H);
                     s.count++;
                     mudouCo = true;
-                    break; // Sai do loop de horários para reordenar a fila pelo count atualizado
+                    break; // Sai do loop para reordenar a fila pelo count atualizado
                   }
                 }
                 if(mudouCo) break;
@@ -2936,14 +3098,25 @@ function sincronizaGabarito(p){
   (pautaEquipe||[]).concat(p.dia.extra||[]).forEach(pe=>{
     const nk=chave(pe.nome); if(!nk) return;
     const horas=new Set();
+    
+    // 1. Verifica nas audiências da grade
     linhas.forEach(L=>{ 
       const c=p.celulas[L.key]; if(!c) return; 
       if(chave(c.res)==='CANCELADA') return; 
       const c1k=chave(c.c1), c2k=chave(c.c2);
-      // O split previne que strings menores deem 'true' dentro de strings maiores
       const partesC3 = c.c3 ? c.c3.split('|').map(x => chave(x)) : [];
       if(c1k===nk || c2k===nk || partesC3.includes(nk)) horas.add(+L.HH); 
     });
+
+    // 2. Verifica no Banco de Reservas
+    if (p.dia.reservas) {
+      Object.keys(p.dia.reservas).forEach(h => {
+        if (chave(p.dia.reservas[h]) === nk) {
+          horas.add(parseInt(h));
+        }
+      });
+    }
+
     if(horas.size) novo[pe.id]=[...horas].sort((a,b)=>a-b);
   });
   p.dia.gab=novo;
@@ -2957,6 +3130,10 @@ function sincronizaGabarito(p){
       diaInit(p);
       if(!p.dia.cancelamentos) p.dia.cancelamentos = [""];
       if(!p.dia.supervisoes_dados) p.dia.supervisoes_dados = {};
+
+      // Reseta o estado dos horários expandidos toda vez que a janela for aberta
+      window._csGruposExpandidos = null; 
+      window._csFocusNextGroup = null;
 
       renderCsCancelamentos();
       await renderCsSupervisoes();
@@ -3024,77 +3201,190 @@ function sincronizaGabarito(p){
       }
       
       const sups = (await DB.getSupConfig()) || [];
-      const hojeSups = sups.filter(s => s.dia === dia && !s.inativa).sort((a,b) => parseInt(a.hora) - parseInt(b.hora));
+      const hojeSups = sups.filter(s => s.dia === dia && !s.inativa).map(s => ({ ...s, _isSimples: false }));
       
       const simples = (await DB.getSimplesConfig()) || [];
-      // MÁGICA AQUI: O filtro ignora automaticamente o estagiário se o dia de folga dele bater com o dia atual da pauta!
-      const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia).sort((a,b) => parseInt(a.hora) - parseInt(b.hora));
+      const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia).map(s => ({ ...s, _isSimples: true }));
 
-      if(!hojeSups.length && !hojeSimples.length) {
-        box.innerHTML = '<div class="faint">Nenhuma supervisão ou audiência simples ativa para este dia (' + diaSemanaISO(pautaAtual.data) + ').</div>';
+      const todosItems = [...hojeSups, ...hojeSimples];
+      if(!todosItems.length) {
+        box.innerHTML = '<div class="faint">Nenhuma supervisão ou audiência simples ativa para este dia.</div>';
         return;
       }
 
-      const compCores = { 1: '#10b981', 2: '#f59e0b', 3: '#ef4444' };
-      const compTitles = { 1: 'Baixa Complexidade', 2: 'Média Complexidade', 3: 'Alta Complexidade' };
-
-      // 1) Imprime as Supervisões padrão
-      hojeSups.forEach(s => {
-        if (!s.complexidade) s.complexidade = 1;
-        const row = document.createElement('div');
-        row.className = 'row between';
-        row.style.cssText = 'padding:8px 12px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; gap:12px; align-items:center; flex-wrap:wrap;';
-        
-        const cor = (s.tipo === 'servidor') ? getSupervisorColor(s.supervisor) : 'var(--ink)';
-        const svgCpx = `<svg width="12" height="12" viewBox="0 0 24 24" title="${compTitles[s.complexidade]}" style="margin-right:6px;"><circle cx="12" cy="12" r="10" fill="${compCores[s.complexidade]}"/></svg>`;
-
-        row.innerHTML = `<div style="min-width:180px; display:flex; align-items:center;">
-            ${svgCpx}
-            <b class="mono" style="margin-right:8px;">${s.hora}h00</b> 
-            <span style="font-weight:700; color:${cor}; margin-right:8px;">${esc(s.supervisor)}</span> 
-            <span class="badge" style="background:var(--brand-50); color:var(--brand-d);">${eqCap(s.tipo)}</span>
-          </div>`;
-        
-        const inp = document.createElement('input');
-        inp.className = 'input';
-        inp.style.flex = '1'; inp.style.minWidth = '200px';
-        inp.placeholder = 'Nº do processo sob supervisão';
-        inp.value = pautaAtual.dia.supervisoes_dados[s.id] || '';
-        
-        inp.oninput = () => { pautaAtual.dia.supervisoes_dados[s.id] = inp.value.trim(); agendaSalvar(); };
-        row.appendChild(inp); box.appendChild(row);
+      // Agrupa os itens por horário (HH:00)
+      const grupos = {};
+      todosItems.forEach(item => {
+        if(!grupos[item.hora]) grupos[item.hora] = [];
+        grupos[item.hora].push(item);
       });
 
-      // 2) Imprime as Aud. Simples (Ícone Azul)
-      if(hojeSimples.length > 0) {
-        const divDivider = document.createElement('div');
-        divDivider.innerHTML = '<hr style="border:0; border-top:1px dashed var(--line2); margin:10px 0;"><div style="font-weight:700; font-size:13px; color:#2563eb; margin-bottom:8px;">Audiências Simples (Estagiários)</div>';
-        box.appendChild(divDivider);
+      const horasOrd = Object.keys(grupos).map(Number).sort((a,b) => a-b);
 
-        hojeSimples.forEach(s => {
-          const row = document.createElement('div');
-          row.className = 'row between';
-          row.style.cssText = 'padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; gap:12px; align-items:center; flex-wrap:wrap;';
-          
-          const cor = getSupervisorColor(s.estagiario) || 'var(--ink)';
-          const svgCpx = `<svg width="12" height="12" viewBox="0 0 24 24" title="Audiência Simples" style="margin-right:6px;"><circle cx="12" cy="12" r="10" fill="#3b82f6"/></svg>`;
-
-          row.innerHTML = `<div style="min-width:180px; display:flex; align-items:center;">
-              ${svgCpx}
-              <b class="mono" style="margin-right:8px; color:#1e3a8a;">${s.hora}h00</b> 
-              <span style="font-weight:700; color:${cor}; margin-right:8px;">${esc(s.estagiario)}</span> 
-            </div>`;
-          
-          const inp = document.createElement('input');
-          inp.className = 'input';
-          inp.style.flex = '1'; inp.style.minWidth = '200px'; inp.style.borderColor = '#93c5fd';
-          inp.placeholder = 'Nº do processo (Aud. Simples)';
-          inp.value = pautaAtual.dia.supervisoes_dados[s.id] || '';
-          
-          inp.oninput = () => { pautaAtual.dia.supervisoes_dados[s.id] = inp.value.trim(); agendaSalvar(); };
-          row.appendChild(inp); box.appendChild(row);
-        });
+      // Define o primeiro horário como expandido por padrão na abertura da janela
+      if(window._csGruposExpandidos === null || window._csGruposExpandidos === undefined) {
+         window._csGruposExpandidos = new Set([horasOrd[0]]);
       }
+
+      // Adiciona Toolbar de Expandir/Minimizar
+      const toolbar = document.createElement('div');
+      toolbar.className = 'row wrapf';
+      toolbar.style.cssText = 'gap:8px; margin-bottom:8px; justify-content: flex-end;';
+      toolbar.innerHTML = `
+        <button class="btn btn-sm" id="csExpandAll" style="font-size:11px;">+</button>
+        <button class="btn btn-sm" id="csCollapseAll" style="font-size:11px;">-</button>
+      `;
+      box.appendChild(toolbar);
+
+      // Função de Validação de Horário
+      const linhas = linhasDaPauta(pautaAtual);
+      const validaHorarioDaSessao = (procStr, horaEsperada) => {
+        if(!procStr) return true; // Vazio ignora
+        const digitos = soDigitos(procStr);
+        if(!digitos) return true;
+        const linha = linhas.find(x => pautaAtual.celulas[x.key] && soDigitos(pautaAtual.celulas[x.key].proc) === digitos);
+        if(!linha) return true; 
+        return parseInt(linha.HH) === parseInt(horaEsperada);
+      };
+
+      // Renderiza os grupos (Acordeão Manipulando CSS Dinamicamente)
+      horasOrd.forEach((h, index) => {
+         const items = grupos[h];
+         const isExpanded = window._csGruposExpandidos.has(h);
+
+         const grpDiv = document.createElement('div');
+         grpDiv.style.cssText = 'border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:8px;';
+
+         const head = document.createElement('div');
+         head.className = `row between cs-grp-head grp-head-${h}`;
+         head.style.cssText = `padding:8px 12px; cursor:pointer; background:${isExpanded ? 'var(--brand-50)' : '#f8fafc'}; color:${isExpanded ? 'var(--brand-d)' : 'var(--ink)'}; font-weight:700; transition:background-color 0.2s, color 0.2s;`;
+         head.innerHTML = `<span>Horário: ${h}h00</span><span class="badge" style="background:#fff; border:1px solid var(--line2); color:var(--muted);">${items.length} ${items.length === 1 ? 'sessão' : 'sessões'}</span>`;
+
+         const body = document.createElement('div');
+         body.style.cssText = 'padding:10px; background:#fff; display:flex; flex-direction:column; gap:8px;';
+         body.style.display = isExpanded ? 'flex' : 'none'; // Alterna via CSS
+
+         // Lógica de Expansão/Retração que manipula apenas o estilo (CSS)
+         const toggleGroup = (forceOpen) => {
+           const currentlyExpanded = body.style.display !== 'none';
+           const willExpand = forceOpen !== undefined ? forceOpen : !currentlyExpanded;
+
+           if (willExpand) {
+             body.style.display = 'flex';
+             head.style.background = 'var(--brand-50)';
+             head.style.color = 'var(--brand-d)';
+             window._csGruposExpandidos.add(h);
+           } else {
+             body.style.display = 'none';
+             head.style.background = '#f8fafc';
+             head.style.color = 'var(--ink)';
+             window._csGruposExpandidos.delete(h);
+           }
+         };
+         
+         head.onclick = () => toggleGroup();
+         head._toggle = toggleGroup; // Salva o método para podermos acionar por fora
+
+         items.forEach(s => {
+            const row = document.createElement('div');
+            row.className = 'row between';
+            let rowBg, svgCpx, nomeTexto, badgeHtml = '';
+
+            if(s._isSimples) {
+               rowBg = '#eff6ff';
+               // Trocando o 'fill' da bolinha de #3b82f6 (azul) para #10b981 (verde claro / baixa complexidade)
+               svgCpx = `<svg width="12" height="12" viewBox="0 0 24 24" title="Audiência Simples" style="margin-right:6px;"><circle cx="12" cy="12" r="10" fill="#10b981"/></svg>`;
+               nomeTexto = `<span style="font-weight:700; color:${getSupervisorColor(s.estagiario) || 'var(--ink)'}; margin-right:8px;">${esc(s.estagiario)}</span>`;
+            } else {
+               if (!s.complexidade) s.complexidade = 1;
+               const compCores = { 1: '#10b981', 2: '#f59e0b', 3: '#ef4444' };
+               rowBg = '#f8fafc';
+               svgCpx = `<svg width="12" height="12" viewBox="0 0 24 24" style="margin-right:6px;"><circle cx="12" cy="12" r="10" fill="${compCores[s.complexidade]}"/></svg>`;
+               const cor = (s.tipo === 'servidor') ? getSupervisorColor(s.supervisor) : 'var(--ink)';
+               nomeTexto = `<span style="font-weight:700; color:${cor}; margin-right:8px;">${esc(s.supervisor)}</span>`;
+               badgeHtml = `<span class="badge" style="background:var(--brand-50); color:var(--brand-d);">${eqCap(s.tipo)}</span>`;
+            }
+
+            row.style.cssText = `padding:8px 12px; background:${rowBg}; border:1px solid var(--line); border-radius:8px; gap:12px; align-items:center; flex-wrap:wrap;`;
+            row.innerHTML = `<div style="min-width:180px; display:flex; align-items:center;">${svgCpx} ${nomeTexto} ${badgeHtml}</div>`;
+
+            const inp = document.createElement('input');
+            inp.className = 'input cs-sup-input';
+            inp.dataset.hid = h; 
+            inp.style.flex = '1'; inp.style.minWidth = '200px';
+            if(s._isSimples) inp.style.borderColor = '#93c5fd';
+            inp.placeholder = 'Nº do processo';
+            inp.value = pautaAtual.dia.supervisoes_dados[s.id] || '';
+
+            const verificarCorDoFundo = () => {
+               if(validaHorarioDaSessao(inp.value, h)) inp.style.backgroundColor = '';
+               else inp.style.backgroundColor = '#fef08a'; 
+            };
+            verificarCorDoFundo();
+
+            inp.oninput = (e) => {
+               pautaAtual.dia.supervisoes_dados[s.id] = inp.value.trim();
+               agendaSalvar();
+               verificarCorDoFundo();
+
+               // Auto-Avanço de Acordeão acionado manipulando CSS (sem redesenhar painel)
+               if(e.inputType === 'insertFromPaste' || soDigitos(inp.value).length >= 15) {
+                   const allInputs = body.querySelectorAll('input.cs-sup-input');
+                   
+                   // NOVA LÓGICA: Verifica se todos têm 15+ dígitos E se NENHUM tem divergência de horário
+                   const todosPreenchidosEValidos = Array.from(allInputs).every(i => {
+                       return soDigitos(i.value).length >= 15 && validaHorarioDaSessao(i.value, h);
+                   });
+                   
+                   if(todosPreenchidosEValidos) {
+                       const nextHour = horasOrd[index + 1];
+                       if(nextHour && !window._csGruposExpandidos.has(nextHour)) {
+                          setTimeout(() => {
+                              // Retrai o grupo atual
+                              toggleGroup(false);
+                              
+                              // Expande o grupo do próximo horário
+                              const nextGrpHead = box.querySelector(`.grp-head-${nextHour}`);
+                              if (nextGrpHead && nextGrpHead._toggle) {
+                                  nextGrpHead._toggle(true);
+                              }
+                              
+                              // Passa o cursor para a primeira caixinha de texto do próximo grupo
+                              const firstNextInp = box.querySelector(`input.cs-sup-input[data-hid="${nextHour}"]`);
+                              if (firstNextInp) firstNextInp.focus();
+                              
+                          }, 350); 
+                       }
+                   }
+               }
+            };
+
+            row.appendChild(inp);
+            body.appendChild(row);
+         });
+         
+         grpDiv.appendChild(head);
+         grpDiv.appendChild(body);
+         box.appendChild(grpDiv);
+      });
+
+      // Controles do Toolbar usando CSS Toggles
+      document.getElementById('csExpandAll').onclick = () => {
+         box.querySelectorAll('.cs-grp-head').forEach(head => {
+            if (head._toggle) head._toggle(true);
+         });
+      };
+      
+      document.getElementById('csCollapseAll').onclick = () => {
+         const heads = Array.from(box.querySelectorAll('.cs-grp-head'));
+         heads.forEach(head => {
+            if (head._toggle) head._toggle(false);
+         });
+         // Garante que pelo menos o primeiro fique visível
+         if (heads.length > 0 && heads[0]._toggle) {
+            heads[0]._toggle(true);
+         }
+      };
     }
 
     async function processarCancelSup() {
@@ -3102,7 +3392,6 @@ function sincronizaGabarito(p){
       let alterou = false;
       
       // 1) Limpa as tags geradas automaticamente na rodada anterior
-      // (Isso garante que se um estagiário/supervisor for retirado da regra, ele volte a ficar 'Presente')
       (pautaEquipe || []).forEach(pe => {
         if (p.dia.aus[pe.id] === 'supervisao' || p.dia.aus[pe.id] === 'iniciante') {
           delete p.dia.aus[pe.id];
@@ -3110,7 +3399,7 @@ function sincronizaGabarito(p){
         }
       });
       
-      // 2) Processa Cancelamentos
+      // 2) Processa Cancelamentos (Forçando "OUTRO" e "Outro ADM")
       const cancelados = p.dia.cancelamentos.map(x => soDigitos(x)).filter(Boolean);
       const naoEncontradosCancel = [];
       
@@ -3120,6 +3409,10 @@ function sincronizaGabarito(p){
           if(c && (c.proc || '').trim()) {
             if(cancelados.includes(soDigitos(c.proc))) {
               if(c.res !== 'Cancelada') { c.res = 'Cancelada'; alterou = true; }
+              
+              // REQUISITO: Preencher as colunas automaticamente ao Cancelar
+              if (c.c1 !== 'OUTRO') { c.c1 = 'OUTRO'; alterou = true; }
+              if (c.c2 !== 'Outro (ADM)') { c.c2 = 'Outro (ADM)'; alterou = true; }
             }
           }
         });
@@ -3133,12 +3426,11 @@ function sincronizaGabarito(p){
 
       const dia = diaSemanaISO(p.data);
       
-      // 3) Processa Supervisões e marca a Equipe do Dia
+      // 3) Processa Supervisões
       const sups = (await DB.getSupConfig()) || [];
       const hojeSups = sups.filter(s => s.dia === dia && !s.inativa);
       
       hojeSups.forEach(s => {
-        // Aplica a eventualidade "Supervisão"
         const pessoaSup = (pautaEquipe || []).find(pe => pe.nome === s.supervisor);
         if (pessoaSup) {
           p.dia.aus[pessoaSup.id] = 'supervisao';
@@ -3155,10 +3447,7 @@ function sincronizaGabarito(p){
                 c.c1 = s.supervisor;
               } else {
                 c.c2 = s.supervisor;
-                // Se for voluntário e o 1º Conciliador estiver em branco, preenche com "OUTRO"
-                if (s.tipo === 'voluntario' && (!c.c1 || c.c1.trim() === '')) {
-                  c.c1 = 'OUTRO';
-                }
+                if (!c.c1 || c.c1.trim() === '') c.c1 = 'OUTRO';
               }
               
               let obsAtual = (c.c3 || '').trim();
@@ -3169,12 +3458,11 @@ function sincronizaGabarito(p){
         }
       });
 
-      // 4) Processa Audiências Simples e marca a Equipe do Dia
+      // 4) Processa Audiências Simples (Forçando "OUTRO" no C1)
       const simples = (await DB.getSimplesConfig()) || [];
       const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia);
 
       hojeSimples.forEach(s => {
-        // Aplica a eventualidade "Iniciante"
         const pessoaIni = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
         if (pessoaIni) {
           p.dia.aus[pessoaIni.id] = 'iniciante';
@@ -3183,23 +3471,20 @@ function sincronizaGabarito(p){
 
         const procInformado = p.dia.supervisoes_dados[s.id];
         if(procInformado && procInformado.trim()) {
-                  const digSup = soDigitos(procInformado);
-                  linhasDaPauta(p).forEach(L => {
-                    const c = p.celulas[L.key];
-                    if(c && soDigitos(c.proc) === digSup) {
-                      const pessoaInfo = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
-                      if(pessoaInfo && pessoaInfo.tipo === 'servidor') {
-                        c.c1 = s.estagiario;
-                      } else {
-                        c.c2 = s.estagiario;
-                        // Se o 1º Conciliador estiver em branco, garante o preenchimento com "OUTRO"
-                        if (!c.c1 || c.c1.trim() === '') {
-                          c.c1 = 'OUTRO';
-                        }
-                      }
-                      
-                      let obsAtual = (c.c3 || '').trim();
-              if (!obsAtual.includes('')) c.c3 = obsAtual ? obsAtual + '' : '';
+          const digSup = soDigitos(procInformado);
+          linhasDaPauta(p).forEach(L => {
+            const c = p.celulas[L.key];
+            if(c && soDigitos(c.proc) === digSup) {
+              const pessoaInfo = (pautaEquipe || []).find(pe => pe.nome === s.estagiario);
+              if(pessoaInfo && pessoaInfo.tipo === 'servidor') {
+                c.c1 = s.estagiario;
+              } else {
+                c.c2 = s.estagiario;
+                // REQUISITO: Se escalar Iniciante no C2, o C1 vira obrigatoriamente OUTRO
+                if (c.c1 !== 'OUTRO') {
+                  c.c1 = 'OUTRO';
+                }
+              }
               alterou = true;
             }
           });
@@ -3207,7 +3492,7 @@ function sincronizaGabarito(p){
       });
 
       if(alterou) {
-        sincronizaGabarito(p); // <- ISSO FAZ O GABARITO DESENHAR AS MARCAÇÕES VERDES DE IMEDIATO
+        sincronizaGabarito(p);
         agendaSalvar();
         if(window._refreshEspelho) window._refreshEspelho();
       }
@@ -3632,6 +3917,427 @@ function sincronizaGabarito(p){
         box.appendChild(row);
       });
     }
+
+
+/* ============================================================
+   CHECKLIST, PENDÊNCIAS E SITUAÇÕES EXCEPCIONAIS
+   ============================================================ */
+    function initNovosModais() {
+        if(document.getElementById('mChecklist')) return;
+        const wrap = document.createElement('div');
+        wrap.innerHTML = `
+          <div class="modal-bg keep-open" id="mChecklist"><div class="modal md modal-flex">
+            <div class="modal-head"><div class="row between"><div><div style="font-size:19px;font-weight:800;">Checklist Diário</div><div class="muted" style="font-size:14px;">Atividades agrupadas da gestão de escala.</div></div><button class="btn icon-btn" onclick="closeM('mChecklist')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>
+            <div class="modal-body" id="chkList" style="display:flex; flex-direction:column; padding-bottom:20px;"></div>
+            <div class="modal-foot"><div class="row between"><button class="btn btn-sm" id="chkAddGroup" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">+ Novo Grupo</button><button class="btn" id="chkReset">Desmarcar Todas</button></div></div>
+          </div></div>
+
+          <div class="modal-bg keep-open" id="mPendencias"><div class="modal md modal-flex">
+            <div class="modal-head"><div class="row between"><div><div style="font-size:19px;font-weight:800;">Pendências</div><div class="muted" style="font-size:14px;">Fila de tarefas por prioridade.</div></div><button class="btn icon-btn" onclick="closeM('mPendencias')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>
+            <div class="modal-body" id="pendList" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px;"></div>
+            <div class="modal-foot"><div class="row between"><button class="btn btn-sm" id="pendAdd">+ Nova Pendência</button></div></div>
+          </div></div>
+
+          <div class="modal-bg keep-open" id="mExcep"><div class="modal md modal-flex">
+            <div class="modal-head"><div class="row between"><div><div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:8px;">📌 Situações Excepcionais</div><div class="muted" style="font-size:14px;">Avisos em formato de post-it para datas específicas.</div></div><button class="btn icon-btn" onclick="closeM('mExcep')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>
+            <div class="modal-body" style="padding-bottom:20px;">
+              <div class="row" style="margin-bottom:12px; gap:8px;">
+                <span style="font-size:13.5px; font-weight:700; color:var(--muted);">Selecione a data:</span>
+                <input type="date" id="excData" class="input" style="width:160px;">
+              </div>
+              <textarea id="excTexto" class="input" rows="6" placeholder="Digite aqui as situações excepcionais (ex.: João só atende 13h-15h hoje)..." style="width:100%; display:none; resize:vertical; transition:0.2s;"></textarea>
+              <div id="excEmpty" class="faint" style="font-size:13px; text-align:center; padding:20px;">Selecione uma data acima para visualizar ou criar um aviso.</div>
+            </div>
+            <div class="modal-foot"><div class="row between"><span id="excStatus" class="faint" style="font-size:12px;"></span><button class="btn" id="excExcluir" style="display:none; color:#ef4444; border-color:#fecaca;">Excluir Aviso</button></div></div>
+          </div></div>
+
+          <div class="modal-bg" id="mPendEdit" style="z-index: 70;"><div class="modal sm modal-flex">
+            <div class="modal-head"><div style="font-size:18px;font-weight:800;" id="pendEditTitle">Nova Pendência</div></div>
+            <div class="modal-body" style="padding-bottom:20px; padding-top:10px;">
+              <div class="row" style="gap:12px; align-items:center;">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:none;">
+                  <button class="btn icon-btn" id="pendEditPrioBtn" title="Alterar prioridade" style="padding:10px; border-radius:50%;"></button>
+                  <span id="pendEditPrioLabel" style="font-size:10.5px; font-weight:700; color:var(--muted); text-align:center; width:48px; line-height:1.1;">Média</span>
+                </div>
+                <input type="text" id="pendEditTexto" class="input" placeholder="O que precisa ser feito?" style="flex:1;">
+              </div>
+            </div>
+            <div class="modal-foot"><div class="row between"><button class="btn" onclick="closeM('mPendEdit')">Cancelar</button><button class="btn btn-primary" id="pendEditSalvar">Salvar</button></div></div>
+          </div></div>
+
+          <div class="modal-bg" id="mChkEditItem" style="z-index: 70;"><div class="modal sm modal-flex">
+            <div class="modal-head"><div style="font-size:18px;font-weight:800;" id="chkEditTitle">Nova Tarefa</div></div>
+            <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; gap:12px;">
+              <div>
+                <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Descrição da Tarefa</div>
+                <input type="text" id="chkEditTexto" class="input" placeholder="O que precisa ser feito?">
+              </div>
+              
+              <div>
+                <div class="row between" style="margin-top:8px; margin-bottom:6px;">
+                  <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Links Anexos</div>
+                  <button class="btn btn-sm" id="chkEditAddLink" style="border-style:dashed; color:var(--brand); padding:3px 8px; font-size:11.5px;">+ Adicionar Link</button>
+                </div>
+                <div id="chkEditLinksWrap" style="display:flex; flex-direction:column; gap:8px;"></div>
+              </div>
+            </div>
+            <div class="modal-foot"><div class="row between">
+              <button class="btn" id="chkEditExcluir" style="display:none; color:#ef4444; border-color:#fecaca;">Excluir Tarefa</button>
+              <div class="row" style="margin-left:auto; gap:8px;">
+                <button class="btn" onclick="closeM('mChkEditItem')">Cancelar</button>
+                <button class="btn btn-primary" id="chkEditSalvar">Salvar</button>
+              </div>
+            </div></div>
+          </div></div>
+        `;
+        document.body.appendChild(wrap);
+
+        // --- LÓGICA DE EDIÇÃO DO CHECKLIST (Com múltiplos links) ---
+        let chkEditGroupId = null;
+        let chkEditItemId = null;
+        let chkEditLinksTemp = []; // Guarda os links temporariamente durante a edição
+
+        const renderChkEditLinks = () => {
+          const wrap = document.getElementById('chkEditLinksWrap');
+          wrap.innerHTML = '';
+          if (chkEditLinksTemp.length === 0) {
+            wrap.innerHTML = '<div class="faint" style="font-size:12.5px; padding:4px 0;">Nenhum link. Clique acima para adicionar.</div>';
+            return;
+          }
+          chkEditLinksTemp.forEach((lk, idx) => {
+            const row = document.createElement('div');
+            row.className = 'row wrapf';
+            row.style.cssText = 'gap:8px; align-items:flex-end; background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid var(--line);';
+            row.innerHTML = `
+              <div style="flex:1; min-width:100px;">
+                <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">Título do botão</div>
+                <input type="text" class="input lk-title" value="${esc(lk.title)}" placeholder="Ex.: Planilha" style="font-size:13px; padding:6px 8px;">
+              </div>
+              <div style="flex:2; min-width:160px;">
+                <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">URL (Endereço Web)</div>
+                <input type="text" class="input lk-url" value="${esc(lk.url)}" placeholder="https://..." style="font-size:13px; padding:6px 8px;">
+              </div>
+              <button class="btn icon-btn" title="Remover Link" style="color:#ef4444; border:0; background:transparent; padding:6px; margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            `;
+            row.querySelector('.lk-title').oninput = (e) => chkEditLinksTemp[idx].title = e.target.value;
+            row.querySelector('.lk-url').oninput = (e) => chkEditLinksTemp[idx].url = e.target.value;
+            row.querySelector('button[title="Remover Link"]').onclick = () => { chkEditLinksTemp.splice(idx, 1); renderChkEditLinks(); };
+            wrap.appendChild(row);
+          });
+        };
+
+        window.abrirChkEditItem = (groupId, itemId = null, text = '', links = []) => {
+          chkEditGroupId = groupId;
+          chkEditItemId = itemId;
+          document.getElementById('chkEditTitle').textContent = itemId ? 'Editar Tarefa' : 'Nova Tarefa';
+          document.getElementById('chkEditTexto').value = text;
+          
+          // Clona os links para a edição não afetar o banco antes de clicar em "Salvar"
+          chkEditLinksTemp = JSON.parse(JSON.stringify(links));
+          renderChkEditLinks();
+
+          const btnExcluir = document.getElementById('chkEditExcluir');
+          btnExcluir.style.display = itemId ? 'block' : 'none';
+
+          openM('mChkEditItem');
+          setTimeout(() => document.getElementById('chkEditTexto').focus(), 150);
+        };
+
+        document.getElementById('chkEditAddLink').onclick = () => {
+          chkEditLinksTemp.push({ title: '', url: '' });
+          renderChkEditLinks();
+        };
+
+        document.getElementById('chkEditSalvar').onclick = () => {
+          const text = document.getElementById('chkEditTexto').value.trim();
+          if(!text) return toast('A descrição da tarefa é obrigatória.');
+
+          // Limpa links que foram deixados com a URL em branco
+          const validLinks = chkEditLinksTemp.filter(lk => lk.url.trim() !== '');
+
+          const group = chkAlvo.find(g => g.id === chkEditGroupId);
+          if(group) {
+            if(chkEditItemId) {
+              const item = group.items.find(i => i.id === chkEditItemId);
+              if(item) { item.text = text; item.links = validLinks; }
+            } else {
+              group.items.push({ id: uid(), text, links: validLinks, checked: false });
+            }
+            DB.saveChecklist(chkAlvo); renderChecklist(); closeM('mChkEditItem');
+          }
+        };
+
+        // Botão seguro de excluir dentro da edição
+        document.getElementById('chkEditExcluir').onclick = () => {
+          if(!chkEditItemId) return;
+          if(confirm('Tem certeza que deseja excluir esta tarefa de forma permanente?')) {
+            const group = chkAlvo.find(g => g.id === chkEditGroupId);
+            if(group) {
+                group.items = group.items.filter(i => i.id !== chkEditItemId);
+                DB.saveChecklist(chkAlvo); renderChecklist(); closeM('mChkEditItem');
+                toast('Tarefa excluída!');
+            }
+          }
+        };
+
+        document.getElementById('chkAddGroup').onclick = () => {
+          const t = prompt('Nome do novo grupo de tarefas (Ex.: Matutino, Final do Dia):');
+          if(t && t.trim()) { chkAlvo.push({ id: uid(), title: t.trim(), items: [] }); DB.saveChecklist(chkAlvo); renderChecklist(); }
+        };
+
+        document.getElementById('chkReset').onclick = () => {
+          if(confirm('Desmarcar todas as tarefas de todos os grupos?')) { 
+              chkAlvo.forEach(g => g.items.forEach(i => i.checked = false)); 
+              DB.saveChecklist(chkAlvo); renderChecklist(); 
+          }
+        };
+
+        // --- LÓGICA DE EDIÇÃO DE PENDÊNCIAS ---
+        let pendEditId = null;
+        let pendEditPrio = 2; // 1 = Baixa, 2 = Média, 3 = Alta
+        const pendCores = { 1: '#10b981', 2: '#f59e0b', 3: '#ef4444' };
+        const pendTitles = { 1: 'Baixa', 2: 'Média', 3: 'Alta' };
+
+        const updatePendEditUI = () => {
+          const btn = document.getElementById('pendEditPrioBtn');
+          btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="${pendCores[pendEditPrio]}"/></svg>`;
+          document.getElementById('pendEditPrioLabel').textContent = pendTitles[pendEditPrio];
+        };
+
+        document.getElementById('pendEditPrioBtn').onclick = () => {
+          pendEditPrio = pendEditPrio === 3 ? 1 : pendEditPrio + 1;
+          updatePendEditUI();
+        };
+
+        window.abrirPendEdit = (id = null, text = '', prio = 2) => {
+          pendEditId = id; pendEditPrio = prio;
+          document.getElementById('pendEditTitle').textContent = id ? 'Editar Pendência' : 'Nova Pendência';
+          document.getElementById('pendEditTexto').value = text;
+          updatePendEditUI(); openM('mPendEdit');
+          setTimeout(() => document.getElementById('pendEditTexto').focus(), 150);
+        };
+
+        document.getElementById('pendAdd').onclick = () => abrirPendEdit(null, '', 2);
+
+        document.getElementById('pendEditSalvar').onclick = () => {
+          const text = document.getElementById('pendEditTexto').value.trim();
+          if(!text) return toast('Digite a descrição da pendência.');
+          
+          if(pendEditId) { const p = pendAlvo.find(x => x.id === pendEditId); if(p) { p.text = text; p.prio = pendEditPrio; } } 
+          else { pendAlvo.push({ id: uid(), text: text, prio: pendEditPrio }); }
+          
+          DB.savePendencias(pendAlvo); renderPendencias(); closeM('mPendEdit');
+        };
+
+        // --- LÓGICA DE AVISOS EXCEPCIONAIS ---
+        document.getElementById('excData').onchange = () => {
+          excDataAtual = document.getElementById('excData').value;
+          const txt = document.getElementById('excTexto'); const btnExcluir = document.getElementById('excExcluir');
+          
+          if(!excDataAtual) { document.getElementById('excEmpty').style.display = 'block'; txt.style.display = 'none'; btnExcluir.style.display = 'none'; document.getElementById('excStatus').textContent = ''; return; }
+
+          document.getElementById('excEmpty').style.display = 'none'; txt.style.display = 'block';
+          const hasContent = !!excepAlvo[excDataAtual]; txt.value = excepAlvo[excDataAtual] || '';
+          
+          if (hasContent) { txt.style.background = '#fef08a'; txt.style.color = '#854d0e'; txt.style.borderColor = '#eab308'; btnExcluir.style.display = 'block'; } 
+          else { txt.style.background = '#fff'; txt.style.color = 'var(--ink)'; txt.style.borderColor = 'var(--line2)'; btnExcluir.style.display = 'none'; }
+          
+          document.getElementById('excStatus').textContent = 'Pronto para digitar (salvamento automático)';
+        };
+        
+        document.getElementById('excTexto').oninput = () => {
+          if(!excDataAtual) return;
+          const txt = document.getElementById('excTexto'); const btnExcluir = document.getElementById('excExcluir'); const val = txt.value.trim();
+          
+          if(val) { excepAlvo[excDataAtual] = val; txt.style.background = '#fef08a'; txt.style.color = '#854d0e'; txt.style.borderColor = '#eab308'; btnExcluir.style.display = 'block'; } 
+          else { delete excepAlvo[excDataAtual]; txt.style.background = '#fff'; txt.style.color = 'var(--ink)'; txt.style.borderColor = 'var(--line2)'; btnExcluir.style.display = 'none'; }
+          
+          document.getElementById('excStatus').textContent = 'Salvando...'; clearTimeout(window._excSaveT);
+          window._excSaveT = setTimeout(() => { DB.saveExcep(excepAlvo); document.getElementById('excStatus').innerHTML = '<span style="color:#10b981; font-weight:700;">Salvo agora mesmo ✓</span>'; }, 600);
+        };
+
+        document.getElementById('excExcluir').onclick = () => {
+          if(!excDataAtual) return;
+          if(confirm('Tem certeza que deseja excluir o aviso do dia ' + isoParaBR(excDataAtual) + '?')) { delete excepAlvo[excDataAtual]; const txt = document.getElementById('excTexto'); txt.value = ''; txt.style.background = '#fff'; txt.style.color = 'var(--ink)'; txt.style.borderColor = 'var(--line2)'; document.getElementById('excExcluir').style.display = 'none'; DB.saveExcep(excepAlvo); document.getElementById('excStatus').textContent = 'Aviso excluído.'; toast('Aviso excluído com sucesso!'); }
+        };
+      }
+
+let chkAlvo = [], pendAlvo = [], excepAlvo = {}, excDataAtual = '';
+
+    window.abrirChecklist = async () => {
+      initNovosModais(); 
+      let data = await DB.getChecklist();
+      
+      // Conversão de segurança: Migra do formato antigo (texto simples ou 1 link) para o formato com grupo e múltiplos links
+      if (data && data.length > 0) {
+          if (data[0].text !== undefined) {
+              data = [{ id: uid(), title: 'Atividades Gerais', items: data }];
+          }
+          data.forEach(g => {
+            if (g.items) {
+                g.items.forEach(i => {
+                  if (!i.links) {
+                      i.links = [];
+                      const oldUrl = i.linkUrl || i.link;
+                      if (oldUrl) i.links.push({ title: i.linkTitle || 'Acessar', url: oldUrl });
+                  }
+                });
+            }
+          });
+          await DB.saveChecklist(data);
+      }
+
+      // Preset inicial caso não exista nada salvo
+      if (!data || data.length === 0) {
+          data = [{
+              id: uid(), title: 'Checklist Diário',
+              items: [
+                  {id:uid(), text:'Conferir HORÁRIOS e SALAS VAZIAS', links:[], checked:false},
+                  {id:uid(), text:'Escalar reserva nos horários', links:[], checked:false}
+              ]
+          }];
+          await DB.saveChecklist(data);
+      }
+      
+      chkAlvo = data;
+      renderChecklist(); 
+      openM('mChecklist');
+    };
+
+    function renderChecklist() {
+      const box = document.getElementById('chkList'); box.innerHTML = '';
+      if(!chkAlvo.length) { box.innerHTML = '<div class="faint" style="text-align:center; padding:12px;">Nenhum grupo de tarefas cadastrado.</div>'; return; }
+
+      chkAlvo.forEach((g, gIdx) => {
+        // Cabeçalho do Grupo
+        const gHead = document.createElement('div');
+        gHead.className = 'row between';
+        gHead.style.cssText = 'margin-top:16px; margin-bottom:8px; padding-bottom:6px; border-bottom:2px solid var(--line); align-items:center;';
+        gHead.innerHTML = `
+          <div style="font-weight:800; font-size:15px; color:var(--brand); display:flex; align-items:center; gap:6px;">
+            ${esc(g.title)}
+            <button class="btn icon-btn" title="Editar Grupo" style="padding:4px; color:var(--muted); border:0; background:transparent;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          </div>
+          <div class="row" style="gap:6px;">
+            <button class="btn btn-sm" title="Adicionar Tarefa">+ Tarefa</button>
+            <button class="btn icon-btn" title="Excluir Grupo" style="padding:4px; color:#ef4444; border:0; background:transparent;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+          </div>
+        `;
+
+        gHead.querySelector('button[title="Editar Grupo"]').onclick = () => {
+            const nt = prompt('Novo nome para o grupo:', g.title);
+            if(nt && nt.trim()) { g.title = nt.trim(); DB.saveChecklist(chkAlvo); renderChecklist(); }
+        };
+        gHead.querySelector('button[title="Excluir Grupo"]').onclick = () => {
+            if(confirm(`Excluir o grupo "${g.title}" e todas as suas tarefas?`)) {
+              chkAlvo.splice(gIdx, 1); DB.saveChecklist(chkAlvo); renderChecklist();
+            }
+        };
+        gHead.querySelector('button[title="Adicionar Tarefa"]').onclick = () => {
+            abrirChkEditItem(g.id);
+        };
+
+        box.appendChild(gHead);
+
+        // Tarefas do Grupo
+        if(!g.items || !g.items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'faint'; empty.style.cssText = 'font-size:12px; margin-bottom:12px;'; 
+            empty.textContent = 'Nenhuma tarefa neste grupo.';
+            box.appendChild(empty);
+        } else {
+            g.items.forEach((c) => {
+              const row = document.createElement('div'); row.className = 'row between';
+              
+              const bgColor = c.checked ? '#dcfce7' : '#fef9c3'; // Troquei para #fef9c3 (amarelo bem claro)
+              const borderColor = c.checked ? '#bbf7d0' : '#fde68a';
+              const textColor = c.checked ? '#15803d' : '#854d0e';
+              const textStrike = c.checked ? 'text-decoration:line-through; opacity:0.7;' : '';
+
+              row.style.cssText = `padding:8px 12px; background:${bgColor}; border:1px solid ${borderColor}; border-radius:8px; transition:0.2s; margin-bottom:6px;`;
+
+              // Renderiza TODOS os botões de links configurados para esta tarefa
+              let linksHtml = '';
+              if (c.links && c.links.length > 0) {
+                linksHtml = c.links.map(lk => `<a href="${esc(lk.url)}" target="_blank" class="btn btn-sm" style="color:#0ea5e9; border-color:#bae6fd; background:#e0f2fe; text-decoration:none; padding:4px 8px; font-size:11.5px; margin-right:4px;" onclick="event.stopPropagation()">${esc(lk.title || 'Acessar')}</a>`).join('');
+              }
+
+              // Sem o botão de exclusão aqui!
+              row.innerHTML = `
+                <label class="row" style="flex:1; cursor:pointer; gap:10px; min-width:0;">
+                  <input type="checkbox" style="width:16px; height:16px; accent-color:#15803d; flex:none; cursor:pointer;" ${c.checked ? 'checked' : ''}>
+                  <span style="font-size:13.5px; font-weight:700; color:${textColor}; ${textStrike} line-height:1.3; word-break:break-word;">${esc(c.text)}</span>
+                </label>
+                <div class="row" style="gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+                  ${linksHtml}
+                  <button class="btn icon-btn btn-sm" title="Editar Tarefa" style="color:${c.checked?'#166534':'#92400e'}; border:0; background:transparent;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                </div>
+              `;
+
+              const cb = row.querySelector('input');
+              cb.onchange = () => { c.checked = cb.checked; DB.saveChecklist(chkAlvo); renderChecklist(); };
+
+              row.querySelector('button[title="Editar Tarefa"]').onclick = (ev) => {
+                  ev.stopPropagation();
+                  abrirChkEditItem(g.id, c.id, c.text, c.links);
+              };
+
+              box.appendChild(row);
+            });
+        }
+      });
+    }
+
+window.abrirPendencias = async () => { initNovosModais(); pendAlvo = await DB.getPendencias(); renderPendencias(); openM('mPendencias'); };
+
+function renderPendencias() {
+  const box = document.getElementById('pendList'); box.innerHTML = '';
+  if(!pendAlvo.length) { box.innerHTML = '<div class="faint" style="text-align:center; padding:12px;">Nenhuma pendência na fila.</div>'; return; }
+  
+  // Ordena pelas prioridades 3(Alta) > 2(Média) > 1(Baixa)
+  pendAlvo.sort((a,b) => b.prio - a.prio);
+  
+  pendAlvo.forEach((p, i) => {
+     const row = document.createElement('div'); row.className = 'row between';
+     row.style.cssText = 'padding:10px 12px; background:#fff; border:1px solid var(--line); border-radius:8px;';
+     const prioLabel = p.prio === 3 ? 'Alta' : (p.prio === 2 ? 'Média' : 'Baixa');
+     
+     row.innerHTML = `
+       <div class="row" style="flex:1;"><span class="prio-dot prio-${p.prio}" title="Prioridade ${prioLabel}"></span><span style="font-size:14px; font-weight:600;">${esc(p.text)}</span></div>
+       <div class="row" style="gap:4px;">
+         <button class="btn icon-btn btn-sm" title="Editar" style="color:var(--brand); border:0; background:transparent;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+         <button class="btn icon-btn btn-sm" title="Concluir/Excluir" style="color:#10b981; border:0; background:transparent;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>
+       </div>
+     `;
+     
+     // Chamada da nova função do mini-modal
+     row.querySelector('button[title="Editar"]').onclick = () => {
+        abrirPendEdit(p.id, p.text, p.prio);
+     };
+     
+     row.querySelector('button[title="Concluir/Excluir"]').onclick = () => { 
+        pendAlvo.splice(i, 1); 
+        DB.savePendencias(pendAlvo); 
+        renderPendencias(); 
+        toast('Pendência concluída!'); 
+     };
+     box.appendChild(row);
+  });
+}
+
+window.abrirExcep = async () => {
+  initNovosModais(); excepAlvo = await DB.getExcep();
+  
+  // Reseta a interface do modal ao abrir
+  document.getElementById('excData').value = '';
+  document.getElementById('excTexto').style.display = 'none'; 
+  document.getElementById('excExcluir').style.display = 'none';
+  document.getElementById('excEmpty').style.display = 'block'; 
+  document.getElementById('excStatus').textContent = '';
+  
+  openM('mExcep');
+};
+
 
 /* ============================================================
    ROTEADOR

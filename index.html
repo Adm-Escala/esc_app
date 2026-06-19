@@ -4505,6 +4505,17 @@ function procIr(id){ closeM('mProcBusca'); abrirPauta(id); }
 function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$/); if(m) renderPauta(m[1]); else { document.body.classList.remove('so-com'); renderHome(); } }
 //window.addEventListener('hashchange',route);
 
+ document.addEventListener('keydown', function(e){
+  const f9 = (e.key === 'F9');
+  const ctrlShiftL = ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'L' || e.key === 'l'));
+  if(f9 || ctrlShiftL){
+    e.preventDefault();
+    if(firebase.auth().currentUser && confirm('Deseja sair (deslogar) do sistema?')){
+      firebase.auth().signOut();
+    }
+  }
+});
+ 
 /* carrega a biblioteca de Excel em segundo plano (só é usada na importação do PJe) */
 (function(){ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onerror=()=>{}; document.head.appendChild(s); })();
 

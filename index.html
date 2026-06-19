@@ -198,7 +198,7 @@
   #mEquipe .seg.mini button{ padding:6px 11px; font-size:12.5px; }
   #mEquipe .seg.dias button.active{ background:var(--brand); color:#fff; }
   #mEquipe .tag{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:2px 8px; border-radius:999px; }
-  #mEquipe .tag.servidor{ background:#f0fdfa; color:#0d9488; } #mEquipe .tag.estagiario{ background:#f5f3ff; color:#7c3aed; } #mEquipe .tag.voluntario{ background:#fffbeb; color:#d97706; }
+  #mEquipe .tag.servidor{ background:#f0fdfa; color:#0d9488; } #mEquipe .tag.estagiario{ background:#f5f3ff; color:#7c3aed; } #mEquipe .tag.voluntario{ background:#fffbeb; color:#d97706; } #mEquipe .tag.adm, #mDiaEdit .de-tag.adm { background:#f1f5f9; color:#475569; border: 1px solid #cbd5e1; }
   #mEquipe .hpill{ display:inline-block; background:#eef2ff; color:#4338ca; border:1px solid #e0e7ff; font-weight:700; font-size:11.5px; padding:1px 7px; border-radius:6px; margin:1px 3px 1px 0; font-variant-numeric:tabular-nums; }
   #mEquipe .totpill{ display:inline-block; background:#ecfdf5; color:#15803d; border:1px solid #bbf7d0; font-weight:800; font-size:11.5px; padding:1px 9px; border-radius:999px; white-space:nowrap; }
   #mEquipe .diab{ display:inline-block; background:#0f172a; color:#fff; font-weight:800; font-size:10.5px; padding:2px 9px; border-radius:6px; margin-right:7px; min-width:38px; text-align:center; }
@@ -523,7 +523,7 @@
   </div>
   <div class="modal-body">
     <div class="row between wrapf" style="margin-bottom:10px;gap:10px;">
-      <div class="seg mini" id="eqF1"><button data-t="" class="active">Todos</button><button data-t="servidor">Servidores</button><button data-t="estagiario">Estagiários</button><button data-t="voluntario">Voluntários</button></div>
+      <div class="seg mini" id="eqF1"><button data-t="" class="active">Todos</button><button data-t="servidor">Servidores</button><button data-t="estagiario">Estagiários</button><button data-t="voluntario">Voluntários</button><button data-t="adm">ADM</button></div>
       <div class="row" style="gap:8px; flex-wrap:nowrap;">
         <input type="text" id="eqBusca" class="input" placeholder="Buscar por nome..." style="padding:6px 10px; font-size:13px; max-width:160px; width:100%;">
         <button class="btn btn-primary icon-btn" id="eqAdd" title="Adicionar pessoa"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="M19 16v6"/><path d="M16 19h6"/></svg></button>
@@ -536,7 +536,13 @@
     <div class="card" style="overflow:hidden;"><table class="teq"><thead><tr><th style="width:26%;" class="sortable" id="thEqNome" title="Ordenar por Nome">Nome ↕</th><th style="width:120px;" class="sortable" id="thEqTipo" title="Ordenar por Tipo">Tipo ↕</th><th id="eqColDisp">Disponibilidade</th><th style="text-align:right;">Ações</th></tr></thead><tbody id="eqBody"></tbody></table></div>
     <div id="eqStat" class="row" style="gap:8px;margin-top:12px;"></div>
   </div>
-  <div class="modal-foot"><div class="row between" style="gap:8px;flex-wrap:wrap;"><span class="faint" style="font-size:12px;">As alterações são salvas no seu navegador.</span><div class="row"><button class="btn" id="eqFechar">Fechar</button><button class="btn btn-primary" id="eqSalvar">Salvar</button></div></div></div>
+      <div class="modal-foot"><div class="row" style="width:100%; justify-content:space-between;">
+      <button class="btn btn-sm" id="eqBtnSup" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">Grade de Supervisões</button>
+      <div class="row">
+        <button class="btn" id="eqFechar">Fechar</button>
+        <button class="btn btn-primary" id="eqSalvar">Salvar</button>
+      </div>
+    </div></div>
 </div></div>
 
 <div class="modal-bg keep-open" id="mPessoaEdit" style="z-index: 9995;">
@@ -684,7 +690,19 @@
       <button class="btn icon-btn" id="deX"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="hint2" style="margin-top:12px;">Marque <b>eventualidades</b> (férias, prova, atestado, folga, afastamento) e ajuste os <b>horários só deste dia</b>. <b>Prova</b> reduz o limite pela metade. Tudo é salvo automaticamente e reflete na grade acima.</div>
-    <div class="seg mini" id="deF" style="margin-top:10px;width:fit-content;"><button data-t="" class="active">Todos</button><button data-t="servidor">Servidores</button><button data-t="estagiario">Estagiários</button><button data-t="voluntario">Voluntários</button></div>
+      <div class="row between wrapf" style="margin-top:10px; gap:10px;">
+        <div class="seg mini" id="deF" style="width:fit-content;">
+          <button data-t="" class="active">Todos</button>
+          <button data-t="servidor">Servidores</button>
+          <button data-t="estagiario">Estagiários</button>
+          <button data-t="voluntario">Voluntários</button>
+          <button data-t="adm">ADM</button>
+        </div>
+        <label class="row" style="cursor:pointer; font-size:13px; font-weight:600; color:var(--muted);">
+          <input type="checkbox" id="deChkAusentes" style="width:16px; height:16px; accent-color:var(--brand);"> 
+          Somente com observações
+        </label>
+      </div>
   </div>
   <div class="modal-body" id="deBody"><div id="deList"></div></div>
   <div class="modal-foot"><div class="row between" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="deReset" style="color:#ef4444;border-color:#fecaca;">Limpar ajustes do dia</button><button class="btn btn-primary" id="deFechar">Concluir</button></div></div>
@@ -952,7 +970,7 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.12</h1></div>
+      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.13</h1></div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" onclick="abrirProcBusca()" title="Procurar um processo em todas as pautas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span class="hide-sm">Processo</span></button>
@@ -1505,8 +1523,8 @@ document.getElementById('confCancelar').onclick=()=>{ closeM('mConfirm'); confCb
 let eqTimes=[13,14,15,16,17,18];
 const EQDIAS=['Seg','Ter','Qua','Qui','Sex'];
 const EQDIA_NOME={Seg:'Segunda',Ter:'Terça',Qua:'Quarta',Qui:'Quinta',Sex:'Sexta'};
-const EQRANK={servidor:0,estagiario:1,voluntario:2};
-const eqCap=s=>({servidor:'Servidor',estagiario:'Estagiário',voluntario:'Voluntário'}[s]||s);
+const EQRANK={servidor:0,estagiario:1,voluntario:2,adm:3}; // 'adm' tem valor maior para ir naturalmente para o final da lista no Equipe do Dia
+const eqCap=s=>({servidor:'Servidor',estagiario:'Estagiário',voluntario:'Voluntário',adm:'Administrativo'}[s]||s);
 const eqFmtH=h=>h+'h';
 const eqOrdenaDias=a=>a.sort((x,y)=>EQDIAS.indexOf(x)-EQDIAS.indexOf(y));
 let eqAlvo=[], eqDirty=false, eqF1='', eqDiaF='', eqExp=null;
@@ -1520,6 +1538,8 @@ function eqEnsureDefaults(p){
   if(p.tipo==='servidor'){ if(!p.modo) p.modo='padrao'; if(!p.slots||!p.slots.length) p.slots=[13,14,15,16,17]; if(p.grade) eqEnsureGrade(p); }
   if(p.tipo==='estagiario'){ if(!p.modo) p.modo='padrao'; if(!p.inicio) p.inicio=13; if(!p.fim) p.fim=17; if(!p.npj) p.npj=[]; if(p.modo==='personalizado') eqEnsureGrade(p); }
   if(p.tipo==='voluntario'){ if(!p.grade){ p.grade=eqGradeVazia(); if(p.dias&&p.slots) p.dias.forEach(d=>{ p.grade[d]=p.slots.slice(); }); } eqEnsureGrade(p); }
+  // --- ADICIONE ESTA LINHA ---
+  if(p.tipo==='adm'){ if(!p.cargo) p.cargo='servidor'; if(!p.subequipe) p.subequipe='geral'; p.grade=eqGradeVazia(); p.slots=[]; p.npj=[]; }
 }
 function eqSlotsNoDia(p,dia){
   if(p.tipo==='servidor'){ if((p.modo||'padrao')==='padrao') return p.slots.slice(); eqEnsureGrade(p); return (p.grade[dia]||[]).slice(); }
@@ -1530,6 +1550,12 @@ const eqEhNPJ=(p,dia)=> p.tipo==='estagiario' && p.npj.includes(dia);
 function eqPills(slots){ return slots.map(t=>`<span class="hpill">${t}h</span>`).join(''); }
 function eqTot(n){ return `<span class="totpill">${n} aud</span>`; }
 function eqDispHTML(p,dia){
+  
+  if(p.tipo === 'adm') {
+    const subNome = { cartorio: 'Cartório', gabinete: 'Gabinete', geral: 'Geral' }[p.subequipe] || p.subequipe || 'Geral';
+    return `<span class="faint" style="font-size:12px; font-weight:600;">Atuação Administrativa (${esc(subNome)}) - ${p.cargo==='estagiario'?'Estg.':'Serv.'}</span>`;
+  }
+
   if(dia){
     if(eqEhNPJ(p,dia)) return '<span class="npjnote">NPJ — não escalado nesse dia</span>';
     const s=eqSlotsNoDia(p,dia); if(!s.length) return '<span class="faint">— indisponível —</span>';
@@ -1550,7 +1576,7 @@ function eqGradeMatrix(p){
 }
 function eqRenderEditor(box,p,onChange){
   eqEnsureDefaults(p);
-  const seg='<div class="seg" style="margin-top:12px;">'+['servidor','estagiario','voluntario'].map(t=>`<button data-tipo="${t}" class="${p.tipo===t?'active':''}">${eqCap(t)}</button>`).join('')+'</div>';
+  const seg='<div class="seg" style="margin-top:12px;">'+['servidor','estagiario','voluntario','adm'].map(t=>`<button data-tipo="${t}" class="${p.tipo===t?'active':''}">${eqCap(t)}</button>`).join('')+'</div>';
   let body='';
   if(p.tipo==='servidor'){
     const modo=p.modo||'padrao';
@@ -1572,9 +1598,34 @@ function eqRenderEditor(box,p,onChange){
     } else {
       body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que o estagiário atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
     }
-  } else {
+  }  else if(p.tipo==='adm'){
+    body=`
+      <div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line);">
+        <label class="fld" style="flex:1; min-width:140px;">Cargo (Vínculo)
+          <select class="sel" data-cargo>
+            <option value="servidor" ${p.cargo==='servidor'?'selected':''}>Servidor</option>
+            <option value="estagiario" ${p.cargo==='estagiario'?'selected':''}>Estagiário</option>
+          </select>
+        </label>
+        <label class="fld" style="flex:1; min-width:140px;">Sub-equipe
+          <select class="sel" data-subequipe>
+            <option value="cartorio" ${p.subequipe==='cartorio'?'selected':''}>Cartório</option>
+            <option value="gabinete" ${p.subequipe==='gabinete'?'selected':''}>Gabinete</option>
+            <option value="geral" ${p.subequipe==='geral'?'selected':''}>Geral</option>
+          </select>
+        </label>
+      </div>
+      <div class="hint ok" style="margin-top:10px;">A equipe administrativa não realiza sessões. Eles aparecerão no final da <b>Equipe do Dia</b> para controle de frequência/ausência em tarefas internas.</div>
+    `;
+  }
+  
+  else {
     body=`<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Voluntário tem <b>horário flexível</b> — marque, em cada dia, os horários que pode atender.</div>${eqGradeMatrix(p)}</div>`;
   }
+
+  const cSel = box.querySelector('[data-cargo]'); if(cSel) cSel.onchange = () => { p.cargo = cSel.value; re(); onChange&&onChange(); };
+  const sSel = box.querySelector('[data-subequipe]'); if(sSel) sSel.onchange = () => { p.subequipe = sSel.value; re(); onChange&&onChange(); };
+
   box.innerHTML=`<input data-nome value="${esc(p.nome)}" placeholder="Nome da pessoa">${seg}<div class="ed-body">${body}</div>`;
   const re=()=>eqRenderEditor(box,p,onChange);
   box.querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ p.tipo=b.dataset.tipo; eqEnsureDefaults(p); re(); onChange&&onChange(); });
@@ -1627,11 +1678,12 @@ function eqRender() {
   
   // Atualizar Contadores Dinâmicos das Abas
   const fBtns = document.querySelectorAll('#eqF1 button');
-  if (fBtns.length === 4) {
+  if (fBtns.length === 5) {
     fBtns[0].textContent = `Todos (${eqAlvo.length})`;
     fBtns[1].textContent = `Servidores (${eqAlvo.filter(p=>p.tipo==='servidor').length})`;
     fBtns[2].textContent = `Estagiários (${eqAlvo.filter(p=>p.tipo==='estagiario').length})`;
     fBtns[3].textContent = `Voluntários (${eqAlvo.filter(p=>p.tipo==='voluntario').length})`;
+    fBtns[4].textContent = `ADM (${eqAlvo.filter(p=>p.tipo==='adm').length})`;
   }
 
   // Atualizar Setas de Ordenação
@@ -1688,7 +1740,7 @@ function eqRender() {
   });
   eqRenderStat();
 }
-function eqRenderStat(){ const s=document.getElementById('eqStat'); const c=t=>eqAlvo.filter(p=>p.tipo===t).length; s.innerHTML=`<div class="eqstat"><div class="n">${eqAlvo.length}</div><div class="faint" style="font-size:12px;">na equipe</div></div><div class="eqstat"><div class="n" style="color:#0d9488">${c('servidor')}</div><div class="faint" style="font-size:12px;">servidores</div></div><div class="eqstat"><div class="n" style="color:#7c3aed">${c('estagiario')}</div><div class="faint" style="font-size:12px;">estagiários</div></div><div class="eqstat"><div class="n" style="color:#d97706">${c('voluntario')}</div><div class="faint" style="font-size:12px;">voluntários</div></div>`; }
+function eqRenderStat(){ const s=document.getElementById('eqStat'); const c=t=>eqAlvo.filter(p=>p.tipo===t).length; s.innerHTML=`<div class="eqstat"><div class="n">${eqAlvo.length}</div><div class="faint" style="font-size:12px;">na equipe</div></div><div class="eqstat"><div class="n" style="color:#0d9488">${c('servidor')}</div><div class="faint" style="font-size:12px;">servidores</div></div><div class="eqstat"><div class="n" style="color:#7c3aed">${c('estagiario')}</div><div class="faint" style="font-size:12px;">estagiários</div></div><div class="eqstat"><div class="n" style="color:#d97706">${c('voluntario')}</div><div class="faint" style="font-size:12px;">voluntários</div></div><div class="eqstat"><div class="n" style="color:#475569">${c('adm')}</div><div class="faint" style="font-size:12px;">adm</div></div>`; }
 
 let pessoaEditando = null;
 let pessoaIsNova = false;
@@ -1770,6 +1822,16 @@ document.getElementById('eqAdd').onclick = () => abrirModalPessoa(null);
 document.getElementById('eqX').onclick=()=>saidaEquipe(eqFecharTudo);
 document.getElementById('eqFechar').onclick=()=>saidaEquipe(eqFecharTudo);
 document.getElementById('eqSalvar').onclick=async()=>{ await eqSalvar(); closeM('mEquipe'); };
+
+const btnSupEquipe = document.getElementById('eqBtnSup');
+if (btnSupEquipe) {
+  btnSupEquipe.onclick = () => {
+    saidaEquipe(() => {
+      eqFecharTudo();
+      abrirGerenciarSup();
+    });
+  };
+}
 
 /* ============================================================
    ESPELHO DA PAUTA
@@ -2720,6 +2782,11 @@ function abrirDiaEdit(){
   const dia=deDia(); const sub=document.getElementById('deSub');
   sub.textContent = (dia&&DIA_FULL[dia]? 'Pauta de '+DIA_FULL[dia]+' — ' : '') + 'ajustes valem só para esta pauta; não altera o cadastro da equipe.';
   deF=''; document.querySelectorAll('#deF button').forEach(x=>x.classList.toggle('active', x.dataset.t===''));
+  
+  deFilterAusentes = false;
+  const chk = document.getElementById('deChkAusentes');
+  if(chk) chk.checked = false;
+  
   deRender(); openM('mDiaEdit');
 }
 function deSave(reRender){ agendaSalvar(); if(window._renderGabarito) window._renderGabarito(); if(reRender!==false) deRender(); }
@@ -2745,21 +2812,34 @@ function deRowHTML(pe,isExtra){
   const btnA = `<label style="cursor:pointer; font-size:12px; font-weight:800; color:var(--muted); display:flex; align-items:center; gap:4px;" title="Afastamento"><input type="checkbox" data-dequick="${pe.id}:afast" ${ev==='afast'?'checked':''} style="accent-color:var(--brand); width:14px; height:14px; cursor:pointer;">A</label>`;
   const quickToggles = `<div class="row" style="gap:12px; margin-right:8px; background:#fff; padding:6px 10px; border-radius:8px; border:1px solid var(--line2); box-shadow:0 1px 2px rgba(0,0,0,0.05);">${btnP}${btnF}${btnA}</div>`;
 
-  const hrow = off? '<span class="faint" style="font-size:12px;">sem audiências hoje</span>' :
-    '<div class="hrow">'+DE_TIMES.map(h=>`<button class="hbtn ${horas.includes(h)?'on':''}" data-deh="${pe.id}:${h}">${h}h</button>`).join('')+'</div>';
+  const isAdm = pe.tipo === 'adm';
+  let hrow = '';
+  if (isAdm) {
+    const subNome = { cartorio: 'Cartório', gabinete: 'Gabinete', geral: 'Geral' }[pe.subequipe] || pe.subequipe || 'Geral';
+    hrow = `<span class="faint" style="font-size:12.5px; font-weight: 600; margin-left: 8px;">Adm (${pe.cargo === 'estagiario' ? 'Estg.' : 'Serv.'} - ${esc(subNome)})</span>`;
+  } else {
+    hrow = off? '<span class="faint" style="font-size:12px;">sem audiências hoje</span>' : '<div class="hrow">'+DE_TIMES.map(h=>`<button class="hbtn ${horas.includes(h)?'on':''}" data-deh="${pe.id}:${h}">${h}h</button>`).join('')+'</div>';
+  }
+  
   const nome = isExtra? `<span class="de-nome"><input data-dename="${pe.id}" value="${esc(pe.nome)}" placeholder="Nome"></span>` : `<span class="de-nome">${esc(pe.nome)||'<span class="faint">sem nome</span>'}</span>`;
-  const tipoSel = isExtra? `<select class="ev" data-detipo="${pe.id}">${['servidor','estagiario','voluntario'].map(t=>`<option value="${t}" ${pe.tipo===t?'selected':''}>${eqCap(t)}</option>`).join('')}</select>` : `<span class="de-tag ${pe.tipo}">${eqCap(pe.tipo)}</span>`;
+  const tipoSel = isExtra? `<select class="ev" data-detipo="${pe.id}">${['servidor','estagiario','voluntario','adm'].map(t=>`<option value="${t}" ${pe.tipo===t?'selected':''}>${eqCap(t)}</option>`).join('')}</select>` : `<span class="de-tag ${pe.tipo}">${eqCap(pe.tipo)}</span>`;
+
   const rem = isExtra? `<button class="xrem" data-derem="${pe.id}">remover</button>` : '';
   
   return `<div class="de-row ${off?'off':''}" style="${bgStyle}"><div class="de-id">${tipoSel}${nome}</div><div class="de-ctl">${quickToggles}<select class="ev ${off?'on':''}" data-deev="${pe.id}">${opts}</select>${hrow}${rem}</div></div>`;
 }
 
-let deF='';
+let deF='', deFilterAusentes=false;
 
 function deRender(){
   const dia=deDia(); const list=document.getElementById('deList'); if(!list) return;
-  let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!=='Dom' && eqSlotsNoDia(pe,dia).length>0 );
+  // SUBSTITUA A LINHA DO LET BASE:
+let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!=='Dom' && (eqSlotsNoDia(pe,dia).length>0 || pe.tipo === 'adm') );
   if(deF) base=base.filter(pe=>pe.tipo===deF);
+
+  if(deFilterAusentes) {
+    base = base.filter(pe => pautaAtual.dia.aus[pe.id] && pautaAtual.dia.aus[pe.id] !== '');
+  }
  
   base = base.slice().sort((a,b) => {
     if (a.tipo !== b.tipo) return EQRANK[a.tipo] - EQRANK[b.tipo]; // Agrupa por cargos
@@ -2770,7 +2850,17 @@ function deRender(){
   let html='';
   html+=`<div class="de-sec">Equipe disponível ${dia&&DIA_FULL[dia]?'· '+DIA_FULL[dia]:''}${deF?' · '+eqCap(deF)+'s':''}</div>`;
   if(!base.length) html+='<div class="faint" style="font-size:13px;padding:4px 2px;">Ninguém'+(deF?' deste tipo':' da equipe')+' disponível neste dia. Você pode incluir alguém abaixo.</div>';
-  base.forEach(pe=>{ html+=deRowHTML(pe,false); });
+  
+    let tipoAtualBase = null;
+    base.forEach(pe => {
+        // Se o tipo mudou em relação ao anterior e não estamos usando os filtros do topo (!deF)
+        if (tipoAtualBase !== null && tipoAtualBase !== pe.tipo && !deF) {
+          html += '<hr style="border:0; height:20px; background:var(--line2); border-radius:999px; margin:16px 4px; opacity:0.8;">';
+        }
+        tipoAtualBase = pe.tipo;
+        html += deRowHTML(pe, false);
+      });
+
   html+='<div class="de-sec">Incluídos só para hoje <button class="btn btn-sm" id="deAdd" style="text-transform:none;letter-spacing:0;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar pessoa</button></div>';
   let extra=(pautaAtual.dia.extra||[]); if(deF) extra=extra.filter(pe=>pe.tipo===deF);
   if(!extra.length) html+='<div class="faint" style="font-size:13px;padding:4px 2px;">Ninguém incluído manualmente'+(deF?' deste tipo':'')+'. Use o botão acima se alguém vai fazer audiência só hoje.</div>';
@@ -2795,10 +2885,34 @@ function deRender(){
   list.querySelectorAll('[data-dename]').forEach(inp=>inp.oninput=()=>{ const pe=(pautaAtual.dia.extra||[]).find(x=>x.id===inp.dataset.dename); if(pe){ pe.nome=inp.value; deSave(false); } });
   list.querySelectorAll('[data-detipo]').forEach(s=>s.onchange=()=>{ const pe=(pautaAtual.dia.extra||[]).find(x=>x.id===s.dataset.detipo); if(pe){ pe.tipo=s.value; deSave(); } });
   list.querySelectorAll('[data-derem]').forEach(b=>b.onclick=()=>{ pautaAtual.dia.extra=(pautaAtual.dia.extra||[]).filter(x=>x.id!==b.dataset.derem); deSave(); });
-  const add=document.getElementById('deAdd'); if(add) add.onclick=()=>{ pautaAtual.dia.extra.push({id:'x'+uid(), nome:'', tipo:(deF||'servidor'), hor:[13,14,15,16,17]}); deSave(); };
+  
+    const add=document.getElementById('deAdd'); 
+    if(add) add.onclick=()=>{ 
+      const novoTipo = deF || 'servidor';
+      const novoItem = { id:'x'+uid(), nome:'', tipo: novoTipo, hor:[13,14,15,16,17] };
+      
+      // Se o filtro ativo for ADM, garante que o objeto nasça com os padrões corretos
+      if(novoTipo === 'adm') {
+        novoItem.cargo = 'servidor';
+        novoItem.subequipe = 'geral';
+      }
+      
+      pautaAtual.dia.extra.push(novoItem); 
+      deSave(); 
+    };
+
 }
 
 document.querySelectorAll('#deF button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#deF button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); deF=b.dataset.t; deRender(); });
+
+const chkAusentes = document.getElementById('deChkAusentes');
+if(chkAusentes) {
+  chkAusentes.onchange = (e) => {
+    deFilterAusentes = e.target.checked;
+    deRender();
+  };
+}
+
 document.getElementById('deX').onclick=()=>closeM('mDiaEdit');
 document.getElementById('deFechar').onclick=()=>closeM('mDiaEdit');
 document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os ajustes do dia (eventualidades, horários e pessoas incluídas)? As marcações da grade são mantidas.')){ pautaAtual.dia.aus={}; pautaAtual.dia.hor={}; pautaAtual.dia.extra=[]; deSave(); toast('Ajustes do dia limpos.'); } };
@@ -4515,7 +4629,7 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
     }
   }
 });
- 
+
 /* carrega a biblioteca de Excel em segundo plano (só é usada na importação do PJe) */
 (function(){ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onerror=()=>{}; document.head.appendChild(s); })();
 

@@ -668,6 +668,13 @@
     </div>
     <button class="btn icon-btn" data-close="mPresence"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
+  <div id="editModeWrap" class="row between" style="margin-top:16px; padding:12px; background:#f1f5f9; border:1px solid var(--line); border-radius:8px;">
+    <div>
+      <div style="font-weight:700; font-size:14px; color:var(--ink);">Modo Desenvolvedor</div>
+      <div class="faint" style="font-size:12px;" id="editModeStatus">Sinalize que está editando o código</div>
+    </div>
+    <label class="sw"><input type="checkbox" id="chkEditSite"><span class="tr"></span></label>
+  </div>
   <div id="presenceList" style="display:flex;flex-direction:column;gap:8px;margin-top:16px;max-height:60vh;overflow-y:auto;padding-right:4px;">
     </div>
 </div></div></div>
@@ -970,7 +977,14 @@ async function renderHome(){
 
   app().innerHTML=`
     <nav class="navbar"><div class="inner">
-      <div class="brand"><svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><h1>Escala Adm - v 1.0.13</h1></div>
+      <div class="brand" style="position:relative;">
+        <div style="position:relative; display:inline-block;">
+          <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <!-- Notch aumentado: width e height passaram de 10px para 16px, top e right reajustados -->
+          <span id="editDot" style="display:none; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="Alguém está editando o código!"></span>
+        </div>
+        <h1>Escala Adm - v 1.0.14</h1>
+      </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
         <button class="btn btn-dark" onclick="abrirProcBusca()" title="Procurar um processo em todas as pautas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span class="hide-sm">Processo</span></button>
@@ -1089,6 +1103,57 @@ async function abrirModalPresence() {
     box.innerHTML = '<div style="color:#ef4444; font-size:13px; text-align:center;">Erro ao carregar dados.</div>';
   }
 }
+
+    // --- CONTROLE DE MODO DESENVOLVEDOR PERSISTENTE (EDIÇÃO DO SITE) ---
+    function initEditingTracker() {
+      const dbRef = firebase.database().ref('/escala_adm/shared/editing_site');
+      const chk = document.getElementById('chkEditSite');
+      const statusTx = document.getElementById('editModeStatus');
+      
+      // Escuta mudanças em tempo real para sincronizar todos os usuários online
+      dbRef.on('value', snap => {
+        const data = snap.val() || { isEditing: false, user: '' };
+        const user = firebase.auth().currentUser;
+        
+        // 1. Atualiza a bolinha vermelha na home
+        const dot = document.getElementById('editDot');
+        if (dot) {
+          dot.style.display = data.isEditing ? 'block' : 'none';
+          if (data.isEditing) dot.title = `Atenção: ${data.user} está editando o código!`;
+        }
+
+        // 2. Atualiza o estado do Toggle dentro do Modal
+        if (chk && statusTx) {
+          chk.checked = data.isEditing;
+          
+          // Se outra pessoa ativou a edição, desabilita a chave para você não sobrescrever por acidente
+          if (data.isEditing && data.user !== user?.email) {
+            statusTx.innerHTML = `<b style="color:#ef4444;">${esc(data.user)}</b> está editando o código`;
+            chk.disabled = true; 
+          } else {
+            statusTx.textContent = data.isEditing ? 'Você está editando o código (sinalização ativa para todos)' : 'Sinalize que está editando o código';
+            chk.disabled = false;
+          }
+        }
+      });
+
+      // Evento de clique para ativar/desativar manualmente
+      if (chk) {
+        chk.onchange = () => {
+          const user = firebase.auth().currentUser;
+          // Se por algum motivo o usuário não estiver logado mas o botão estiver acessível, usa um identificador genérico
+          const userEmail = user ? user.email : 'Desenvolvedor Desconectado';
+          
+          if (chk.checked) {
+            // Salva de forma permanente no Firebase (sem onDisconnect)
+            dbRef.set({ isEditing: true, user: userEmail });
+          } else {
+            // Limpa o registro do banco de dados
+            dbRef.set({ isEditing: false, user: '' });
+          }
+        };
+      }
+    }
 
 function linhaInfo(p){ const status=p.status==='editando'?'<span class="badge b-open">aberta</span>':(audsDe(p)===0?'<span class="badge b-draft">rascunho</span>':''); return {auds:audsDe(p),status}; }
 
@@ -4685,6 +4750,8 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
             });
         });
         // ------------------------------------
+
+        initEditingTracker();
 
         route(); // Inicia o app apenas depois de logado
       } else {

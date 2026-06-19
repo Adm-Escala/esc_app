@@ -986,7 +986,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.0.15</h1>
+        <h1>Escala Adm - v 1.0.16</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -1645,10 +1645,11 @@ function eqRenderEditor(box,p,onChange){
   const seg='<div class="seg" style="margin-top:12px;">'+['servidor','estagiario','voluntario','adm'].map(t=>`<button data-tipo="${t}" class="${p.tipo===t?'active':''}">${eqCap(t)}</button>`).join('')+'</div>';
   let body='';
   if(p.tipo==='servidor'){
+    const rjaHtml = `<div style="margin-bottom:12px;"><label class="fld">Sigla RJA<input type="text" class="input" data-rja value="${esc(p.rja||'')}" placeholder="Ex.: ABC" style="max-width:120px; font-weight:700; text-transform:uppercase;"></label></div>`;
     const modo=p.modo||'padrao';
     const modoSeg='<div class="seg mini" style="width:fit-content;">'+[['padrao','Padrão'],['personalizado','Personalizado']].map(([v,t])=>`<button data-modo="${v}" class="${modo===v?'active':''}">${t}</button>`).join('')+'</div>';
-    if(modo==='padrao') body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Audiências que realiza (todos os dias)</div>'+eqSlotToggles(p.slots)+'</div><div class="hint">Em regra, servidores fazem <b>5 audiências</b> (13h–17h) — todos os dias. Para variar por dia, use <b>Personalizado</b>.</div>';
-    else body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
+    if(modo==='padrao') body=rjaHtml+modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Audiências que realiza (todos os dias)</div>'+eqSlotToggles(p.slots)+'</div><div class="hint">Em regra, servidores fazem <b>5 audiências</b> (13h–17h) — todos os dias. Para variar por dia, use <b>Personalizado</b>.</div>';
+    else body=rjaHtml+modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
   } else if(p.tipo==='estagiario'){
     const modo=p.modo||'padrao';
     const modoSeg='<div class="seg mini" style="width:fit-content;">'+[['padrao','Padrão'],['personalizado','Personalizado']].map(([v,t])=>`<button data-modo="${v}" class="${modo===v?'active':''}">${t}</button>`).join('')+'</div>';
@@ -1666,7 +1667,7 @@ function eqRenderEditor(box,p,onChange){
     }
   }  else if(p.tipo==='adm'){
     body=`
-      <div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line);">
+      <div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line); align-items: flex-end;">
         <label class="fld" style="flex:1; min-width:140px;">Cargo (Vínculo)
           <select class="sel" data-cargo>
             <option value="servidor" ${p.cargo==='servidor'?'selected':''}>Servidor</option>
@@ -1680,6 +1681,9 @@ function eqRenderEditor(box,p,onChange){
             <option value="geral" ${p.subequipe==='geral'?'selected':''}>Geral</option>
           </select>
         </label>
+        <label class="fld" style="width:120px; flex:none;">Sigla RJA
+          <input type="text" class="input" data-rja value="${esc(p.rja||'')}" placeholder="Ex.: ABC" style="font-weight:700; text-transform:uppercase; padding:8px 10px; font-size:13.5px;">
+        </label>
       </div>
       <div class="hint ok" style="margin-top:10px;">A equipe administrativa não realiza sessões. Eles aparecerão no final da <b>Equipe do Dia</b> para controle de frequência/ausência em tarefas internas.</div>
     `;
@@ -1689,13 +1693,15 @@ function eqRenderEditor(box,p,onChange){
     body=`<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Voluntário tem <b>horário flexível</b> — marque, em cada dia, os horários que pode atender.</div>${eqGradeMatrix(p)}</div>`;
   }
 
-  const cSel = box.querySelector('[data-cargo]'); if(cSel) cSel.onchange = () => { p.cargo = cSel.value; re(); onChange&&onChange(); };
-  const sSel = box.querySelector('[data-subequipe]'); if(sSel) sSel.onchange = () => { p.subequipe = sSel.value; re(); onChange&&onChange(); };
-
   box.innerHTML=`<input data-nome value="${esc(p.nome)}" placeholder="Nome da pessoa">${seg}<div class="ed-body">${body}</div>`;
   const re=()=>eqRenderEditor(box,p,onChange);
   box.querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ p.tipo=b.dataset.tipo; eqEnsureDefaults(p); re(); onChange&&onChange(); });
+  
   const nm=box.querySelector('[data-nome]'); nm.oninput=()=>{ p.nome=nm.value; onChange&&onChange(); };
+  const inRja=box.querySelector('[data-rja]'); if(inRja) inRja.oninput=()=>{ p.rja=inRja.value.toUpperCase(); onChange&&onChange(); };
+  const cSel = box.querySelector('[data-cargo]'); if(cSel) cSel.onchange = () => { p.cargo = cSel.value; re(); onChange&&onChange(); };
+  const sSel = box.querySelector('[data-subequipe]'); if(sSel) sSel.onchange = () => { p.subequipe = sSel.value; re(); onChange&&onChange(); };
+  
   box.querySelectorAll('[data-modo]').forEach(b=>b.onclick=()=>{
     p.modo=b.dataset.modo;
     if(p.modo==='personalizado' && !p.grade){
@@ -1847,7 +1853,7 @@ function tentarFecharModalPessoa() {
 document.getElementById('peX').onclick = tentarFecharModalPessoa;
 document.getElementById('peVoltar').onclick = tentarFecharModalPessoa;
 
-document.getElementById('peSalvar').onclick = () => {
+document.getElementById('peSalvar').onclick = async () => {
   if (!pessoaEditando.nome || !pessoaEditando.nome.trim()) { 
     toast('O nome da pessoa não pode ficar vazio.'); 
     return; 
@@ -1861,8 +1867,8 @@ document.getElementById('peSalvar').onclick = () => {
   }
   
   pessoaDirty = false;
-  eqDirty = true; 
   eqRender();
+  await eqSalvar(); // <--- Salva no Firebase imediatamente
   closeM('mPessoaEdit');
 };
 
@@ -2161,15 +2167,56 @@ async function renderPauta(id){
           boxFaltas.innerHTML = '<div style="color:#15803d; background:#ecfdf5; border:1px solid #bbf7d0; padding:12px; border-radius:10px; font-weight:800; text-align:center; font-size:13.5px;">✅ Tudo certo nesta pauta! Todas as sessões ativas possuem conciliador designado.</div>';
         } else {
           horasFaltas.forEach(H => {
-            const qtd = contFaltas[H];
-            const row = document.createElement('div');
-            row.className = 'row between';
-            row.style.cssText = 'padding:8px 14px; background:#fef2f2; border:1px solid #fecaca; border-radius:9px; color:#b91c1c; font-weight:700; font-size:13.5px;';
-            row.innerHTML = `<span>Horário das ${H}h00</span><span class="badge" style="background:#dc2626; color:#fff; font-size:11px; padding:3px 9px;">${qtd} ${qtd === 1 ? 'sessão desatendida' : 'sessões desatendidas'}</span>`;
-            boxFaltas.appendChild(row);
-          });
+          const qtd = contFaltas[H];
+          const row = document.createElement('div');
+          row.className = 'row between';
+          row.style.cssText = 'padding:8px 14px; background:#fef2f2; border:1px solid #fecaca; border-radius:9px; color:#b91c1c; font-weight:700; font-size:13.5px;';
+          row.innerHTML = `<span>Horário das ${H}h00</span><span class="badge" style="background:#dc2626; color:#fff; font-size:11px; padding:3px 9px;">${qtd} ${qtd === 1 ? 'sessão desatendida' : 'sessões desatendidas'}</span>`;
+          boxFaltas.appendChild(row);
+        });
+      }
+
+      // 3) Renderização da Coluna Direita (Abaixo): Tabela de RJA
+      const boxRja = document.getElementById('autoRjaList');
+      if (boxRja) {
+        boxRja.innerHTML = '';
+        const contRja = {};
+        let totalRja = 0;
+        
+        // Passa por todas as sessões e conta as siglas, pulando sessões Canceladas
+        linhasDaPauta(p).forEach(L => {
+          const cel = p.celulas[L.key];
+          if (cel && (cel.proc || '').trim() && chave(cel.res) !== 'CANCELADA' && cel.rja && cel.rja.trim()) {
+             const sigla = cel.rja.toUpperCase().trim();
+             contRja[sigla] = (contRja[sigla] || 0) + 1;
+             totalRja++;
+          }
+        });
+
+        // Ordena por quem tem mais sessões. Se empatar, ordena em ordem alfabética.
+        const rjasOrdenados = Object.keys(contRja).sort((a,b) => contRja[b] - contRja[a] || a.localeCompare(b));
+        
+        if (rjasOrdenados.length === 0) {
+           boxRja.innerHTML = '<div class="faint" style="font-size:13px; text-align:center; padding:10px;">Nenhuma sigla RJA preenchida ainda.</div>';
+        } else {
+           rjasOrdenados.forEach(sigla => {
+             const qtd = contRja[sigla];
+             const row = document.createElement('div');
+             row.className = 'row between';
+             row.style.cssText = 'padding:6px 12px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:8px; color:#0f766e; font-weight:700; font-size:13.5px; margin-bottom:4px;';
+             row.innerHTML = `<span>${esc(sigla)}</span><span class="badge" style="background:#0d9488; color:#fff; font-size:11px; padding:3px 9px;">${qtd}</span>`;
+             boxRja.appendChild(row);
+           });
+           
+           // Adiciona a linha de TOTAL no final
+           const rowTot = document.createElement('div');
+           rowTot.className = 'row between';
+           rowTot.style.cssText = 'padding:6px 12px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; color:var(--ink); font-weight:800; font-size:13.5px; margin-top:4px;';
+           rowTot.innerHTML = `<span>TOTAL</span><span class="badge" style="background:var(--muted); color:#fff; font-size:11px; padding:3px 9px;">${totalRja}</span>`;
+           boxRja.appendChild(rowTot);
         }
       }
+    }
 
   pautaEquipe=(await DB.getEquipe())||[]; pautaEquipe.forEach(eqEnsureDefaults);
   diaInit(p);
@@ -2262,13 +2309,14 @@ async function renderPauta(id){
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c1" checked> 1º Conciliador</label>
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c2" checked> 2º Conciliador</label>
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c3" checked> Coconciliador / Obs</label>
-              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="res"> Resultado</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="rja" checked> RJA</label>
+<label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="res"> Resultado</label>
             </div>
           </div>
         </div>
       </div>
       <div class="card shadow" id="gradeScroll" style="margin-top:16px;overflow:auto;max-height:65vh;">
-        <table class="grade"><thead><tr><th data-col="sala" style="width:120px;">Salas</th><th data-col="hora" style="width:64px;text-align:center;">Horário</th><th data-col="proc">Processo</th><th data-col="vara">Vara de Origem</th><th data-col="c1" style="background:#1e3a8a;">1º Conciliador</th><th data-col="c2" style="background:#14532d;">2º Conciliador</th><th data-col="c3" style="background:#3730a3;min-width:200px;">Coconciliador / Observações</th><th style="width:40px;text-align:center;background:#475569;" title="Trocar conciliadores">🔄</th><th data-col="res" style="background:#92400e;width:150px;">Resultado</th></tr></thead><tbody id="gradeBody"></tbody></table>
+        <table class="grade"><thead><tr><th data-col="sala" style="width:120px;">Salas</th><th data-col="hora" style="width:64px;text-align:center;">Horário</th><th data-col="proc">Processo</th><th data-col="vara">Vara de Origem</th><th data-col="c1" style="background:#1e3a8a;width:160px;">1º Conciliador</th><th data-col="c2" style="background:#14532d;">2º Conciliador</th><th data-col="c3" style="background:#3730a3;min-width:200px;">Coconciliador / Observações</th><th style="width:40px;text-align:center;background:#475569;" title="Trocar conciliadores">🔄</th><th data-col="rja" style="background:#0f766e;width:80px;">RJA</th><th data-col="res" style="background:#92400e;width:150px;">Resultado</th></tr></thead><tbody id="gradeBody"></tbody></table>
       </div>
 
       <div class="card" style="margin-top:16px;padding:18px;">
@@ -2312,6 +2360,14 @@ async function renderPauta(id){
             Audiências sem conciliador
           </div>
           <div id="autoFaltasList" style="display:flex; flex-direction:column; gap:6px;"></div>
+
+          <div style="margin-top: 24px;">
+            <div style="font-weight:800; font-size:16px; margin-bottom:12px; color:#0f766e; display:flex; align-items:center; gap:6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              Tabela de RJA
+            </div>
+            <div id="autoRjaList" style="display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
         </div>
       </div>
 
@@ -2321,6 +2377,7 @@ async function renderPauta(id){
           <div class="row wrapf" style="gap:8px;">
             <button class="btn" id="gabDia"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg> Equipe do dia</button>
             <button class="btn btn-primary" id="gabAuto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg> Escala automática</button>
+            <button class="btn" id="gabRja" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Escalar RJA</button>
             <button class="btn" id="gabLimpar">Limpar</button>
           </div>
         </div>
@@ -2342,9 +2399,17 @@ async function renderPauta(id){
     const tb=document.getElementById('gradeBody'); tb.innerHTML='';
     const vis=linhas.filter(L=>{ if(soCom){ const c=p.celulas[L.key]; if(!(c&&(c.proc||'').trim())) return false; } return passaFiltros(L); });
     const cont={}; vis.forEach(L=>cont[L.sala]=(cont[L.sala]||0)+1);
+    
+    // Filtra todas as siglas RJA de qualquer membro da equipe que a tenha preenchido
+    const rjasDisponiveis = [...new Set(
+      (pautaEquipe||[]).concat(p.dia.extra||[])
+      .filter(x => x.rja && x.rja.trim())
+      .map(x => x.rja.toUpperCase().trim())
+    )].sort();
+
     let salaAnt=null;
     vis.forEach(L=>{
-      const cel=p.celulas[L.key]||(p.celulas[L.key]={proc:'',vara:'',c1:'',c2:'',c3:'',res:''});
+      const cel=p.celulas[L.key]||(p.celulas[L.key]={proc:'',vara:'',c1:'',c2:'',c3:'',res:'',rja:''});
       const tr=document.createElement('tr'); tr.style.background=L.cor;
       if(L.sala!==salaAnt){ const tdS=document.createElement('td'); tdS.className='lbl sala-merged'; tdS.rowSpan=cont[L.sala]; tdS.textContent=L.sala; tr.appendChild(tdS); salaAnt=L.sala; }
       const tdH=document.createElement('td'); tdH.className='hr'; tdH.textContent=L.hora; tr.appendChild(tdH);
@@ -2477,7 +2542,31 @@ async function renderPauta(id){
       tr.appendChild(mk('c1')); 
       tr.appendChild(mk('c2')); 
       tr.appendChild(mk('c3','obs')); 
+      const mkRja = () => {
+        const c = document.createElement('td');
+        const sel = document.createElement('select');
+        sel.className = 'rescell';
+        sel.style.color = 'var(--ink)';
+        sel.style.fontWeight = '700';
+        
+        const op0 = document.createElement('option');
+        op0.value = ''; op0.textContent = '—';
+        sel.appendChild(op0);
+        
+        rjasDisponiveis.forEach(r => {
+          const op = document.createElement('option');
+          op.value = r; op.textContent = r;
+          if ((cel.rja || '') === r) op.selected = true;
+          sel.appendChild(op);
+        });
+        
+        sel.onchange = () => { cel.rja = sel.value; agendaSalvar(); };
+        c.appendChild(sel);
+        return c;
+      };
+
       tr.appendChild(mkSwap()); // <--- AQUI FICA NOSSO BOTÃO!
+      tr.appendChild(mkRja());  // <--- NOVA COLUNA RJA AQUI!
       tr.appendChild(mkRes());
       tb.appendChild(tr);
 
@@ -2513,7 +2602,7 @@ async function renderPauta(id){
   function cfAbrir(th,campo,nome){
     const pop=document.getElementById('cfPop'); const allVals=valoresDistintos(campo);
     const sel = filtros[campo] ? new Set(filtros[campo]) : new Set(allVals);
-    const editavel=['proc','vara','c1','c2','c3','res'].includes(campo);
+    const editavel=['proc','vara','c1','c2','c3','rja','res'].includes(campo);
     pop.innerHTML='<div class="cfhead">'+esc(nome)+'</div>'
       +'<input class="cfsearch" placeholder="Buscar...">'
       +'<label class="cfrow cfall"><input type="checkbox" class="cfallcb"><span>(Selecionar tudo)</span></label>'
@@ -2696,11 +2785,107 @@ async function renderPauta(id){
         };
       }
 
-  document.getElementById('gabDia').onclick=()=>abrirDiaEdit();
-  document.getElementById('pDia').onclick=()=>abrirDiaEdit();
-  document.getElementById('gabAuto').onclick=()=>{ if(confirm('Preencher 1º e 2º Conciliador automaticamente?\n\n• Mantém o que você já preencheu à mão.\n• Onde faltar servidor: "OUTRO" no 1º.\n• Onde faltar estagiário/voluntário: "Outro (ADM)" no 2º.\n• Audiências marcadas como "Cancelada" são ignoradas.')) escalaAutomatica(pautaAtual); };
-  document.getElementById('gabLimpar').onclick=()=>{ if(confirm('Limpar todas as marcações da grade desta pauta?')){ p.dia.gab={}; agendaSalvar(); renderGabarito(); toast('Marcações limpas.'); } };
+    document.getElementById('gabDia').onclick=()=>abrirDiaEdit();
+    document.getElementById('pDia').onclick=()=>abrirDiaEdit();
+    document.getElementById('gabAuto').onclick=()=>{ if(confirm('Preencher 1º e 2º Conciliador automaticamente?\n\n• Mantém o que você já preencheu à mão.\n• Onde faltar servidor: "OUTRO" no 1º.\n• Onde faltar estagiário/voluntário: "Outro (ADM)" no 2º.\n• Audiências marcadas como "Cancelada" são ignoradas.')) escalaAutomatica(pautaAtual); };
+    document.getElementById('gabLimpar').onclick=()=>{ if(confirm('Limpar todas as marcações da grade desta pauta?')){ p.dia.gab={}; agendaSalvar(); renderGabarito(); toast('Marcações limpas.'); } };
 
+    document.getElementById('gabRja').onclick=()=>{
+      if(confirm('Distribuir RJAs automaticamente?\n\nEle mapeará os servidores escalados e distribuirá as vagas restantes (OUTRO) para a equipe Adm-Geral.')){
+        let alterou = false;
+
+        // 1) Mapear siglas RJA dos servidores e colaboradores
+        const nomeToRja = {};
+        (pautaEquipe || []).concat(p.dia.extra || []).forEach(pe => {
+          if (pe.rja && pe.rja.trim()) {
+            nomeToRja[chave(pe.nome)] = pe.rja.toUpperCase().trim();
+          }
+        });
+
+        // 1.1) Preencher RJA de quem está atrelado na coluna 1º Conciliador
+        linhasDaPauta(p).forEach(L => {
+          const c = p.celulas[L.key];
+          if (!c || !(c.proc || '').trim() || chave(c.res) === 'CANCELADA') return;
+          
+          const c1k = chave(c.c1);
+          if (c1k && c1k !== 'OUTRO' && nomeToRja[c1k]) {
+            c.rja = nomeToRja[c1k];
+            alterou = true;
+          }
+        });
+
+        // 2) RJAs Aleatórios para audiências restantes (1º Conciliador = OUTRO e sem RJA preenchida)
+        let elegiveis = linhasDaPauta(p).filter(L => {
+          const c = p.celulas[L.key];
+          return c && (c.proc || '').trim() && chave(c.c1) === 'OUTRO' && chave(c.res) !== 'CANCELADA' && (!c.rja || !c.rja.trim());
+        });
+
+        // Função de sorteio para as arrays
+        const shuffle = (array) => {
+          let arr = [...array];
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          return arr;
+        };
+
+        let p13 = shuffle(elegiveis.filter(L => +L.HH === 13));
+        let p14 = shuffle(elegiveis.filter(L => +L.HH === 14));
+        let p15 = shuffle(elegiveis.filter(L => +L.HH === 15));
+
+        // 2.1) 4 RJAs em sessões aleatórias de 13h para a sigla "ANM"
+        let anmCount = 4;
+        while (anmCount > 0 && p13.length > 0) {
+          const L = p13.pop();
+          p.celulas[L.key].rja = 'ANM';
+          alterou = true;
+          anmCount--;
+        }
+
+        // 2.2) Pegar servidores do ADM (Geral) disponíveis
+        const aus = p.dia.aus || {};
+        const admsDisponiveis = (pautaEquipe || []).concat(p.dia.extra || [])
+          .filter(pe => {
+            const ev = aus[pe.id];
+            const off = ev && !['prova', 'supervisao', 'iniciante'].includes(ev);
+            return pe.tipo === 'adm' && pe.subequipe === 'geral' && !off && pe.rja && pe.rja.trim();
+          })
+          .map(pe => pe.rja.toUpperCase().trim());
+
+        // 2.3) Distribuir 4 RJAs para cada ADM (13h e 14h primeiro, fallback para 15h)
+        let p13_14 = shuffle([...p13, ...p14]);
+        let p_15 = shuffle([...p15]);
+
+        admsDisponiveis.forEach(rja => {
+          let toAssign = 4;
+          
+          // Tenta esgotar em 13h e 14h primeiro
+          while (toAssign > 0 && p13_14.length > 0) {
+            const L = p13_14.pop();
+            p.celulas[L.key].rja = rja;
+            alterou = true;
+            toAssign--;
+          }
+          // Se a cota não bateu (falta audiências nas 13h/14h), transborda para as 15h
+          while (toAssign > 0 && p_15.length > 0) {
+            const L = p_15.pop();
+            p.celulas[L.key].rja = rja;
+            alterou = true;
+            toAssign--;
+          }
+        });
+
+        if (alterou) {
+          agendaSalvar();
+          if (window._refreshEspelho) window._refreshEspelho();
+          toast('RJAs escalados com sucesso!');
+        } else {
+          toast('Nenhuma alteração necessária ou possível nos RJAs.');
+        }
+      }
+    };
+      
   recalc();
   if(!p.data) setTimeout(()=>abrirModalData('exigir',pautaAtual),250);
 

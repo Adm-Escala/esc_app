@@ -954,6 +954,10 @@ function buildPagination(total) {
 }
 async function renderHome(){
   const pautas=(await DB.list()).sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.editadoEm-a.editadoEm);
+ 
+  const isSiteEditing = window._currentEditingStatus?.isEditing;
+  const editingSiteUser = window._currentEditingStatus?.user || '';
+
   const anos=[...new Set(pautas.map(p=>(p.data||'').slice(0,4)).filter(Boolean))].sort().reverse();
   
   const filtra=p=>{ 
@@ -980,10 +984,9 @@ async function renderHome(){
       <div class="brand" style="position:relative;">
         <div style="position:relative; display:inline-block;">
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          <!-- Notch aumentado: width e height passaram de 10px para 16px, top e right reajustados -->
-          <span id="editDot" style="display:none; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="Alguém está editando o código!"></span>
+          <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.0.14</h1>
+        <h1>Escala Adm - v 1.0.15</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -1104,29 +1107,29 @@ async function abrirModalPresence() {
   }
 }
 
-    // --- CONTROLE DE MODO DESENVOLVEDOR PERSISTENTE (EDIÇÃO DO SITE) ---
+    // --- CONTROLE DE MODO DESENVOLVEDOR PERSISTENTE COM ESTADO GLOBAL (EDIÇÃO DO SITE) ---
     function initEditingTracker() {
       const dbRef = firebase.database().ref('/escala_adm/shared/editing_site');
-      const chk = document.getElementById('chkEditSite');
-      const statusTx = document.getElementById('editModeStatus');
       
-      // Escuta mudanças em tempo real para sincronizar todos os usuários online
       dbRef.on('value', snap => {
         const data = snap.val() || { isEditing: false, user: '' };
-        const user = firebase.auth().currentUser;
+        window._currentEditingStatus = data; // <--- Salva o estado na memória global para a renderHome() ler
         
-        // 1. Atualiza a bolinha vermelha na home
+        const user = firebase.auth().currentUser;
         const dot = document.getElementById('editDot');
+        const chk = document.getElementById('chkEditSite');
+        const statusTx = document.getElementById('editModeStatus');
+        
+        // 1. Se a bolinha já existir na tela atual (após renderHome), atualiza em tempo real
         if (dot) {
           dot.style.display = data.isEditing ? 'block' : 'none';
           if (data.isEditing) dot.title = `Atenção: ${data.user} está editando o código!`;
         }
 
-        // 2. Atualiza o estado do Toggle dentro do Modal
+        // 2. Se o modal de acessos estiver aberto, atualiza o estado do Toggle
         if (chk && statusTx) {
           chk.checked = data.isEditing;
           
-          // Se outra pessoa ativou a edição, desabilita a chave para você não sobrescrever por acidente
           if (data.isEditing && data.user !== user?.email) {
             statusTx.innerHTML = `<b style="color:#ef4444;">${esc(data.user)}</b> está editando o código`;
             chk.disabled = true; 
@@ -1137,18 +1140,16 @@ async function abrirModalPresence() {
         }
       });
 
-      // Evento de clique para ativar/desativar manualmente
+      // Escuta o clique do checkbox estático
+      const chk = document.getElementById('chkEditSite');
       if (chk) {
         chk.onchange = () => {
           const user = firebase.auth().currentUser;
-          // Se por algum motivo o usuário não estiver logado mas o botão estiver acessível, usa um identificador genérico
           const userEmail = user ? user.email : 'Desenvolvedor Desconectado';
           
           if (chk.checked) {
-            // Salva de forma permanente no Firebase (sem onDisconnect)
             dbRef.set({ isEditing: true, user: userEmail });
           } else {
-            // Limpa o registro do banco de dados
             dbRef.set({ isEditing: false, user: '' });
           }
         };

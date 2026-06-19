@@ -1,7 +1,7 @@
 # 📱 Como transformar o Sistema de Escala em aplicativo (PWA)
 
 Este guia explica, passo a passo, como deixar o **Sistema de Escala de
-Audiências do TJDFT** instalável como um aplicativo no celular e no computador.
+Audiências** instalável como um aplicativo no celular e no computador.
 
 > **PWA** = *Progressive Web App*. É um site que pode ser **instalado** na tela
 > inicial, abre **em tela cheia** (sem a barra do navegador) e funciona mesmo
@@ -65,7 +65,7 @@ está tudo certo.
 
 ### Computador (Chrome / Edge)
 - Aparece um **ícone de instalar** na barra de endereço (um monitor com uma seta),
-  ou em **⋮ → Instalar Escala TJDFT**.
+  ou em **⋮ → Instalar Escala Admin*.
 
 ---
 
@@ -77,7 +77,7 @@ versão nova depois de uma alteração:
 1. Abra o arquivo **`sw.js`**.
 2. Na linha do topo, troque a versão do cache:
    ```js
-   const CACHE = 'escala-tjdft-v1';   // mude para v2, v3, ...
+   const CACHE = 'escala-Admin-v1';   // mude para v2, v3, ...
    ```
 3. Salve e publique. No próximo acesso, o app se atualiza sozinho.
 

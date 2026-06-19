@@ -1,5 +1,5 @@
 /* ============================================================
-   SERVICE WORKER — Sistema de Escala (TJDFT)
+   SERVICE WORKER — Sistema de Escala
    ------------------------------------------------------------
    Responsável por: deixar o site instalável como aplicativo e
    abrir mesmo sem internet (guarda apenas a "casca" visual).
@@ -10,7 +10,7 @@
    ============================================================ */
 
 // Troque a versão (v1 -> v2 ...) sempre que quiser forçar atualização.
-const CACHE = 'escala-tjdft-v1';
+const CACHE = 'escala-Admin-v1';
 
 // Arquivos da "casca" do app que ficam guardados para abrir offline.
 const APP_SHELL = [

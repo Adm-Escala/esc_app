@@ -1045,7 +1045,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.0.20</h1>
+        <h1>Escala Adm - v 1.0.21</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -1965,71 +1965,74 @@ if (btnSupEquipe) {
 }
 
     // --- INÍCIO: CÁLCULO DE CAPACIDADE DA FORÇA DE TRABALHO SEMANAL EM MODAL ---
-const btnForcaTrabalho = document.getElementById('eqBtnForcaTrabalho');
-if (btnForcaTrabalho) {
-  btnForcaTrabalho.onclick = () => {
-    const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
-    const nomesExtensos = { Seg: 'Segunda-feira', Ter: 'Terça-feira', Qua: 'Quarta-feira', Qui: 'Quinta-feira', Sex: 'Sexta-feira' };
-    
-    let acumuladoSemanal = 0;
-    let htmlDias = '';
-
-    diasSemana.forEach(d => {
-      const servidoresAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'servidor' && eqSlotsNoDia(p, d).length > 0);
-      const estagiariosAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'estagiario' && eqSlotsNoDia(p, d).length > 0);
-
-      const sessoesServ = servidoresAtivos.length * 5;
-      const sessoesEstag = estagiariosAtivos.length * 3;
-      
-      const capacidadeIdealDia = (servidoresAtivos.length || estagiariosAtivos.length) 
-        ? Math.max(0, (sessoesServ + sessoesEstag) - 8) 
-        : 0;
+    const btnForcaTrabalho = document.getElementById('eqBtnForcaTrabalho');
+    if (btnForcaTrabalho) {
+      btnForcaTrabalho.onclick = () => {
+        const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+        const nomesExtensos = { Seg: 'Segunda-feira', Ter: 'Terça-feira', Qua: 'Quarta-feira', Qui: 'Quinta-feira', Sex: 'Sexta-feira' };
         
-      acumuladoSemanal += capacidadeIdealDia;
+        let acumuladoSemanal = 0;
+        let htmlDias = '';
 
-      // Monta o card estilizado para cada dia da semana
-      htmlDias += `
-        <div class="card" style="padding:12px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; margin-bottom:2px;">
-          <div class="row between" style="font-weight:800; color:var(--brand-d); margin-bottom:6px; font-size:14px;">
-            <span>🗓️ ${nomesExtensos[d]}</span>
-            <span class="badge" style="background:var(--brand-50); color:var(--brand-d); font-size:11.5px; padding:2px 8px;">${capacidadeIdealDia} sessões</span>
-          </div>
-          <div class="row between" style="font-size:13px; margin-bottom:3px; color:var(--muted);">
-            <span>Servidores ativos: <b>${servidoresAtivos.length}</b></span>
-            <span class="tnums">${sessoesServ} sessões</span>
-          </div>
-          <div class="row between" style="font-size:13px; color:var(--muted);">
-            <span>Estagiários ativos: <b>${estagiariosAtivos.length}</b></span>
-            <span class="tnums">${sessoesEstag} sessões</span>
-          </div>
-        </div>
-      `;
-    });
+        diasSemana.forEach(d => {
+          const servidoresAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'servidor' && eqSlotsNoDia(p, d).length > 0);
+          const estagiariosAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'estagiario' && eqSlotsNoDia(p, d).length > 0);
 
-    // Injeta o topo de resumo consolidado + a listagem dos dias no corpo do modal
-    const modalBody = document.getElementById('ftModalBody');
-    modalBody.innerHTML = `
-      <div class="card" style="padding:14px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:12px; text-align:center; box-shadow:0 1px 3px rgba(15,118,110,0.05);">
-        <div style="font-size:11.5px; font-weight:700; color:#0f766e; text-transform:uppercase; letter-spacing:0.05em;">Capacidade Semanal Líquida Total</div>
-        <div style="font-size:28px; font-weight:800; color:#0d9488; margin-top:2px;" class="tnums">
-          ${acumuladoSemanal} <span style="font-size:15px; font-weight:600; color:#0f766e;">sessões p/ semana</span>
-        </div>
-      </div>
-      
-      <div style="display:flex; flex-direction:column; gap:6px;">
-        ${htmlDias}
-      </div>
-      
-      <div class="faint" style="font-size:11px; text-align:center; margin-top:4px; line-height:1.45;">
-        * Redução automática de 8 sessões diárias aplicada para composição do banco de reservas e blindagem contra faltas médicas.
-      </div>
-    `;
+          // Reduz 1 servidor do total diário para atuar na sala de apoio (garante que não fique negativo)
+          const qtdeServidoresEscala = Math.max(0, servidoresAtivos.length - 1);
 
-    // Abre o novo modal por cima
-    openM('mForcaTrabalho');
-  };
-}
-// --- FIM: CÁLCULO DE CAPACIDADE EM MODAL ---
+          const sessoesServ = qtdeServidoresEscala * 5;
+          const sessoesEstag = estagiariosAtivos.length * 3;
+          
+          const capacidadeIdealDia = (qtdeServidoresEscala > 0 || estagiariosAtivos.length > 0) 
+            ? Math.max(0, (sessoesServ + sessoesEstag) - 8) 
+            : 0;
+            
+          acumuladoSemanal += capacidadeIdealDia;
+
+          // Monta o card estilizado para cada dia da semana
+          htmlDias += `
+            <div class="card" style="padding:12px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; margin-bottom:2px;">
+              <div class="row between" style="font-weight:800; color:var(--brand-d); margin-bottom:6px; font-size:14px;">
+                <span>🗓️ ${nomesExtensos[d]}</span>
+                <span class="badge" style="background:var(--brand-50); color:var(--brand-d); font-size:11.5px; padding:2px 8px;">${capacidadeIdealDia} sessões</span>
+              </div>
+              <div class="row between" style="font-size:13px; margin-bottom:3px; color:var(--muted);">
+                <span>Servidores na pauta: <b>${qtdeServidoresEscala}</b> <span class="faint" style="font-size:11px;">(${servidoresAtivos.length} total - 1 apoio)</span></span>
+                <span class="tnums">${sessoesServ} sessões</span>
+              </div>
+              <div class="row between" style="font-size:13px; color:var(--muted);">
+                <span>Estagiários ativos: <b>${estagiariosAtivos.length}</b></span>
+                <span class="tnums">${sessoesEstag} sessões</span>
+              </div>
+            </div>
+          `;
+        });
+
+        // Injeta o topo de resumo consolidado + a listagem dos dias no corpo do modal
+        const modalBody = document.getElementById('ftModalBody');
+        modalBody.innerHTML = `
+          <div class="card" style="padding:14px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:12px; text-align:center; box-shadow:0 1px 3px rgba(15,118,110,0.05);">
+            <div style="font-size:11.5px; font-weight:700; color:#0f766e; text-transform:uppercase; letter-spacing:0.05em;">Capacidade Semanal Líquida Total</div>
+            <div style="font-size:28px; font-weight:800; color:#0d9488; margin-top:2px;" class="tnums">
+              ${acumuladoSemanal} <span style="font-size:15px; font-weight:600; color:#0f766e;">sessões p/ semana</span>
+            </div>
+          </div>
+          
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${htmlDias}
+          </div>
+          
+          <div class="faint" style="font-size:11px; text-align:center; margin-top:4px; line-height:1.45;">
+            * Redução automática de <b>1 servidor diário</b> (para sala de apoio) e <b>8 sessões diárias</b> (para banco de reservas/imprevistos médicos).
+          </div>
+        `;
+
+        // Abre o novo modal por cima
+        openM('mForcaTrabalho');
+      };
+    }
+    // --- FIM: CÁLCULO DE CAPACIDADE EM MODAL ---
 
 /* ============================================================
    ESPELHO DA PAUTA

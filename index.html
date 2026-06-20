@@ -1045,7 +1045,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.0.19</h1>
+        <h1>Escala Adm - v 1.0.20</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -2888,23 +2888,29 @@ async function renderPauta(id){
             });
             html+='</tbody><tfoot><tr class="gab-foot"><td class="l" style="text-align:left;color:var(--ink);">Preenchidos / disponíveis</td><td></td>'+cols.map(h=>`<td>${onH[h]}/${dispH[h]}</td>`).join('')+'<td></td></tr></tfoot></table></div>';
             
-            // --- INÍCIO: CÁLCULO DA PAUTA IDEAL (CORRIGIDO 2) ---
+            // --- INÍCIO: CÁLCULO DA PAUTA IDEAL (CORRIGIDO 3) ---
             const diaAtual = diaSemanaISO(p.data);
             
-            // Filtra o pool: remove supervisão/iniciante E remove quem não tem nenhum horário base configurado para o dia (ex: equipe de suporte)
-            const poolDisponiveis = ppl.filter(x => {
-              if (x.ev === 'supervisao' || x.ev === 'iniciante') return false;
-              
-              // Verifica se a pessoa possui pelo menos 1 horário em sua configuração padrão para este dia
+            // 1. Filtramos quem realmente tem horário configurado no dia (ignora equipe de suporte que não atende)
+            const poolComHorario = ppl.filter(x => {
               const horasBase = horasEfetivas(p, x.pe, diaAtual, x.extra);
               return horasBase.length > 0;
             });
-            
-            const numServ = poolDisponiveis.filter(x => x.pe.tipo === 'servidor').length;
-            const numEstag = poolDisponiveis.filter(x => x.pe.tipo === 'estagiario').length;
+
+            // 2. Separamos quem tem carga normal de quem tem carga reduzida (supervisão/iniciante)
+            const poolReduzido = poolComHorario.filter(x => x.ev === 'supervisao' || x.ev === 'iniciante');
+            const poolNormal = poolComHorario.filter(x => x.ev !== 'supervisao' && x.ev !== 'iniciante');
+
+            // 3. Contagem dos membros
+            const numServ = poolNormal.filter(x => x.pe.tipo === 'servidor').length;
+            const numEstag = poolNormal.filter(x => x.pe.tipo === 'estagiario').length;
+            const numReduzidos = poolReduzido.length;
+
+            // 4. Cálculos de sessões
             const calcServ = numServ * 5;
             const calcEstag = numEstag * 3;
-            const calcIdeal = calcServ + calcEstag - 8; // -8 como margem de segurança
+            const calcReduzidos = numReduzidos * 3; // Supervisores e iniciantes fazem 3 sessões
+            const calcIdeal = calcServ + calcEstag + calcReduzidos - 8; // -8 como margem de segurança
 
             html += `
             <div style="margin-top:16px; padding:14px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; font-size:13.5px;">
@@ -2913,23 +2919,28 @@ async function renderPauta(id){
                 Projeção Ideal de Sessões para o Dia
               </div>
               <div class="row between" style="margin-bottom:4px;">
-                <span class="muted">Servidores Disponíveis para Escala (${numServ} x 5)</span>
+                <span class="muted">Servidores Disponíveis (${numServ} x 5)</span>
                 <span style="font-weight:600;">${calcServ} sessões</span>
               </div>
-              <div class="row between" style="margin-bottom:6px;">
-                <span class="muted">Estagiários Disponíveis para Escala (${numEstag} x 3)</span>
+              <div class="row between" style="margin-bottom:${numReduzidos > 0 ? '4px' : '6px'};">
+                <span class="muted">Estagiários Disponíveis (${numEstag} x 3)</span>
                 <span style="font-weight:600;">${calcEstag} sessões</span>
               </div>
+              ${numReduzidos > 0 ? `
+              <div class="row between" style="margin-bottom:6px;">
+                <span class="muted">Supervisores e Iniciantes (${numReduzidos} x 3)</span>
+                <span style="font-weight:600; color:#0369a1;">${calcReduzidos} sessões</span>
+              </div>` : ''}
               <div style="height:1px; background:var(--line2); opacity:0.5; margin:8px 0;"></div>
               <div class="row between">
                 <span style="font-weight:800; color:var(--brand);">Pauta ideal com base na equipe:</span>
                 <span class="badge" style="background:var(--brand-50); color:var(--brand-d); font-size:12.5px; padding:4px 10px;">${Math.max(0, calcIdeal)} sessões</span>
               </div>
               <div class="faint" style="font-size:11.5px; margin-top:6px;">
-                * Subtração de 8 sessões aplicada sobre o pool de escala comum. Membros de suporte (sem horários regulares no dia), em Supervisão ou Iniciantes foram desconsiderados deste cálculo.
+                * Subtração de 8 sessões aplicada sobre o pool para garantir margem de segurança. Supervisores e Iniciantes contabilizam 3 sessões cada. Membros de apoio (sem horários no dia) foram desconsiderados.
               </div>
             </div>`;
-            // --- FIM: CÁLCULO DA PAUTA IDEAL (CORRIGIDO 2) ---
+            // --- FIM: CÁLCULO DA PAUTA IDEAL (CORRIGIDO 3) ---
             
             host.innerHTML=html;
             host.querySelectorAll('[data-gc]').forEach(c=>c.onclick=()=>{ const [id,h]=c.dataset.gc.split(':'); const hn=+h; const arr=p.dia.gab[id]||(p.dia.gab[id]=[]); const i=arr.indexOf(hn); if(i>=0)arr.splice(i,1); else arr.push(hn); agendaSalvar(); renderGabarito(); });

@@ -3367,7 +3367,10 @@ async function renderPauta(id){
                         <span class="rja-drag" style="cursor:grab; color:var(--line2); font-size:18px;" title="Arrastar">⠿</span>
                         <input type="text" class="input" value="${esc(r.nome)}" placeholder="Nome da Regra" style="font-weight:700; width:180px; padding:6px 10px;" data-r-nome>
                     </div>
-                    <button class="btn icon-btn" title="Excluir Regra" style="color:#ef4444; border:0; background:transparent;" data-r-del><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                    <div class="row" style="gap:4px;">
+                        <button class="btn icon-btn" title="Duplicar Regra" style="color:var(--brand); border:0; background:transparent;" data-r-dup><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                        <button class="btn icon-btn" title="Excluir Regra" style="color:#ef4444; border:0; background:transparent;" data-r-del><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                    </div>
                 </div>
                 <div class="row wrapf" style="gap:10px; align-items:flex-end; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--line);">
                     <div>
@@ -3394,13 +3397,22 @@ async function renderPauta(id){
                 </div>
             `;
 
-            // Eventos dos inputs para salvar a mudança na memória
+            // Eventos dos inputs
             row.querySelector('[data-r-nome]').oninput = e => r.nome = e.target.value;
             row.querySelector('[data-r-tipo]').onchange = e => r.alvoTipo = e.target.value;
             row.querySelector('[data-r-valor]').oninput = e => r.alvoValor = e.target.value;
             row.querySelector('[data-r-cota]').oninput = e => r.cota = parseInt(e.target.value);
             row.querySelector('[data-r-vara]').onchange = e => r.priorizaVara = e.target.checked;
             row.querySelector('[data-r-del]').onclick = () => { rjaRegrasAlvo.splice(idx, 1); renderRjaRegrasList(); };
+
+            // NOVA AÇÃO: Duplicar
+            row.querySelector('[data-r-dup]').onclick = () => {
+                const novaRegra = JSON.parse(JSON.stringify(r)); // Copia todos os dados da regra atual
+                novaRegra.id = uid(); // Dá um ID novo exclusivo
+                novaRegra.nome = r.nome + ' (Cópia)'; // Avisa que é cópia no nome
+                rjaRegrasAlvo.splice(idx + 1, 0, novaRegra); // Insere logo abaixo da original (idx + 1)
+                renderRjaRegrasList();
+            };
 
             // Horários
             row.querySelectorAll('.rja-btn-hora').forEach(b => {

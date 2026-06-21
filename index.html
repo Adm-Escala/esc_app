@@ -3148,7 +3148,10 @@ async function renderPauta(id){
     document.getElementById('gabLimpar').onclick=()=>{ if(confirm('Limpar todas as marcações da grade desta pauta?')){ p.dia.gab={}; agendaSalvar(); renderGabarito(); toast('Marcações limpas.'); } };
 
     document.getElementById('gabRja').onclick=()=>{
-      if(confirm('Distribuir RJAs automaticamente?\n\nO sistema abaterá os RJAs que já estão na pauta para respeitar as cotas. Priorizará Apoio Jurídico (6) e Cartórios (4, buscando a vara exata). O que sobrar irá para a equipe ADM.')){
+      // RASTREADOR: Verifica se o código novo está rodando
+      console.log('🚀 --- INICIANDO DISTRIBUIÇÃO RJA (ANM PRIORITÁRIA) ---');
+
+      if(confirm('Distribuir RJAs automaticamente?\n\nO sistema abaterá os RJAs que já estão na pauta para respeitar as cotas. Priorizará Apoio Jurídico (6), ANM (4 nas 13h) e Cartórios (4, buscando o NÚMERO exato da vara). O que sobrar irá para a equipe ADM.')){
         let alterou = false;
 
         // 1) Mapear siglas RJA
@@ -3211,40 +3214,32 @@ async function renderPauta(id){
           return null;
         };
 
-        // NOVA FUNÇÃO DE CORRESPONDÊNCIA BLINDADA
-        const consomeAudEspecifica = (horaList, varaIdeal) => {
-            if (!varaIdeal) return consomeAud(horaList);
-            
-            const varaIdealStr = String(varaIdeal);
-            const numIdealMatch = varaIdealStr.match(/\d+/);
-            // Uso de parseInt garante que "03" e "3" sejam lidos da mesma forma
-            const numIdeal = numIdealMatch ? parseInt(numIdealMatch[0], 10) : null;
-            const strIdeal = chave(varaIdealStr);
+        const extrairJuizado = (texto) => {
+            if (!texto) return null;
+            const m = String(texto).match(/\d+/);
+            return m ? parseInt(m[0], 10) : null;
+        };
 
-            // Tenta achar a vara exata percorrendo TODOS os horários solicitados primeiro
+        const consomeAudEspecifica = (horaList, cartorioServidor, rjaServidor) => {
+            if (!cartorioServidor) return consomeAud(horaList);
+            
+            const numServidor = extrairJuizado(cartorioServidor);
+            console.log(`🔎 Buscando vaga p/ ${rjaServidor} | Cartório: ${cartorioServidor} | NUM: ${numServidor}`);
+
             for (let h of horaList) {
                 if (dispPorHora[h] && dispPorHora[h].length > 0) {
                     let bestIdx = dispPorHora[h].findIndex(L => {
-                        const varaPauta = String(p.celulas[L.key].vara || '');
-                        if (!varaPauta.trim()) return false;
-                        
-                        // REGRA 1: Checa o número exato
-                        const numPautaMatch = varaPauta.match(/\d+/);
-                        const numPauta = numPautaMatch ? parseInt(numPautaMatch[0], 10) : null;
-                        
-                        if (numIdeal !== null && numPauta !== null && numIdeal === numPauta) return true;
-                        
-                        // REGRA 2: Checa se uma string contém a outra (Fallback)
-                        const strPauta = chave(varaPauta);
-                        if (strPauta.includes(strIdeal) || strIdeal.includes(strPauta)) return true;
-                        
-                        return false;
+                        const numPauta = extrairJuizado(p.celulas[L.key].vara);
+                        return numServidor !== null && numPauta !== null && numServidor === numPauta;
                     });
                     
-                    if (bestIdx >= 0) return dispPorHora[h].splice(bestIdx, 1)[0];
+                    if (bestIdx >= 0) {
+                        console.log(`   ✅ MATCH! Horário: ${h}h | Vara: "${p.celulas[dispPorHora[h][bestIdx].key].vara}"`);
+                        return dispPorHora[h].splice(bestIdx, 1)[0];
+                    }
                 }
             }
-            // Se esgotaram todas as audiências do cartório dele nesses horários, pega qualquer uma para não ficar com cota vazia
+            console.log(`   ⚠️ Sem vaga na vara ${numServidor} para ${rjaServidor}. Pegando aleatória.`);
             return consomeAud(horaList);
         };
 
@@ -3271,31 +3266,8 @@ async function renderPauta(id){
             }
         });
 
-        // 4) REGRA 2: Adm -> Cartório (Total: 4 atas | Horários: 15h, 16h, 17h)
-        const admCartorio = todasPessoas.filter(pe => {
-            const off = aus[pe.id] && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(aus[pe.id]);
-            return pe.tipo === 'adm' && pe.subequipe === 'cartorio' && !off && pe.rja && pe.rja.trim();
-        });
-        
-        admCartorio.forEach(pe => {
-            let rja = pe.rja.toUpperCase().trim();
-            if (rjasProcessados.has(rja)) return; 
-            rjasProcessados.add(rja);
-            
-            let jaTem = contagemRja[rja] || 0;
-            let toAssign = 4 - jaTem;
-            
-            while (toAssign > 0) {
-                let L = pe.cartorio ? consomeAudEspecifica([15, 16, 17], pe.cartorio) : consomeAud([15, 16, 17]);
-                if (!L) break;
-                p.celulas[L.key].rja = rja;
-                alterou = true;
-                toAssign--;
-                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
-            }
-        });
-
-        // 5) ANM (Regra Fixa 13h - Total limite: 4 atas)
+        // 4) REGRA ESPECIAL: ANM (Regra Fixa 13h - Total limite: 4 atas)
+        // Colocada ANTES da regra do Cartório para garantir que ela pegue 13h independente da Vara
         if (!rjasProcessados.has('ANM')) {
             rjasProcessados.add('ANM');
             
@@ -3303,7 +3275,7 @@ async function renderPauta(id){
             let anmCount = 4 - jaTem;
             
             while (anmCount > 0) {
-              let L = consomeAud([13]);
+              let L = consomeAud([13]); // Só consome das 13h, de qualquer vara
               if (!L) break;
               p.celulas[L.key].rja = 'ANM';
               alterou = true;
@@ -3311,6 +3283,30 @@ async function renderPauta(id){
               contagemRja['ANM'] = (contagemRja['ANM'] || 0) + 1;
             }
         }
+
+        // 5) REGRA 2: Adm -> Cartório (Total: 4 atas | Horários: 15h, 16h, 17h -> PRIORIZA NÚMERO DO JUIZADO)
+        const admCartorio = todasPessoas.filter(pe => {
+            const off = aus[pe.id] && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(aus[pe.id]);
+            return pe.tipo === 'adm' && pe.subequipe === 'cartorio' && !off && pe.rja && pe.rja.trim();
+        });
+        
+        admCartorio.forEach(pe => {
+            let rja = pe.rja.toUpperCase().trim();
+            if (rjasProcessados.has(rja)) return; // Se for a ANM, ela já estará aqui e o robô vai pular ela
+            rjasProcessados.add(rja);
+            
+            let jaTem = contagemRja[rja] || 0;
+            let toAssign = 4 - jaTem;
+            
+            while (toAssign > 0) {
+                let L = pe.cartorio ? consomeAudEspecifica([15, 16, 17], pe.cartorio, rja) : consomeAud([15, 16, 17]);
+                if (!L) break;
+                p.celulas[L.key].rja = rja;
+                alterou = true;
+                toAssign--;
+                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
+            }
+        });
 
         // 6) RESTO DA EQUIPE ADM (Total limite: 4 atas)
         const admResto = todasPessoas.filter(pe => {

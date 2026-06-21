@@ -768,7 +768,23 @@
       </div>
   </div>
   <div class="modal-body" id="deBody"><div id="deList"></div></div>
-  <div class="modal-foot"><div class="row between" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="deReset" style="color:#ef4444;border-color:#fecaca;">Limpar ajustes do dia</button><button class="btn btn-primary" id="deFechar">Concluir</button></div></div>
+  <div class="modal-foot">
+    <div id="deAreaImport" style="display:none; margin-bottom:12px; width:100%; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid var(--line);">
+      <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px;">Cole a lista de nomes (um por linha):</div>
+      <textarea id="deTxtImport" class="input" rows="4" style="width:100%; resize:vertical; font-size:13px;" placeholder="Ex:\nAna Silva\nCarlos Souza"></textarea>
+      <div class="row" style="justify-content:flex-end; gap:8px; margin-top:8px;">
+        <button class="btn btn-sm" id="deCancelImport">Cancelar</button>
+        <button class="btn btn-sm btn-primary" id="deConfirmImport">Processar Nomes</button>
+      </div>
+    </div>
+    <div class="row between" style="gap:8px; flex-wrap:wrap; width:100%;">
+      <button class="btn btn-sm" id="deReset" style="color:#ef4444; border-color:#fecaca;">Limpar ajustes do dia</button>
+      <div class="row" style="gap:8px;">
+        <button class="btn btn-sm" id="deBtnImportarAus">Importar Indisponibilidades</button>
+        <button class="btn btn-primary" id="deFechar">Concluir</button>
+      </div>
+    </div>
+  </div>
 </div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -1045,7 +1061,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.0.22</h1>
+        <h1>Escala Adm - v 1.0.23</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -1664,7 +1680,12 @@ function eqEnsureDefaults(p){
   if(p.tipo==='estagiario'){ if(!p.modo) p.modo='padrao'; if(!p.inicio) p.inicio=13; if(!p.fim) p.fim=17; if(!p.npj) p.npj=[]; if(p.modo==='personalizado') eqEnsureGrade(p); }
   if(p.tipo==='voluntario'){ if(!p.grade){ p.grade=eqGradeVazia(); if(p.dias&&p.slots) p.dias.forEach(d=>{ p.grade[d]=p.slots.slice(); }); } eqEnsureGrade(p); }
   // --- ADICIONE ESTA LINHA ---
-  if(p.tipo==='adm'){ if(!p.cargo) p.cargo='servidor'; if(!p.subequipe) p.subequipe='geral'; p.grade=eqGradeVazia(); p.slots=[]; p.npj=[]; }
+  if(p.tipo==='adm'){ 
+    if(!p.cargo) p.cargo='servidor'; 
+    if(!p.subequipe) p.subequipe='geral'; 
+    if(!p.cartorio) p.cartorio=''; // Nova propriedade para armazenar o cartório
+    p.grade=eqGradeVazia(); p.slots=[]; p.npj=[]; 
+  }
 }
 function eqSlotsNoDia(p,dia){
   if(p.tipo==='servidor'){ if((p.modo||'padrao')==='padrao') return p.slots.slice(); eqEnsureGrade(p); return (p.grade[dia]||[]).slice(); }
@@ -1740,11 +1761,22 @@ function eqRenderEditor(box,p,onChange){
             <option value="geral" ${p.subequipe==='geral'?'selected':''}>Geral</option>
           </select>
         </label>
+        <label class="fld" id="cartorioWrap" style="flex:1; min-width:180px; display:${p.subequipe==='cartorio'?'flex':'none'};">Qual Cartório?
+          <select class="sel" data-cartorio>
+            <option value="" ${!p.cartorio?'selected':''}>Selecione...</option>
+            <option value="1º Juizado Especial Cível de Brasília" ${p.cartorio==='1º Juizado Especial Cível de Brasília'?'selected':''}>1º JEC de Brasília</option>
+            <option value="2º Juizado Especial Cível de Brasília" ${p.cartorio==='2º Juizado Especial Cível de Brasília'?'selected':''}>2º JEC de Brasília</option>
+            <option value="3º Juizado Especial Cível de Brasília" ${p.cartorio==='3º Juizado Especial Cível de Brasília'?'selected':''}>3º JEC de Brasília</option>
+            <option value="4º Juizado Especial Cível de Brasília" ${p.cartorio==='4º Juizado Especial Cível de Brasília'?'selected':''}>4º JEC de Brasília</option>
+            <option value="5º Juizado Especial Cível de Brasília" ${p.cartorio==='5º Juizado Especial Cível de Brasília'?'selected':''}>5º JEC de Brasília</option>
+            <option value="6º Juizado Especial Cível de Brasília" ${p.cartorio==='6º Juizado Especial Cível de Brasília'?'selected':''}>6º JEC de Brasília</option>
+          </select>
+        </label>
         <label class="fld" style="width:120px; flex:none;">Sigla RJA
           <input type="text" class="input" data-rja value="${esc(p.rja||'')}" placeholder="Ex.: ABC" style="font-weight:700; text-transform:uppercase; padding:8px 10px; font-size:13.5px;">
         </label>
       </div>
-      <div class="hint ok" style="margin-top:10px;">A equipe administrativa não realiza sessões. Eles aparecerão no final da <b>Equipe do Dia</b> para controle de frequência/ausência em tarefas internas.</div>
+      <div class="hint ok" style="margin-top:10px;">A equipe administrativa não realiza sessões, mas aparecerá para controle de frequência e escalação de RJAs.</div>
     `;
   }
   
@@ -1758,8 +1790,14 @@ function eqRenderEditor(box,p,onChange){
   
   const nm=box.querySelector('[data-nome]'); nm.oninput=()=>{ p.nome=nm.value; onChange&&onChange(); };
   const inRja=box.querySelector('[data-rja]'); if(inRja) inRja.oninput=()=>{ p.rja=inRja.value.toUpperCase(); onChange&&onChange(); };
+  
   const cSel = box.querySelector('[data-cargo]'); if(cSel) cSel.onchange = () => { p.cargo = cSel.value; re(); onChange&&onChange(); };
-  const sSel = box.querySelector('[data-subequipe]'); if(sSel) sSel.onchange = () => { p.subequipe = sSel.value; re(); onChange&&onChange(); };
+  const sSel = box.querySelector('[data-subequipe]'); if(sSel) sSel.onchange = () => { 
+    p.subequipe = sSel.value; 
+    if(p.subequipe !== 'cartorio') p.cartorio = ''; // Limpa o cartório se trocar de subequipe
+    re(); onChange&&onChange(); 
+  };
+  const cCart = box.querySelector('[data-cartorio]'); if(cCart) cCart.onchange = () => { p.cartorio = cCart.value; onChange&&onChange(); };
   
   box.querySelectorAll('[data-modo]').forEach(b=>b.onclick=()=>{
     p.modo=b.dataset.modo;
@@ -3110,12 +3148,13 @@ async function renderPauta(id){
     document.getElementById('gabLimpar').onclick=()=>{ if(confirm('Limpar todas as marcações da grade desta pauta?')){ p.dia.gab={}; agendaSalvar(); renderGabarito(); toast('Marcações limpas.'); } };
 
     document.getElementById('gabRja').onclick=()=>{
-      if(confirm('Distribuir RJAs automaticamente?\n\nEle mapeará os servidores escalados e distribuirá as vagas restantes (OUTRO) para a equipe Adm-Geral.')){
+      if(confirm('Distribuir RJAs automaticamente?\n\nO sistema abaterá os RJAs que já estão na pauta para respeitar as cotas. Priorizará Apoio Jurídico (6) e Cartórios (4, buscando a vara exata). O que sobrar irá para a equipe ADM.')){
         let alterou = false;
 
-        // 1) Mapear siglas RJA dos servidores e colaboradores
+        // 1) Mapear siglas RJA
         const nomeToRja = {};
-        (pautaEquipe || []).concat(p.dia.extra || []).forEach(pe => {
+        const todasPessoas = (pautaEquipe || []).concat(p.dia.extra || []);
+        todasPessoas.forEach(pe => {
           if (pe.rja && pe.rja.trim()) {
             nomeToRja[chave(pe.nome)] = pe.rja.toUpperCase().trim();
           }
@@ -3128,18 +3167,29 @@ async function renderPauta(id){
           
           const c1k = chave(c.c1);
           if (c1k && c1k !== 'OUTRO' && nomeToRja[c1k]) {
-            c.rja = nomeToRja[c1k];
-            alterou = true;
+            if (c.rja !== nomeToRja[c1k]) {
+               c.rja = nomeToRja[c1k];
+               alterou = true;
+            }
           }
         });
 
-        // 2) RJAs Aleatórios para audiências restantes (1º Conciliador = OUTRO e sem RJA preenchida)
+        // 1.2) Contar quantos RJAs CADA pessoa JÁ TEM na pauta (evita cota dupla)
+        const contagemRja = {};
+        linhasDaPauta(p).forEach(L => {
+          const c = p.celulas[L.key];
+          if (c && c.rja && c.rja.trim()) {
+            let rjaUpper = c.rja.toUpperCase().trim();
+            contagemRja[rjaUpper] = (contagemRja[rjaUpper] || 0) + 1;
+          }
+        });
+
+        // 2) RJAs Elegíveis (1º Conciliador = OUTRO e sem RJA preenchida)
         let elegiveis = linhasDaPauta(p).filter(L => {
           const c = p.celulas[L.key];
           return c && (c.proc || '').trim() && chave(c.c1) === 'OUTRO' && chave(c.res) !== 'CANCELADA' && (!c.rja || !c.rja.trim());
         });
 
-        // Função de sorteio para as arrays
         const shuffle = (array) => {
           let arr = [...array];
           for (let i = arr.length - 1; i > 0; i--) {
@@ -3149,50 +3199,142 @@ async function renderPauta(id){
           return arr;
         };
 
-        let p13 = shuffle(elegiveis.filter(L => +L.HH === 13));
-        let p14 = shuffle(elegiveis.filter(L => +L.HH === 14));
-        let p15 = shuffle(elegiveis.filter(L => +L.HH === 15));
+        let dispPorHora = {};
+        [13, 14, 15, 16, 17, 18].forEach(h => {
+          dispPorHora[h] = shuffle(elegiveis.filter(L => +L.HH === h));
+        });
 
-        // 2.1) 4 RJAs em sessões aleatórias de 13h para a sigla "ANM"
-        let anmCount = 4;
-        while (anmCount > 0 && p13.length > 0) {
-          const L = p13.pop();
-          p.celulas[L.key].rja = 'ANM';
-          alterou = true;
-          anmCount--;
+        const consomeAud = (horaList) => {
+          for (let h of horaList) {
+            if (dispPorHora[h] && dispPorHora[h].length > 0) return dispPorHora[h].pop();
+          }
+          return null;
+        };
+
+        // NOVA FUNÇÃO DE CORRESPONDÊNCIA BLINDADA
+        const consomeAudEspecifica = (horaList, varaIdeal) => {
+            if (!varaIdeal) return consomeAud(horaList);
+            
+            const varaIdealStr = String(varaIdeal);
+            const numIdealMatch = varaIdealStr.match(/\d+/);
+            const numIdeal = numIdealMatch ? numIdealMatch[0] : null;
+            const iNorm = chave(varaIdealStr);
+
+            // Tenta achar a vara exata percorrendo TODOS os horários solicitados primeiro
+            for (let h of horaList) {
+                if (dispPorHora[h] && dispPorHora[h].length > 0) {
+                    const idx = dispPorHora[h].findIndex(L => {
+                        // Força a leitura da Vara como String para não quebrar a função .match()
+                        const varaPauta = String(p.celulas[L.key].vara || '');
+                        if (!varaPauta.trim()) return false;
+                        
+                        // REGRA 1: Checa o número exato (Extremamente preciso)
+                        if (numIdeal) {
+                            const numPautaMatch = varaPauta.match(/\d+/);
+                            const numPauta = numPautaMatch ? numPautaMatch[0] : null;
+                            if (numIdeal === numPauta) return true;
+                        }
+                        
+                        // REGRA 2: Checa se uma string contém a outra (Fallback)
+                        const vNorm = chave(varaPauta);
+                        if (vNorm.includes(iNorm) || iNorm.includes(vNorm)) return true;
+                        
+                        return false;
+                    });
+                    
+                    if (idx >= 0) return dispPorHora[h].splice(idx, 1)[0];
+                }
+            }
+            // Se realmente esgotaram todas as audiências do cartório dele nesses horários, pega qualquer uma
+            return consomeAud(horaList);
+        };
+
+        const aus = p.dia.aus || {};
+        const rjasProcessados = new Set();
+
+        // 3) REGRA 1: Apoio Jurídico (Total: 6 atas | Horários: 14h, 15h)
+        const apoioJuridico = todasPessoas.filter(pe => aus[pe.id] === 'apoio' && pe.rja && pe.rja.trim());
+        apoioJuridico.forEach(pe => {
+            let rja = pe.rja.toUpperCase().trim();
+            if (rjasProcessados.has(rja)) return; 
+            rjasProcessados.add(rja); 
+            
+            let jaTem = contagemRja[rja] || 0;
+            let toAssign = 6 - jaTem; 
+            
+            while (toAssign > 0) {
+                let L = consomeAud([14, 15]);
+                if (!L) break;
+                p.celulas[L.key].rja = rja;
+                alterou = true;
+                toAssign--;
+                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
+            }
+        });
+
+        // 4) REGRA 2: Adm -> Cartório (Total: 4 atas | Horários: 15h, 16h, 17h)
+        const admCartorio = todasPessoas.filter(pe => {
+            const off = aus[pe.id] && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(aus[pe.id]);
+            return pe.tipo === 'adm' && pe.subequipe === 'cartorio' && !off && pe.rja && pe.rja.trim();
+        });
+        
+        admCartorio.forEach(pe => {
+            let rja = pe.rja.toUpperCase().trim();
+            if (rjasProcessados.has(rja)) return; 
+            rjasProcessados.add(rja);
+            
+            let jaTem = contagemRja[rja] || 0;
+            let toAssign = 4 - jaTem;
+            
+            while (toAssign > 0) {
+                let L = pe.cartorio ? consomeAudEspecifica([15, 16, 17], pe.cartorio) : consomeAud([15, 16, 17]);
+                if (!L) break;
+                p.celulas[L.key].rja = rja;
+                alterou = true;
+                toAssign--;
+                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
+            }
+        });
+
+        // 5) ANM (Regra Fixa 13h - Total limite: 4 atas)
+        if (!rjasProcessados.has('ANM')) {
+            rjasProcessados.add('ANM');
+            
+            let jaTem = contagemRja['ANM'] || 0;
+            let anmCount = 4 - jaTem;
+            
+            while (anmCount > 0) {
+              let L = consomeAud([13]);
+              if (!L) break;
+              p.celulas[L.key].rja = 'ANM';
+              alterou = true;
+              anmCount--;
+              contagemRja['ANM'] = (contagemRja['ANM'] || 0) + 1;
+            }
         }
 
-        // 2.2) Pegar servidores do ADM (Geral) disponíveis
-        const aus = p.dia.aus || {};
-        const admsDisponiveis = (pautaEquipe || []).concat(p.dia.extra || [])
-          .filter(pe => {
-            const ev = aus[pe.id];
-            const off = ev && !['prova', 'supervisao', 'iniciante'].includes(ev);
-            return pe.tipo === 'adm' && pe.subequipe === 'geral' && !off && pe.rja && pe.rja.trim();
-          })
-          .map(pe => pe.rja.toUpperCase().trim());
-
-        // 2.3) Distribuir 4 RJAs para cada ADM (13h e 14h primeiro, fallback para 15h)
-        let p13_14 = shuffle([...p13, ...p14]);
-        let p_15 = shuffle([...p15]);
-
-        admsDisponiveis.forEach(rja => {
-          let toAssign = 4;
-          
-          // Tenta esgotar em 13h e 14h primeiro
-          while (toAssign > 0 && p13_14.length > 0) {
-            const L = p13_14.pop();
-            p.celulas[L.key].rja = rja;
-            alterou = true;
-            toAssign--;
-          }
-          // Se a cota não bateu (falta audiências nas 13h/14h), transborda para as 15h
-          while (toAssign > 0 && p_15.length > 0) {
-            const L = p_15.pop();
-            p.celulas[L.key].rja = rja;
-            alterou = true;
-            toAssign--;
-          }
+        // 6) RESTO DA EQUIPE ADM (Total limite: 4 atas)
+        const admResto = todasPessoas.filter(pe => {
+            const off = aus[pe.id] && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(aus[pe.id]);
+            return pe.tipo === 'adm' && !off && pe.rja && pe.rja.trim();
+        });
+        
+        admResto.forEach(pe => {
+            let rja = pe.rja.toUpperCase().trim();
+            if (rjasProcessados.has(rja)) return; 
+            rjasProcessados.add(rja);
+            
+            let jaTem = contagemRja[rja] || 0;
+            let toAssign = 4 - jaTem;
+            
+            while (toAssign > 0) {
+                let L = consomeAud([13, 14, 15, 16, 17, 18]);
+                if (!L) break;
+                p.celulas[L.key].rja = rja;
+                alterou = true;
+                toAssign--;
+                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
+            }
         });
 
         if (alterou) {
@@ -3815,6 +3957,70 @@ function sincronizaGabarito(p){
   });
   p.dia.gab=novo;
 }
+
+    /* ============================================================
+      LÓGICA DE IMPORTAÇÃO DE INDISPONIBILIDADES
+      ============================================================ */
+
+    // Função inteligente de match: verifica se todas as palavras principais do nome colado existem no nome do sistema
+    function matchNomeParcial(nomeColado, nomeSistema) {
+      if (!nomeColado || !nomeSistema) return false;
+      
+      const limpa = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+      const stopWords = ['DE', 'DA', 'DO', 'DAS', 'DOS', 'E']; // Ignora conectivos
+      
+      const coladoWords = limpa(nomeColado).split(/\s+/).filter(w => w && !stopWords.includes(w));
+      const sistemaWords = limpa(nomeSistema).split(/\s+/);
+      
+      if (coladoWords.length === 0) return false;
+      
+      // Retorna true APENAS se todas as palavras do nome colado forem encontradas no nome do sistema
+      return coladoWords.every(pw => sistemaWords.includes(pw));
+    }
+
+    // Interações da interface
+    document.getElementById('deBtnImportarAus').onclick = () => {
+      document.getElementById('deAreaImport').style.display = 'block';
+      document.getElementById('deTxtImport').focus();
+    };
+
+    document.getElementById('deCancelImport').onclick = () => {
+      document.getElementById('deAreaImport').style.display = 'none';
+      document.getElementById('deTxtImport').value = '';
+    };
+
+    document.getElementById('deConfirmImport').onclick = () => {
+      const txt = document.getElementById('deTxtImport').value;
+      if (!txt.trim()) return;
+      
+      const linhasTexto = txt.split('\n').map(l => l.trim()).filter(Boolean);
+      let matches = 0;
+      
+      // Avalia tanto a equipe global quanto as pessoas adicionadas manualmente (extras) no dia
+      const todasPessoas = (pautaEquipe || []).concat(pautaAtual.dia.extra || []);
+      
+      linhasTexto.forEach(linha => {
+        todasPessoas.forEach(pe => {
+          if (matchNomeParcial(linha, pe.nome)) {
+            // 'afast' é o ID interno para Afastamento
+            pautaAtual.dia.aus[pe.id] = 'afast';
+            matches++;
+          }
+        });
+      });
+      
+      // Limpa e oculta a área
+      document.getElementById('deAreaImport').style.display = 'none';
+      document.getElementById('deTxtImport').value = '';
+      
+      if (matches > 0) {
+        toast(`${matches} afastamento(s) processado(s) com sucesso!`);
+        deSave(); // Salva no Firebase e re-renderiza a lista visual do Modal
+      } else {
+        toast('Nenhuma correspondência encontrada na equipe para os nomes informados.');
+      }
+    };
+
 
     /* ============================================================
       CONTROLE DE CANCELAMENTOS E SUPERVISÕES DO DIA

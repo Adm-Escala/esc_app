@@ -3184,7 +3184,7 @@ async function renderPauta(id){
           }
         });
 
-        // 2) RJAs Elegíveis (1º Conciliador = OUTRO e sem RJA preenchida)
+        // 2) RJAs Elegíveis
         let elegiveis = linhasDaPauta(p).filter(L => {
           const c = p.celulas[L.key];
           return c && (c.proc || '').trim() && chave(c.c1) === 'OUTRO' && chave(c.res) !== 'CANCELADA' && (!c.rja || !c.rja.trim());
@@ -3217,35 +3217,34 @@ async function renderPauta(id){
             
             const varaIdealStr = String(varaIdeal);
             const numIdealMatch = varaIdealStr.match(/\d+/);
-            const numIdeal = numIdealMatch ? numIdealMatch[0] : null;
-            const iNorm = chave(varaIdealStr);
+            // Uso de parseInt garante que "03" e "3" sejam lidos da mesma forma
+            const numIdeal = numIdealMatch ? parseInt(numIdealMatch[0], 10) : null;
+            const strIdeal = chave(varaIdealStr);
 
             // Tenta achar a vara exata percorrendo TODOS os horários solicitados primeiro
             for (let h of horaList) {
                 if (dispPorHora[h] && dispPorHora[h].length > 0) {
-                    const idx = dispPorHora[h].findIndex(L => {
-                        // Força a leitura da Vara como String para não quebrar a função .match()
+                    let bestIdx = dispPorHora[h].findIndex(L => {
                         const varaPauta = String(p.celulas[L.key].vara || '');
                         if (!varaPauta.trim()) return false;
                         
-                        // REGRA 1: Checa o número exato (Extremamente preciso)
-                        if (numIdeal) {
-                            const numPautaMatch = varaPauta.match(/\d+/);
-                            const numPauta = numPautaMatch ? numPautaMatch[0] : null;
-                            if (numIdeal === numPauta) return true;
-                        }
+                        // REGRA 1: Checa o número exato
+                        const numPautaMatch = varaPauta.match(/\d+/);
+                        const numPauta = numPautaMatch ? parseInt(numPautaMatch[0], 10) : null;
+                        
+                        if (numIdeal !== null && numPauta !== null && numIdeal === numPauta) return true;
                         
                         // REGRA 2: Checa se uma string contém a outra (Fallback)
-                        const vNorm = chave(varaPauta);
-                        if (vNorm.includes(iNorm) || iNorm.includes(vNorm)) return true;
+                        const strPauta = chave(varaPauta);
+                        if (strPauta.includes(strIdeal) || strIdeal.includes(strPauta)) return true;
                         
                         return false;
                     });
                     
-                    if (idx >= 0) return dispPorHora[h].splice(idx, 1)[0];
+                    if (bestIdx >= 0) return dispPorHora[h].splice(bestIdx, 1)[0];
                 }
             }
-            // Se realmente esgotaram todas as audiências do cartório dele nesses horários, pega qualquer uma
+            // Se esgotaram todas as audiências do cartório dele nesses horários, pega qualquer uma para não ficar com cota vazia
             return consomeAud(horaList);
         };
 

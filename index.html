@@ -3962,20 +3962,23 @@ function sincronizaGabarito(p){
       LÓGICA DE IMPORTAÇÃO DE INDISPONIBILIDADES
       ============================================================ */
 
-    // Função inteligente de match: verifica se todas as palavras principais do nome colado existem no nome do sistema
+    // Função inteligente de match: verifica se o nome curto do sistema está contido no nome completo colado
     function matchNomeParcial(nomeColado, nomeSistema) {
       if (!nomeColado || !nomeSistema) return false;
       
       const limpa = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9\s]/g, '');
       const stopWords = ['DE', 'DA', 'DO', 'DAS', 'DOS', 'E']; // Ignora conectivos
       
+      // Limpa e quebra os dois nomes em arrays de palavras
       const coladoWords = limpa(nomeColado).split(/\s+/).filter(w => w && !stopWords.includes(w));
-      const sistemaWords = limpa(nomeSistema).split(/\s+/);
+      const sistemaWords = limpa(nomeSistema).split(/\s+/).filter(w => w && !stopWords.includes(w));
       
-      if (coladoWords.length === 0) return false;
+      if (sistemaWords.length === 0) return false;
       
-      // Retorna true APENAS se todas as palavras do nome colado forem encontradas no nome do sistema
-      return coladoWords.every(pw => sistemaWords.includes(pw));
+      // LÓGICA INVERTIDA: 
+      // Retorna true APENAS se todas as palavras do nome do SISTEMA (que é menor) 
+      // forem encontradas no nome COLADO (que é o nome completo)
+      return sistemaWords.every(pw => coladoWords.includes(pw));
     }
 
     // Interações da interface

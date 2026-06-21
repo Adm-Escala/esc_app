@@ -567,7 +567,7 @@
       <div class="modal-foot"><div class="row" style="width:100%; justify-content:space-between;">
       <div class="row" style="gap:8px;">
         <button class="btn btn-sm" id="eqBtnSup" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">Grade de Supervisões</button>
-        <button class="btn btn-sm" id="eqBtnForcaTrabalho" style="color:#0f766e; border-color:#ccfbf1; background:#f0fdfa;">📊 Calcular Capacidade Semanal</button>
+        <button class="btn btn-sm" id="eqBtnForcaTrabalho" style="color:#0f766e; border-color:#ccfbf1; background:#f0fdfa;">📊 Força de Trabalho Atual</button>
       </div>
       <div class="row">
         <button class="btn" id="eqFechar">Fechar</button>
@@ -581,7 +581,7 @@
     <div class="modal-head">
       <div class="row between" style="align-items:flex-start;">
         <div>
-          <div style="font-size:19px;font-weight:800;">📊 Capacidade Semanal</div>
+          <div style="font-size:19px;font-weight:800;">📊 Força de Trabalho Atual</div>
           <div class="muted" style="font-size:13.5px;">Projeção com base na equipe ativa cadastrada.</div>
         </div>
         <button class="btn icon-btn" onclick="closeM('mForcaTrabalho')">
@@ -1045,7 +1045,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.0.21</h1>
+        <h1>Escala Adm - v 1.0.22</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -2009,17 +2009,51 @@ if (btnSupEquipe) {
           `;
         });
 
+        // Cálculos de Estimativa
+        const mediaDiaria = Math.round(acumuladoSemanal / 5);
+        const estimativaMensal = Math.round(mediaDiaria * 22);
+
+        // CORREÇÃO: Cálculo da média usando o array de diasSemana e a equipe ativa (eqAlvo)
+        let totalConciliadoresDias = 0;
+        diasSemana.forEach(d => {
+            const servAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'servidor' && eqSlotsNoDia(p, d).length > 0).length;
+            const estagAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'estagiario' && eqSlotsNoDia(p, d).length > 0).length;
+            totalConciliadoresDias += (servAtivos + estagAtivos);
+        });
+        const mediaConciliadoresSimultaneos = Math.round(totalConciliadoresDias / 5);
+
         // Injeta o topo de resumo consolidado + a listagem dos dias no corpo do modal
         const modalBody = document.getElementById('ftModalBody');
         modalBody.innerHTML = `
           <div class="card" style="padding:14px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:12px; text-align:center; box-shadow:0 1px 3px rgba(15,118,110,0.05);">
-            <div style="font-size:11.5px; font-weight:700; color:#0f766e; text-transform:uppercase; letter-spacing:0.05em;">Capacidade Semanal Líquida Total</div>
+            <div style="font-size:11.5px; font-weight:700; color:#0f766e; text-transform:uppercase; letter-spacing:0.05em;">Capacidade Diária Estimada</div>
             <div style="font-size:28px; font-weight:800; color:#0d9488; margin-top:2px;" class="tnums">
-              ${acumuladoSemanal} <span style="font-size:15px; font-weight:600; color:#0f766e;">sessões p/ semana</span>
+              ${mediaDiaria} <span style="font-size:15px; font-weight:600; color:#0f766e;">sessões p/ dia</span>
+            </div>
+            
+            <div style="margin-top:10px; background:#eff6ff; border:1px solid #bfdbfe; padding:8px 12px; border-radius:8px; display:flex; align-items:center; justify-content:space-between; text-align:left; gap:8px;">
+              <div style="display:flex; flex-direction:column; gap:1px;">
+                <span style="color:#1e3a8a; font-weight:700; font-size:13px;">Capacidade Simultânea</span>
+              </div>
+              <div style="margin-left:auto; display:flex; align-items:center; gap:6px; color:#15803d; font-weight:800; font-size:13px; text-align:right; white-space:nowrap;">
+                <span>Máx. ${mediaConciliadoresSimultaneos} salas/hora</span>
+                <svg style="min-width:16px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+            
+            <div class="row" style="justify-content:center; gap:24px; border-top:1px solid #ccfbf1; margin-top:12px; padding-top:12px; font-size:13.5px; color:#0f766e;">
+                <div>
+                    <span style="font-weight:700;">Semanal:</span> 
+                    <b class="tnums">${acumuladoSemanal}</b> <span style="font-size:11.5px; opacity:0.8;">(5 dias)</span>
+                </div>
+                <div>
+                    <span style="font-weight:700;">Mensal:</span> 
+                    <b class="tnums">${estimativaMensal}</b> <span style="font-size:11.5px; opacity:0.8;">(~22 dias)</span>
+                </div>
             </div>
           </div>
           
-          <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
             ${htmlDias}
           </div>
           
@@ -2913,7 +2947,64 @@ async function renderPauta(id){
             const calcServ = numServ * 5;
             const calcEstag = numEstag * 3;
             const calcReduzidos = numReduzidos * 3; // Supervisores e iniciantes fazem 3 sessões
-            const calcIdeal = calcServ + calcEstag + calcReduzidos - 8; // -8 como margem de segurança
+            const calcIdeal = Math.max(0, calcServ + calcEstag + calcReduzidos - 8); // -8 como margem de segurança
+
+            // 5. Comparativo de Pico Simultâneo e Volume Real
+            const sessoesPorHora = {};
+            let numSessoesAtivas = 0;
+            
+            linhas.forEach(L => {
+              const c = p.celulas[L.key];
+              if (c && (c.proc || '').trim() && chave(c.res) !== 'CANCELADA') {
+                numSessoesAtivas++;
+                sessoesPorHora[L.HH] = (sessoesPorHora[L.HH] || 0) + 1;
+              }
+            });
+
+            // Descobre o horário com mais sessões ao mesmo tempo
+            const maxSessoesSimultaneas = Object.values(sessoesPorHora).length ? Math.max(...Object.values(sessoesPorHora)) : 0;
+            
+            // NOVO: Encontra qual é a hora do pico (ex: 15h ou 15:00)
+            const horasPicoArray = Object.keys(sessoesPorHora).filter(h => sessoesPorHora[h] === maxSessoesSimultaneas);
+            // Se houver mais de um horário com o mesmo pico, ele junta (ex: 14:00, 15:00)
+            const horasPicoStr = horasPicoArray.length > 0 ? `(${horasPicoArray.join(', ')})` : '';
+
+            const totalEquipe = numServ + numEstag + numReduzidos;
+            const folgaSimultanea = totalEquipe - maxSessoesSimultaneas;
+
+            // Lógica do Ícone de Capacidade Simultânea
+            let iconeSimultaneo = '';
+            let corSimultaneo = '';
+            
+            if (folgaSimultanea >= 2) {
+                iconeSimultaneo = '<svg style="min-width:18px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'; // V verde
+                corSimultaneo = '#15803d'; 
+            } else if (folgaSimultanea >= 0) {
+                iconeSimultaneo = '<svg style="min-width:18px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'; // Alerta amarelo
+                corSimultaneo = '#d97706'; 
+            } else {
+                iconeSimultaneo = '<svg style="min-width:18px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'; // X vermelho
+                corSimultaneo = '#dc2626'; 
+            }
+
+            // Lógica da Conclusão (Volume diário)
+            const saldo = calcIdeal - numSessoesAtivas;
+            let conclusaoTexto = '';
+            let conclusaoCor = '';
+            
+            if (saldo < 0) {
+                conclusaoTexto = '⚠️ Pauta além da capacidade';
+                conclusaoCor = '#dc2626'; // Vermelho
+            } else if (saldo < 5) {
+                conclusaoTexto = '⚠️ Pauta apertada';
+                conclusaoCor = '#d97706'; // Amarelo
+            } else if (saldo <= 10) {
+                conclusaoTexto = '✅ Pauta adequada';
+                conclusaoCor = '#15803d'; // Verde
+            } else {
+                conclusaoTexto = '🧊 Pauta subutilizada';
+                conclusaoCor = '#0369a1'; // Azul
+            }
 
             html += `
             <div style="margin-top:16px; padding:14px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; font-size:13.5px;">
@@ -2934,12 +3025,40 @@ async function renderPauta(id){
                 <span class="muted">Supervisores e Iniciantes (${numReduzidos} x 3)</span>
                 <span style="font-weight:600; color:#0369a1;">${calcReduzidos} sessões</span>
               </div>` : ''}
-              <div style="height:1px; background:var(--line2); opacity:0.5; margin:8px 0;"></div>
-              <div class="row between">
-                <span style="font-weight:800; color:var(--brand);">Pauta ideal com base na equipe:</span>
-                <span class="badge" style="background:var(--brand-50); color:var(--brand-d); font-size:12.5px; padding:4px 10px;">${Math.max(0, calcIdeal)} sessões</span>
+              
+              <div class="row between" style="margin-bottom:6px; background:#eff6ff; padding:8px 10px; border-radius:6px; align-items:center;">
+                <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
+                    <span style="color:#1e3a8a; font-weight:600;">Capacidade Simultânea</span>
+                    <span style="color:#3b82f6; font-size:11px; font-weight:500;">
+                        Sobram: <b>${folgaSimultanea}</b> conciliadores
+                    </span>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px; color:${corSimultaneo}; text-align:right;">
+                    <span style="font-weight:800; font-size:12px; line-height:1.2;">
+                        Pico de ${maxSessoesSimultaneas} salas ${horasPicoStr}h <br/> 
+                        <span style="font-weight:600; opacity:0.85;">Cap. máx. de ${totalEquipe} conciliadores</span>
+                    </span>
+                    ${iconeSimultaneo}
+                </div>
               </div>
-              <div class="faint" style="font-size:11.5px; margin-top:6px;">
+
+              <div style="height:1px; background:var(--line2); opacity:0.5; margin:8px 0;"></div>
+              
+              <div class="row between" style="margin-bottom:6px;">
+                <span style="font-weight:800; color:var(--brand);">Pauta ideal com base na equipe:</span>
+                <span class="badge" style="background:var(--brand-50); color:var(--brand-d); font-size:12.5px; padding:4px 10px;">${calcIdeal} sessões</span>
+              </div>
+              
+              <div class="row between" style="margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--line2);">
+                <span class="muted" style="font-weight:700;">Sessões ativas listadas hoje:</span>
+                <span class="badge" style="background:#f1f5f9; color:var(--ink); font-size:12.5px; padding:4px 10px;">${numSessoesAtivas} sessões</span>
+              </div>
+              
+              <div style="text-align:right; font-weight:800; font-size:14px; color:${conclusaoCor};">
+                ${conclusaoTexto}
+              </div>
+
+              <div class="faint" style="font-size:11.5px; margin-top:8px;">
                 * Subtração de 8 sessões aplicada sobre o pool para garantir margem de segurança. Supervisores e Iniciantes contabilizam 3 sessões cada. Membros de apoio (sem horários no dia) foram desconsiderados.
               </div>
             </div>`;

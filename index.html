@@ -873,6 +873,9 @@ const DB = (function(){
 
     async getChecklistMensal(){ const snap = await getRef().child('config/checklistMensal').once('value'); return snap.val() || []; },
     async saveChecklistMensal(d){ await getRef().child('config/checklistMensal').set(d); },
+
+    async getRegrasRja(){ const snap = await getRef().child('config/regrasRja').once('value'); return snap.val(); },
+    async saveRegrasRja(d){ await getRef().child('config/regrasRja').set(d); },
     
     async getPendenciasNotes(){ 
       const snap = await getRef().child('config/pendenciasNotes').once('value'); 
@@ -2594,7 +2597,13 @@ async function renderPauta(id){
           <div class="row wrapf" style="gap:8px;">
             <button class="btn" id="gabDia"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg> Equipe do dia</button>
             <button class="btn btn-primary" id="gabAuto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg> Escala automática</button>
-            <button class="btn" id="gabRja" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Escalar RJA</button>
+            <div class="split" id="rjaSplitWrap">
+              <button class="main" id="gabRja" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50); border-radius:9px 0 0 9px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Escalar RJA</button>
+              <button class="car" id="btnRjaMenu" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50); border-left:1px solid #c7d2fe; border-radius:0 9px 9px 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
+              <div class="menu" id="menuRjaOpts" style="min-width:200px;">
+                <button id="btnGerenciarRja"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px; vertical-align:middle;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Regras</button>
+              </div>
+            </div>
             <button class="btn" id="gabLimpar">Limpar</button>
           </div>
         </div>
@@ -3147,37 +3156,44 @@ async function renderPauta(id){
     document.getElementById('gabAuto').onclick=()=>{ if(confirm('Preencher 1º e 2º Conciliador automaticamente?\n\n• Mantém o que você já preencheu à mão.\n• Onde faltar servidor: "OUTRO" no 1º.\n• Onde faltar estagiário/voluntário: "Outro (ADM)" no 2º.\n• Audiências marcadas como "Cancelada" são ignoradas.')) escalaAutomatica(pautaAtual); };
     document.getElementById('gabLimpar').onclick=()=>{ if(confirm('Limpar todas as marcações da grade desta pauta?')){ p.dia.gab={}; agendaSalvar(); renderGabarito(); toast('Marcações limpas.'); } };
 
-    document.getElementById('gabRja').onclick=()=>{
-      // RASTREADOR: Verifica se o código novo está rodando
-      console.log('🚀 --- INICIANDO DISTRIBUIÇÃO RJA (ANM PRIORITÁRIA) ---');
+    // --- LÓGICA DO MENU DO BOTÃO RJA ---
+    const rjaWrap = document.getElementById('rjaSplitWrap');
+    document.getElementById('btnRjaMenu').onclick = ev => { ev.stopPropagation(); rjaWrap.classList.toggle('open'); };
+    document.addEventListener('click', e => { if(!rjaWrap.contains(e.target)) rjaWrap.classList.remove('open'); });
+    document.getElementById('btnGerenciarRja').onclick = () => { rjaWrap.classList.remove('open'); abrirGerenciarRja(); };
 
-      if(confirm('Distribuir RJAs automaticamente?\n\nO sistema abaterá os RJAs que já estão na pauta para respeitar as cotas. Priorizará Apoio Jurídico (6), ANM (4 nas 13h) e Cartórios (4, buscando o NÚMERO exato da vara). O que sobrar irá para a equipe ADM.')){
+    // --- MOTOR DE ESCALA RJA DINÂMICO ---
+    document.getElementById('gabRja').onclick = async () => {
+      // Regras Padrão (As mesmas que definimos antes, caso o BD esteja vazio)
+      const regrasPadrao = [
+        { id: 'r1', nome: 'Apoio Jurídico', alvoTipo: 'ausencia', alvoValor: 'apoio', cota: 6, horas: [14, 15], priorizaVara: false },
+        { id: 'r2', nome: 'Regra Especial (ANM)', alvoTipo: 'sigla', alvoValor: 'ANM', cota: 4, horas: [13], priorizaVara: false },
+        { id: 'r3', nome: 'Cartórios', alvoTipo: 'subequipe', alvoValor: 'cartorio', cota: 4, horas: [15, 16, 17], priorizaVara: true },
+        { id: 'r4', nome: 'Resto da Equipe ADM', alvoTipo: 'equipe', alvoValor: 'adm', cota: 4, horas: [13, 14, 15, 16, 17, 18], priorizaVara: false }
+      ];
+
+      const regras = (await DB.getRegrasRja()) || regrasPadrao;
+
+      if(confirm(`Distribuir RJAs automaticamente usando as ${regras.length} regras configuradas?\n\nO sistema processará as regras na ordem em que aparecem no gerenciador.`)){
         let alterou = false;
 
-        // 1) Mapear siglas RJA
         const nomeToRja = {};
         const todasPessoas = (pautaEquipe || []).concat(p.dia.extra || []);
         todasPessoas.forEach(pe => {
-          if (pe.rja && pe.rja.trim()) {
-            nomeToRja[chave(pe.nome)] = pe.rja.toUpperCase().trim();
-          }
+          if (pe.rja && pe.rja.trim()) nomeToRja[chave(pe.nome)] = pe.rja.toUpperCase().trim();
         });
 
-        // 1.1) Preencher RJA de quem está atrelado na coluna 1º Conciliador
+        // 1) Preencher RJA de quem está atrelado na coluna 1º Conciliador
         linhasDaPauta(p).forEach(L => {
           const c = p.celulas[L.key];
           if (!c || !(c.proc || '').trim() || chave(c.res) === 'CANCELADA') return;
-          
           const c1k = chave(c.c1);
           if (c1k && c1k !== 'OUTRO' && nomeToRja[c1k]) {
-            if (c.rja !== nomeToRja[c1k]) {
-               c.rja = nomeToRja[c1k];
-               alterou = true;
-            }
+            if (c.rja !== nomeToRja[c1k]) { c.rja = nomeToRja[c1k]; alterou = true; }
           }
         });
 
-        // 1.2) Contar quantos RJAs CADA pessoa JÁ TEM na pauta (evita cota dupla)
+        // 2) Contagem atual (evita cota dupla)
         const contagemRja = {};
         linhasDaPauta(p).forEach(L => {
           const c = p.celulas[L.key];
@@ -3187,7 +3203,7 @@ async function renderPauta(id){
           }
         });
 
-        // 2) RJAs Elegíveis
+        // 3) Separar as elegíveis
         let elegiveis = linhasDaPauta(p).filter(L => {
           const c = p.celulas[L.key];
           return c && (c.proc || '').trim() && chave(c.c1) === 'OUTRO' && chave(c.res) !== 'CANCELADA' && (!c.rja || !c.rja.trim());
@@ -3195,22 +3211,15 @@ async function renderPauta(id){
 
         const shuffle = (array) => {
           let arr = [...array];
-          for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-          }
+          for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
           return arr;
         };
 
         let dispPorHora = {};
-        [13, 14, 15, 16, 17, 18].forEach(h => {
-          dispPorHora[h] = shuffle(elegiveis.filter(L => +L.HH === h));
-        });
+        [13, 14, 15, 16, 17, 18].forEach(h => dispPorHora[h] = shuffle(elegiveis.filter(L => +L.HH === h)) );
 
         const consomeAud = (horaList) => {
-          for (let h of horaList) {
-            if (dispPorHora[h] && dispPorHora[h].length > 0) return dispPorHora[h].pop();
-          }
+          for (let h of horaList) { if (dispPorHora[h] && dispPorHora[h].length > 0) return dispPorHora[h].pop(); }
           return null;
         };
 
@@ -3220,116 +3229,61 @@ async function renderPauta(id){
             return m ? parseInt(m[0], 10) : null;
         };
 
-        const consomeAudEspecifica = (horaList, cartorioServidor, rjaServidor) => {
+        const consomeAudEspecifica = (horaList, cartorioServidor) => {
             if (!cartorioServidor) return consomeAud(horaList);
-            
             const numServidor = extrairJuizado(cartorioServidor);
-            console.log(`🔎 Buscando vaga p/ ${rjaServidor} | Cartório: ${cartorioServidor} | NUM: ${numServidor}`);
-
             for (let h of horaList) {
                 if (dispPorHora[h] && dispPorHora[h].length > 0) {
                     let bestIdx = dispPorHora[h].findIndex(L => {
                         const numPauta = extrairJuizado(p.celulas[L.key].vara);
                         return numServidor !== null && numPauta !== null && numServidor === numPauta;
                     });
-                    
-                    if (bestIdx >= 0) {
-                        console.log(`   ✅ MATCH! Horário: ${h}h | Vara: "${p.celulas[dispPorHora[h][bestIdx].key].vara}"`);
-                        return dispPorHora[h].splice(bestIdx, 1)[0];
-                    }
+                    if (bestIdx >= 0) return dispPorHora[h].splice(bestIdx, 1)[0];
                 }
             }
-            console.log(`   ⚠️ Sem vaga na vara ${numServidor} para ${rjaServidor}. Pegando aleatória.`);
             return consomeAud(horaList);
         };
 
         const aus = p.dia.aus || {};
         const rjasProcessados = new Set();
 
-        // 3) REGRA 1: Apoio Jurídico (Total: 6 atas | Horários: 14h, 15h)
-        const apoioJuridico = todasPessoas.filter(pe => aus[pe.id] === 'apoio' && pe.rja && pe.rja.trim());
-        apoioJuridico.forEach(pe => {
-            let rja = pe.rja.toUpperCase().trim();
-            if (rjasProcessados.has(rja)) return; 
-            rjasProcessados.add(rja); 
-            
-            let jaTem = contagemRja[rja] || 0;
-            let toAssign = 6 - jaTem; 
-            
-            while (toAssign > 0) {
-                let L = consomeAud([14, 15]);
-                if (!L) break;
-                p.celulas[L.key].rja = rja;
-                alterou = true;
-                toAssign--;
-                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
-            }
-        });
+        // 4) PROCESSA O MOTOR DE REGRAS DINÂMICAS
+        regras.forEach(regra => {
+            // Filtra as pessoas que se enquadram na regra atual
+            const pessoasMatch = todasPessoas.filter(pe => {
+                const ev = aus[pe.id];
+                const off = ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev);
+                
+                // Se está de folga e a regra não busca ativamente essa ausência, ignora a pessoa
+                if (off && regra.alvoTipo !== 'ausencia') return false; 
+                if (!pe.rja || !pe.rja.trim()) return false;
+                
+                if (regra.alvoTipo === 'ausencia') return ev === regra.alvoValor;
+                if (regra.alvoTipo === 'subequipe') return pe.tipo === 'adm' && pe.subequipe === regra.alvoValor && !off;
+                if (regra.alvoTipo === 'equipe') return pe.tipo === regra.alvoValor && !off;
+                if (regra.alvoTipo === 'sigla') return pe.rja.toUpperCase().trim() === regra.alvoValor.toUpperCase().trim() && !off;
+                return false;
+            });
 
-        // 4) REGRA ESPECIAL: ANM (Regra Fixa 13h - Total limite: 4 atas)
-        // Colocada ANTES da regra do Cartório para garantir que ela pegue 13h independente da Vara
-        if (!rjasProcessados.has('ANM')) {
-            rjasProcessados.add('ANM');
-            
-            let jaTem = contagemRja['ANM'] || 0;
-            let anmCount = 4 - jaTem;
-            
-            while (anmCount > 0) {
-              let L = consomeAud([13]); // Só consome das 13h, de qualquer vara
-              if (!L) break;
-              p.celulas[L.key].rja = 'ANM';
-              alterou = true;
-              anmCount--;
-              contagemRja['ANM'] = (contagemRja['ANM'] || 0) + 1;
-            }
-        }
-
-        // 5) REGRA 2: Adm -> Cartório (Total: 4 atas | Horários: 15h, 16h, 17h -> PRIORIZA NÚMERO DO JUIZADO)
-        const admCartorio = todasPessoas.filter(pe => {
-            const off = aus[pe.id] && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(aus[pe.id]);
-            return pe.tipo === 'adm' && pe.subequipe === 'cartorio' && !off && pe.rja && pe.rja.trim();
-        });
-        
-        admCartorio.forEach(pe => {
-            let rja = pe.rja.toUpperCase().trim();
-            if (rjasProcessados.has(rja)) return; // Se for a ANM, ela já estará aqui e o robô vai pular ela
-            rjasProcessados.add(rja);
-            
-            let jaTem = contagemRja[rja] || 0;
-            let toAssign = 4 - jaTem;
-            
-            while (toAssign > 0) {
-                let L = pe.cartorio ? consomeAudEspecifica([15, 16, 17], pe.cartorio, rja) : consomeAud([15, 16, 17]);
-                if (!L) break;
-                p.celulas[L.key].rja = rja;
-                alterou = true;
-                toAssign--;
-                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
-            }
-        });
-
-        // 6) RESTO DA EQUIPE ADM (Total limite: 4 atas)
-        const admResto = todasPessoas.filter(pe => {
-            const off = aus[pe.id] && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(aus[pe.id]);
-            return pe.tipo === 'adm' && !off && pe.rja && pe.rja.trim();
-        });
-        
-        admResto.forEach(pe => {
-            let rja = pe.rja.toUpperCase().trim();
-            if (rjasProcessados.has(rja)) return; 
-            rjasProcessados.add(rja);
-            
-            let jaTem = contagemRja[rja] || 0;
-            let toAssign = 4 - jaTem;
-            
-            while (toAssign > 0) {
-                let L = consomeAud([13, 14, 15, 16, 17, 18]);
-                if (!L) break;
-                p.celulas[L.key].rja = rja;
-                alterou = true;
-                toAssign--;
-                contagemRja[rja] = (contagemRja[rja] || 0) + 1;
-            }
+            pessoasMatch.forEach(pe => {
+                let rja = pe.rja.toUpperCase().trim();
+                if (rjasProcessados.has(rja)) return; // Se a pessoa já foi servida por uma regra anterior, pula
+                rjasProcessados.add(rja);
+                
+                let jaTem = contagemRja[rja] || 0;
+                let toAssign = regra.cota - jaTem;
+                
+                while (toAssign > 0) {
+                    let L = (regra.priorizaVara && pe.cartorio) 
+                            ? consomeAudEspecifica(regra.horas, pe.cartorio) 
+                            : consomeAud(regra.horas);
+                    if (!L) break;
+                    p.celulas[L.key].rja = rja;
+                    alterou = true;
+                    toAssign--;
+                    contagemRja[rja] = (contagemRja[rja] || 0) + 1;
+                }
+            });
         });
 
         if (alterou) {
@@ -3341,6 +3295,138 @@ async function renderPauta(id){
         }
       }
     };
+
+    // --- MODAL DE GERENCIAMENTO DE REGRAS RJA ---
+    let rjaRegrasAlvo = [];
+    async function abrirGerenciarRja() {
+        if(!document.getElementById('mGerenciarRja')) {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+              <div class="modal-bg keep-open" id="mGerenciarRja"><div class="modal md modal-flex">
+                <div class="modal-head">
+                  <div class="row between" style="align-items:flex-start;">
+                    <div>
+                      <div style="font-size:19px;font-weight:800;">Motor de Regras RJA</div>
+                      <div class="muted" style="font-size:14px;">A ordem abaixo importa! A distribuição de vagas começa sempre de cima para baixo. Arraste (⠿) para reordenar.</div>
+                    </div>
+                    <button class="btn icon-btn" onclick="closeM('mGerenciarRja')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+                  </div>
+                </div>
+                <div class="modal-body" id="rjaRegrasList" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px; padding-top:10px;"></div>
+                <div class="modal-foot">
+                  <div class="row between">
+                    <button class="btn btn-sm" id="rjaRegrasAdd" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">+ Nova Regra</button>
+                    <button class="btn btn-primary" id="rjaRegrasSalvar">Salvar Ordem e Regras</button>
+                  </div>
+                </div>
+              </div></div>
+            `;
+            document.body.appendChild(wrap);
+            
+            document.getElementById('rjaRegrasSalvar').onclick = async () => {
+                await DB.saveRegrasRja(rjaRegrasAlvo);
+                toast('Regras RJA atualizadas!');
+                closeM('mGerenciarRja');
+            };
+            document.getElementById('rjaRegrasAdd').onclick = () => {
+                rjaRegrasAlvo.push({ id: uid(), nome: 'Nova Regra', alvoTipo: 'sigla', alvoValor: '', cota: 4, horas: [13,14,15,16,17], priorizaVara: false });
+                renderRjaRegrasList();
+            };
+        }
+
+        const regrasPadrao = [
+            { id: uid(), nome: 'Apoio Jurídico', alvoTipo: 'ausencia', alvoValor: 'apoio', cota: 6, horas: [14, 15], priorizaVara: false },
+            { id: uid(), nome: 'Regra Especial (ANM)', alvoTipo: 'sigla', alvoValor: 'ANM', cota: 4, horas: [13], priorizaVara: false },
+            { id: uid(), nome: 'Cartórios', alvoTipo: 'subequipe', alvoValor: 'cartorio', cota: 4, horas: [15, 16, 17], priorizaVara: true },
+            { id: uid(), nome: 'Resto da Equipe ADM', alvoTipo: 'equipe', alvoValor: 'adm', cota: 4, horas: [13, 14, 15, 16, 17, 18], priorizaVara: false }
+        ];
+
+        rjaRegrasAlvo = (await DB.getRegrasRja()) || regrasPadrao;
+        renderRjaRegrasList();
+        openM('mGerenciarRja');
+    }
+
+    function renderRjaRegrasList() {
+        const box = document.getElementById('rjaRegrasList');
+        box.innerHTML = '';
+        
+        rjaRegrasAlvo.forEach((r, idx) => {
+            const row = document.createElement('div');
+            row.className = 'rja-rule-item';
+            row.style.cssText = 'background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:6px;';
+            
+            // Controle de horas permitidas
+            const horasToggles = [13,14,15,16,17,18].map(h => {
+                const isOn = r.horas.includes(h);
+                return `<button class="rja-btn-hora ${isOn?'on':''}" data-rjah="${h}" style="padding:4px 8px; font-size:12px; font-weight:700; border-radius:6px; cursor:pointer; border:1px solid ${isOn?'var(--brand)':'var(--line2)'}; background:${isOn?'var(--brand)':'#fff'}; color:${isOn?'#fff':'var(--muted)'};">${h}h</button>`;
+            }).join('');
+
+            row.innerHTML = `
+                <div class="row between" style="margin-bottom:8px;">
+                    <div class="row" style="gap:8px;">
+                        <span class="rja-drag" style="cursor:grab; color:var(--line2); font-size:18px;" title="Arrastar">⠿</span>
+                        <input type="text" class="input" value="${esc(r.nome)}" placeholder="Nome da Regra" style="font-weight:700; width:180px; padding:6px 10px;" data-r-nome>
+                    </div>
+                    <button class="btn icon-btn" title="Excluir Regra" style="color:#ef4444; border:0; background:transparent;" data-r-del><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                </div>
+                <div class="row wrapf" style="gap:10px; align-items:flex-end; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--line);">
+                    <div>
+                        <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">Tipo de Filtro</div>
+                        <select class="sel" data-r-tipo style="padding:6px 8px; font-size:13px; min-width:130px;">
+                            <option value="sigla" ${r.alvoTipo==='sigla'?'selected':''}>Sigla Específica</option>
+                            <option value="ausencia" ${r.alvoTipo==='ausencia'?'selected':''}>Situação Específica</option>
+                            <option value="subequipe" ${r.alvoTipo==='subequipe'?'selected':''}>Sub-Equipe ADM</option>
+                            <option value="equipe" ${r.alvoTipo==='equipe'?'selected':''}>Equipe (Geral)</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">Alvo / Valor</div>
+                        <input type="text" class="input" value="${esc(r.alvoValor)}" placeholder="Ex.: ANM, apoio, cartorio..." style="font-size:13px; padding:6px 8px; width:100%;" data-r-valor>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">Cota</div>
+                        <input type="number" class="input" value="${r.cota}" min="1" max="15" style="font-size:13px; padding:6px 8px; width:60px; text-align:center;" data-r-cota>
+                    </div>
+                </div>
+                <div class="row between wrapf" style="margin-top:10px; gap:8px;">
+                    <div class="row" style="gap:4px;">${horasToggles}</div>
+                    <label class="row" style="gap:6px; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--ink);"><input type="checkbox" style="width:16px; height:16px; accent-color:var(--brand);" data-r-vara ${r.priorizaVara?'checked':''}> Buscar vara de origem</label>
+                </div>
+            `;
+
+            // Eventos dos inputs para salvar a mudança na memória
+            row.querySelector('[data-r-nome]').oninput = e => r.nome = e.target.value;
+            row.querySelector('[data-r-tipo]').onchange = e => r.alvoTipo = e.target.value;
+            row.querySelector('[data-r-valor]').oninput = e => r.alvoValor = e.target.value;
+            row.querySelector('[data-r-cota]').oninput = e => r.cota = parseInt(e.target.value);
+            row.querySelector('[data-r-vara]').onchange = e => r.priorizaVara = e.target.checked;
+            row.querySelector('[data-r-del]').onclick = () => { rjaRegrasAlvo.splice(idx, 1); renderRjaRegrasList(); };
+
+            // Horários
+            row.querySelectorAll('.rja-btn-hora').forEach(b => {
+                b.onclick = () => {
+                    const h = parseInt(b.dataset.rjah);
+                    if(r.horas.includes(h)) r.horas = r.horas.filter(x => x !== h);
+                    else r.horas.push(h);
+                    r.horas.sort((a,b)=>a-b);
+                    renderRjaRegrasList();
+                };
+            });
+
+            box.appendChild(row);
+        });
+
+        // Instancia o arrastar e soltar
+        if (typeof Sortable !== 'undefined') {
+            new Sortable(box, {
+              animation: 150, handle: '.rja-drag',
+              onEnd: (evt) => {
+                const item = rjaRegrasAlvo.splice(evt.oldIndex, 1)[0];
+                rjaRegrasAlvo.splice(evt.newIndex, 0, item);
+              }
+            });
+        }
+    }
       
   recalc();
   if(!p.data) setTimeout(()=>abrirModalData('exigir',pautaAtual),250);

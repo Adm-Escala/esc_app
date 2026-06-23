@@ -1209,7 +1209,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.4</h1>
+        <h1>Escala Adm - v 1.1.5</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -1387,8 +1387,8 @@ async function abrirModalPresence() {
 
       if (p.status === 'editando') {
         if (p.data && p.data <= hoje) {
-          // Tag ENCERRADA com amarelo desbotado e texto cinza-acastanhado bem suave
-          statusHtml = '<span class="badge" style="background:#F7F7E0; color:#D6AF61;">encerrada</span>';
+          // Tag ENCERRADA com amarelo cinza desbotado e texto cinza-acastanhado bem suave
+          statusHtml = '<span class="badge" style="background:#FCFCFC; color:#D6AF61;">encerrada</span>';
         } else if (p._isProxima) {
           // Tag PARA REVISAR com azul claro
           statusHtml = '<span class="badge" style="background:#e0f2fe; color:#0369a1;">para revisar</span>';
@@ -2199,11 +2199,20 @@ if (btnSupEquipe) {
         const nomesExtensos = { Seg: 'Segunda-feira', Ter: 'Terça-feira', Qua: 'Quarta-feira', Qui: 'Quinta-feira', Sex: 'Sexta-feira' };
         
         let acumuladoSemanal = 0;
+        let totalEstag13hSemana = 0; 
+        let totalEstag17hSemana = 0;
         let htmlDias = '';
 
         diasSemana.forEach(d => {
           const servidoresAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'servidor' && eqSlotsNoDia(p, d).length > 0);
           const estagiariosAtivos = eqAlvo.filter(p => !p.inativo && p.tipo === 'estagiario' && eqSlotsNoDia(p, d).length > 0);
+
+          // Calcula o balanceamento de estagiários nos horários de ponta (13h e 17h)
+          const estag13h = estagiariosAtivos.filter(p => eqSlotsNoDia(p, d).includes(13)).length;
+          const estag17h = estagiariosAtivos.filter(p => eqSlotsNoDia(p, d).includes(17)).length;
+
+          totalEstag13hSemana += estag13h;
+          totalEstag17hSemana += estag17h;
 
           // Reduz 1 servidor do total diário para atuar na sala de apoio (garante que não fique negativo)
           const qtdeServidoresEscala = Math.max(0, servidoresAtivos.length - 1);
@@ -2228,9 +2237,13 @@ if (btnSupEquipe) {
                 <span>Servidores na pauta: <b>${qtdeServidoresEscala}</b> <span class="faint" style="font-size:11px;">(${servidoresAtivos.length} total - 1 apoio)</span></span>
                 <span class="tnums">${sessoesServ} sessões</span>
               </div>
-              <div class="row between" style="font-size:13px; color:var(--muted);">
+              <div class="row between" style="font-size:13px; color:var(--muted); margin-bottom:2px;">
                 <span>Estagiários ativos: <b>${estagiariosAtivos.length}</b></span>
                 <span class="tnums">${sessoesEstag} sessões</span>
+              </div>
+              <div class="row faint" style="font-size:11.5px; gap:12px; font-weight:600; padding-top:2px;">
+                <span><span style="color:var(--brand);">13h00:</span> ${estag13h} alocados</span>
+                <span><span style="color:var(--brand);">17h00:</span> ${estag17h} alocados</span>
               </div>
             </div>
           `;
@@ -2249,6 +2262,9 @@ if (btnSupEquipe) {
         });
         const mediaConciliadoresSimultaneos = Math.round(totalConciliadoresDias / 5);
 
+        const media13h = (totalEstag13hSemana / diasSemana.length).toFixed(1);
+        const media17h = (totalEstag17hSemana / diasSemana.length).toFixed(1);
+        
         // Injeta o topo de resumo consolidado + a listagem dos dias no corpo do modal
         const modalBody = document.getElementById('ftModalBody');
         modalBody.innerHTML = `
@@ -2277,6 +2293,11 @@ if (btnSupEquipe) {
                     <span style="font-weight:700;">Mensal:</span> 
                     <b class="tnums">${estimativaMensal}</b> <span style="font-size:11.5px; opacity:0.8;">(~22 dias)</span>
                 </div>
+            </div>
+
+            <div class="row faint" style="font-size:12px; margin-top:8px; justify-content:center; gap:16px; background: #e0f2fe; padding: 6px; border-radius: 6px; color: var(--ink); border: 1px solid #bae6fd;">
+                <span><span style="color:#0369a1; font-weight:600;">Média 13h:</span> <b>${media13h}</b> estag/dia</span>
+                <span><span style="color:#0369a1; font-weight:600;">Média 17h:</span> <b>${media17h}</b> estag/dia</span>
             </div>
           </div>
           
@@ -3366,7 +3387,6 @@ async function renderPauta(id){
 
     // --- MOTOR DE ESCALA RJA DINÂMICO ---
     document.getElementById('gabRja').onclick = async () => {
-      // Regras Padrão (As mesmas que definimos antes, caso o BD esteja vazio)
       const regrasPadrao = [
         { id: 'r1', nome: 'Apoio Jurídico', alvoTipo: 'ausencia', alvoValor: 'apoio', cota: 6, horas: [14, 15], priorizaVara: false },
         { id: 'r2', nome: 'Regra Especial (ANM)', alvoTipo: 'sigla', alvoValor: 'ANM', cota: 4, horas: [13], priorizaVara: false },
@@ -3374,9 +3394,40 @@ async function renderPauta(id){
         { id: 'r4', nome: 'Resto da Equipe ADM', alvoTipo: 'equipe', alvoValor: 'adm', cota: 4, horas: [13, 14, 15, 16, 17, 18], priorizaVara: false }
       ];
 
-      const regras = (await DB.getRegrasRja()) || regrasPadrao;
+      let dbData = await DB.getRegrasRja();
+      let perfisDisponiveis = [];
+      
+      if (!dbData) {
+         perfisDisponiveis = [{ id: 'p-default', nome: 'Padrão', regras: regrasPadrao }];
+      } else if (Array.isArray(dbData) && dbData.length > 0 && dbData[0].alvoTipo) {
+         perfisDisponiveis = [{ id: 'p-default', nome: 'Cenário Padrão', regras: dbData }];
+      } else {
+         perfisDisponiveis = dbData;
+      }
 
-      if(confirm(`Distribuir RJAs automaticamente usando as ${regras.length} regras configuradas?\n\nO sistema processará as regras na ordem em que aparecem no gerenciador.`)){
+      let perfilSelecionado = perfisDisponiveis[0];
+
+      // Se houver mais de um cenário salvo, pergunta qual o usuário quer rodar
+      if (perfisDisponiveis.length > 1) {
+          let msg = "Qual cenário de regras RJA você deseja rodar nesta pauta?\n\n";
+          perfisDisponiveis.forEach((p, i) => {
+              msg += `${i + 1} - ${p.nome}\n`;
+          });
+          let escolha = prompt(msg + "\nDigite o número do cenário:", "1");
+          if (!escolha) return; // Cancelou
+          
+          let idx = parseInt(escolha) - 1;
+          if (idx >= 0 && idx < perfisDisponiveis.length) {
+              perfilSelecionado = perfisDisponiveis[idx];
+          } else {
+              toast("Opção inválida.");
+              return;
+          }
+      }
+
+      const regras = perfilSelecionado.regras;
+
+      if(confirm(`Distribuir RJAs automaticamente usando o cenário '${perfilSelecionado.nome}'?\n\nSerão processadas ${regras.length} regras na ordem estabelecida.`)){
         let alterou = false;
         
         // --- INÍCIO DOS LOGS NO CONSOLE ---
@@ -3531,7 +3582,12 @@ async function renderPauta(id){
     };
 
     // --- MODAL DE GERENCIAMENTO DE REGRAS RJA ---
+   
+    // --- VARIÁVEIS DE ESTADO DAS ABAS DO RJA ---
+    let perfisRegrasRJA = [];
+    let perfilRegrasAtivoId = null;
     let rjaRegrasAlvo = [];
+
     async function abrirGerenciarRja() {
         if(!document.getElementById('mGerenciarRja')) {
             const wrap = document.createElement('div');
@@ -3541,7 +3597,7 @@ async function renderPauta(id){
                   <div class="row between" style="align-items:flex-start;">
                     <div>
                       <div style="font-size:19px;font-weight:800;">Motor de Regras RJA</div>
-                      <div class="muted" style="font-size:14px;">A ordem abaixo importa! A distribuição de vagas começa sempre de cima para baixo. Arraste (⠿) para reordenar.</div>
+                      <div class="muted" style="font-size:14px;">A ordem abaixo importa! A distribuição começa sempre de cima para baixo. Arraste (⠿) para reordenar.</div>
                     </div>
                     <div class="row" style="gap:8px;">
                       <a href="manualrja.pdf" target="_blank" class="btn icon-btn" title="Manual do Motor RJA" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50); display:flex; align-items:center; justify-content:center; text-decoration:none;">
@@ -3551,11 +3607,14 @@ async function renderPauta(id){
                     </div>
                   </div>
                 </div>
+                
+                <div id="tabsRegrasContainer" class="row" style="overflow-x: auto; padding: 12px 22px 0; gap: 4px; display: flex; align-items: flex-end; background:#f1f5f9; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);"></div>
+                
                 <div class="modal-body" id="rjaRegrasList" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px; padding-top:10px;"></div>
                 <div class="modal-foot">
                   <div class="row between">
                     <button class="btn btn-sm" id="rjaRegrasAdd" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">+ Nova Regra</button>
-                    <button class="btn btn-primary" id="rjaRegrasSalvar">Salvar Ordem e Regras</button>
+                    <button class="btn btn-primary" id="rjaRegrasSalvar">Salvar Todos os Cenários</button>
                   </div>
                 </div>
               </div></div>
@@ -3563,8 +3622,8 @@ async function renderPauta(id){
             document.body.appendChild(wrap);
             
             document.getElementById('rjaRegrasSalvar').onclick = async () => {
-                await DB.saveRegrasRja(rjaRegrasAlvo);
-                toast('Regras RJA atualizadas!');
+                await DB.saveRegrasRja(perfisRegrasRJA);
+                toast('Cenários RJA atualizados!');
                 closeM('mGerenciarRja');
             };
             document.getElementById('rjaRegrasAdd').onclick = () => {
@@ -3580,10 +3639,167 @@ async function renderPauta(id){
             { id: uid(), nome: 'Resto da Equipe ADM', alvoTipo: 'equipe', alvoValor: 'adm', cota: 4, horas: [13, 14, 15, 16, 17, 18], priorizaVara: false }
         ];
 
-        rjaRegrasAlvo = (await DB.getRegrasRja()) || regrasPadrao;
+        let dbData = await DB.getRegrasRja();
+        if (!dbData) {
+            perfisRegrasRJA = [{ id: 'p-default', nome: 'Padrão', regras: regrasPadrao }];
+        } else if (Array.isArray(dbData) && dbData.length > 0 && dbData[0].alvoTipo) {
+            // Migração invisível: Converte array antigo para o formato de Abas
+            perfisRegrasRJA = [{ id: 'p-default', nome: 'Cenário Padrão', regras: dbData }];
+        } else {
+            perfisRegrasRJA = dbData;
+        }
+
+        if (!perfilRegrasAtivoId || !perfisRegrasRJA.find(p => p.id === perfilRegrasAtivoId)) {
+            perfilRegrasAtivoId = perfisRegrasRJA[0].id;
+        }
+
+        rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === perfilRegrasAtivoId).regras;
+
+        renderAbasRegrasRja();
         renderRjaRegrasList();
         openM('mGerenciarRja');
     }
+
+    // --- INÍCIO: FUNÇÕES DE RENDERIZAÇÃO E CONTROLE DAS ABAS ---
+    function renderAbasRegrasRja() {
+        const container = document.getElementById('tabsRegrasContainer');
+        if(!container) return;
+        
+        let html = '';
+        perfisRegrasRJA.forEach((p, idx) => {
+            const isActive = p.id === perfilRegrasAtivoId;
+            const style = isActive
+                ? "background: #fff; color: var(--brand-d); border: 1px solid var(--line); border-bottom: 1px solid #fff; font-weight: 700; margin-bottom: -1px; border-radius: 8px 8px 0 0;"
+                : "color: var(--muted); cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0;";
+
+            // MÁGICA AQUI: flex-shrink: 0 impede que a aba seja esmagada. Padding e font-size aumentados!
+            html += `<div style="flex-shrink: 0; padding: 12px 20px; font-size: 14.5px; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 10px; position: relative; ${style}" 
+                          data-aba-id="${p.id}" class="aba-rja-item">
+                        
+                        <span class="aba-rja-drag" style="cursor:grab; color:var(--line2); font-size:18px; margin-left:-4px; display:${perfisRegrasRJA.length > 1 ? 'block' : 'none'}" title="Arraste para reordenar as abas">⠿</span>
+                        
+                        <span onclick="trocarAbaRja('${p.id}')" style="flex:1;">${esc(p.nome)}</span>
+                        
+                        <div class="aba-menu-wrap" style="position:relative; margin-right: -6px;">
+                            <button class="btn icon-btn" title="Opções do cenário" style="padding:4px; border:0; background:transparent; color:${isActive ? 'var(--brand)' : 'var(--muted)'};" onclick="toggleMenuAbaRja(event, '${p.id}')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                            </button>
+                            
+                            <div class="menu" id="menuAba-${p.id}" style="top:calc(100% + 4px); right:0; min-width:140px; z-index:9999; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
+                                <button onclick="acaoAbaRja(event, 'renomear', '${p.id}')" style="padding:10px 14px; font-weight:600; font-size:13px;">✏️ Renomear</button>
+                                <button onclick="acaoAbaRja(event, 'duplicar', '${p.id}')" style="padding:10px 14px; font-weight:600; font-size:13px;">📄 Duplicar</button>
+                                <button onclick="acaoAbaRja(event, 'excluir', '${p.id}')" style="padding:10px 14px; font-weight:600; font-size:13px; color:#ef4444;">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                     </div>`;
+        });
+        
+        // Botão Novo Cenário (Também com flex-shrink: 0 e maior)
+        html += `<div style="flex-shrink: 0; padding: 12px 16px; font-size: 14.5px; color: var(--brand); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px;" id="btnNovaAbaRja">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo Cenário
+                 </div>`;
+                 
+        container.innerHTML = html;
+
+        // Fecha menus abertos se o usuário clicar fora
+        document.addEventListener('click', fecharMenusAbasRja);
+
+        container.querySelectorAll('.aba-rja-item').forEach(el => {
+            if (el.dataset.abaId !== perfilRegrasAtivoId) {
+                el.onmouseover = () => el.style.background = '#e2e8f0';
+                el.onmouseout = () => el.style.background = 'transparent';
+            }
+        });
+
+        document.getElementById('btnNovaAbaRja').onclick = () => {
+            const nome = prompt("Dê um nome para este novo cenário (ex: 'Mutirão', 'Pauta Dupla'):");
+            if (!nome || !nome.trim()) return;
+            const novoId = 'p-' + Date.now();
+            
+            // Clona o array de regras da aba atual para a nova
+            const regrasClonadas = JSON.parse(JSON.stringify(rjaRegrasAlvo));
+            regrasClonadas.forEach(r => r.id = uid());
+            
+            perfisRegrasRJA.push({ id: novoId, nome: nome.trim(), regras: regrasClonadas });
+            perfilRegrasAtivoId = novoId;
+            rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === novoId).regras;
+            renderAbasRegrasRja();
+            renderRjaRegrasList();
+        };
+
+        // Aplica o Drag-and-Drop (SortableJS) para as abas!
+        if (typeof Sortable !== 'undefined') {
+            new Sortable(container, {
+                animation: 150,
+                handle: '.aba-rja-drag',
+                draggable: '.aba-rja-item',
+                onEnd: (evt) => {
+                    const item = perfisRegrasRJA.splice(evt.oldIndex, 1)[0];
+                    perfisRegrasRJA.splice(evt.newIndex, 0, item);
+                    renderAbasRegrasRja(); // Atualiza a tela após arrastar
+                }
+            });
+        }
+    }
+
+    // --- FUNÇÕES AUXILIARES DAS ABAS ---
+    window.trocarAbaRja = function(id) {
+        if (id === perfilRegrasAtivoId) return;
+        perfilRegrasAtivoId = id;
+        rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === perfilRegrasAtivoId).regras;
+        renderAbasRegrasRja();
+        renderRjaRegrasList();
+    };
+
+    window.toggleMenuAbaRja = function(ev, id) {
+        ev.stopPropagation(); // Impede que o clique seja considerado "clicar fora"
+        fecharMenusAbasRja(); // Garante que só 1 menu fique aberto
+        const menu = document.getElementById('menuAba-' + id);
+        if (menu) menu.style.display = 'block';
+    };
+
+    window.fecharMenusAbasRja = function() {
+        document.querySelectorAll('[id^="menuAba-"]').forEach(m => m.style.display = 'none');
+    };
+
+    window.acaoAbaRja = function(ev, acao, id) {
+        ev.stopPropagation();
+        fecharMenusAbasRja();
+        
+        const index = perfisRegrasRJA.findIndex(p => p.id === id);
+        if (index === -1) return;
+        const perfil = perfisRegrasRJA[index];
+
+        if (acao === 'renomear') {
+            const n = prompt("Novo nome:", perfil.nome);
+            if (n && n.trim()) {
+                perfil.nome = n.trim();
+                renderAbasRegrasRja();
+            }
+        } else if (acao === 'duplicar') {
+            const novoId = 'p-' + Date.now();
+            const regrasClonadas = JSON.parse(JSON.stringify(perfil.regras));
+            regrasClonadas.forEach(r => r.id = uid());
+            
+            perfisRegrasRJA.splice(index + 1, 0, { id: novoId, nome: perfil.nome + ' (Cópia)', regras: regrasClonadas });
+            perfilRegrasAtivoId = novoId;
+            rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === novoId).regras;
+            renderAbasRegrasRja();
+            renderRjaRegrasList();
+        } else if (acao === 'excluir') {
+            if (perfisRegrasRJA.length <= 1) return alert("Você precisa ter pelo menos um cenário de regras.");
+            if (confirm("Tem certeza que deseja excluir o cenário '" + perfil.nome + "'?")) {
+                perfisRegrasRJA.splice(index, 1);
+                if (perfilRegrasAtivoId === id) {
+                    perfilRegrasAtivoId = perfisRegrasRJA[0].id; // Retorna para a primeira aba se a ativa for excluída
+                    rjaRegrasAlvo = perfisRegrasRJA[0].regras;
+                }
+                renderAbasRegrasRja();
+                renderRjaRegrasList();
+            }
+        }
+    };
+    // --- FIM: FUNÇÕES DE RENDERIZAÇÃO E CONTROLE DAS ABAS ---
 
     function renderRjaRegrasList() {
         const box = document.getElementById('rjaRegrasList');

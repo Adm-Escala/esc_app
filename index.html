@@ -1165,6 +1165,19 @@ function buildPagination(total) {
 async function renderHome(){
   const pautas=(await DB.list()).sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.editadoEm-a.editadoEm);
  
+  // --- 1. COLE ESTE BLOCO AQUI ---
+  const t = new Date();
+  const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  
+  // Filtra as pautas futuras e ordena da mais próxima para a mais distante
+  const futuras = pautas.filter(p => p.data && p.data > hoje).sort((a,b) => a.data.localeCompare(b.data));
+  if (futuras.length > 0) {
+    const dataProxima = futuras[0].data;
+    // Marca todas as pautas que compartilham essa exata data (caso haja pautas divididas no mesmo dia)
+    futuras.filter(p => p.data === dataProxima).forEach(p => p._isProxima = true);
+  }
+  // -------------------------------
+
   const isSiteEditing = window._currentEditingStatus?.isEditing;
   const editingSiteUser = window._currentEditingStatus?.user || '';
 
@@ -1366,7 +1379,29 @@ async function abrirModalPresence() {
       }
     }
 
-function linhaInfo(p){ const status=p.status==='editando'?'<span class="badge b-open">aberta</span>':(audsDe(p)===0?'<span class="badge b-draft">rascunho</span>':''); return {auds:audsDe(p),status}; }
+    function linhaInfo(p) {
+      const t = new Date();
+      const hoje = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+
+      let statusHtml = '';
+
+      if (p.status === 'editando') {
+        if (p.data && p.data <= hoje) {
+          // Tag ENCERRADA com amarelo desbotado e texto cinza-acastanhado bem suave
+          statusHtml = '<span class="badge" style="background:#F7F7E0; color:#D6AF61;">encerrada</span>';
+        } else if (p._isProxima) {
+          // Tag PARA REVISAR com azul claro
+          statusHtml = '<span class="badge" style="background:#e0f2fe; color:#0369a1;">para revisar</span>';
+        } else {
+          // Pautas futuras normais
+          statusHtml = '<span class="badge b-open">aberta</span>';
+        }
+      } else if (audsDe(p) === 0) {
+        statusHtml = '<span class="badge b-draft">rascunho</span>';
+      }
+
+      return { auds: audsDe(p), status: statusHtml };
+    }
 
       function renderTabela(cont, vis, totalVis){
         const t = new Date(); 

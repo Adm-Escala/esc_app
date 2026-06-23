@@ -434,6 +434,33 @@
   .prio-2 { background:#f59e0b; box-shadow:0 0 0 2px #fef3c7; } /* Média */
   .prio-1 { background:#10b981; box-shadow:0 0 0 2px #d1fae5; } /* Baixa */
 
+    /* ===== Botão Flutuante (Checklist) ===== */
+      .fab-checklist {
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 14px rgba(79,70,229,.4);
+        cursor: pointer;
+        z-index: 50;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .fab-checklist:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(79,70,229,.6);
+      }
+      @media(max-width:640px){
+        .fab-checklist { bottom: 16px; left: 16px; width: 44px; height: 44px; }
+      }
+
 </style>
 </head>
 <body>
@@ -1169,7 +1196,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.2</h1>
+        <h1>Escala Adm - v 1.1.3</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -2644,17 +2671,24 @@ async function renderPauta(id){
           <input type="file" id="pjeFile" accept=".xlsx,.xls,.csv" style="display:none;">
           <button class="btn btn-sm" id="pImport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg> Importar PJe</button>
           <button class="btn btn-sm btn-primary" id="pAutoTopo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg> EA</button>
+          <button class="btn btn-sm" id="pAutoRjaTopo" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> EA-RJA</button>
           <div class="split" id="copyWrap">
-            <button class="main" id="copyMain"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar p/ Excel</button><button class="car" id="copyCar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
+            <button class="main" id="copyMain"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar</button><button class="car" id="copyCar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
             <div class="menu" id="copyMenu" style="padding:10px; min-width:220px;">
+              <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px; padding-left:4px;">Atalhos rápidos:</div>
+              <div style="display:flex; gap:6px; margin-bottom:12px; padding: 0 4px;">
+                <button type="button" class="btn btn-sm" onclick="copiarColunasRapido(['c1', 'c2', 'c3'])" style="flex:1; font-size:11px; padding:6px 4px;">Conciliadores</button>
+                <button type="button" class="btn btn-sm" onclick="copiarColunasRapido(['rja'])" style="flex:1; font-size:11px; padding:6px 4px;">RJAs</button>
+              </div>
+              <div style="height:1px; background:var(--bg); margin:0 4px 10px 4px;"></div>
               <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px; padding-left:4px;">Colunas para copiar:</div>
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="proc"> Processo</label>
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="vara"> Vara de Origem</label>
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c1" checked> 1º Conciliador</label>
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c2" checked> 2º Conciliador</label>
               <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="c3" checked> Coconciliador / Obs</label>
-              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="rja" checked> RJA</label>
-<label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="res"> Resultado</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="rja"> RJA</label>
+              <label class="row" style="padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" value="res"> Resultado</label>
             </div>
           </div>
         </div>
@@ -2724,8 +2758,8 @@ async function renderPauta(id){
             <div class="split" id="rjaSplitWrap">
               <button class="main" id="gabRja" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50); border-radius:9px 0 0 9px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> EA-RJA</button>
               <button class="car" id="btnRjaMenu" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50); border-left:1px solid #c7d2fe; border-radius:0 9px 9px 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
-              <div class="menu" id="menuRjaOpts" style="min-width:200px;">
-                <button id="btnGerenciarRja"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px; vertical-align:middle;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Regras</button>
+              <div class="menu" id="menuRjaOpts" style="min-width:200px;">                
+                <button id="btnGerenciarRja">Regras de RJA</button>
               </div>
             </div>
             <button class="btn" id="gabLimpar">Limpar</button>
@@ -2892,6 +2926,7 @@ async function renderPauta(id){
       tr.appendChild(mk('c1')); 
       tr.appendChild(mk('c2')); 
       tr.appendChild(mk('c3','obs')); 
+
       const mkRja = () => {
         const c = document.createElement('td');
         const sel = document.createElement('select');
@@ -2903,7 +2938,13 @@ async function renderPauta(id){
         op0.value = ''; op0.textContent = '—';
         sel.appendChild(op0);
         
-        rjasDisponiveis.forEach(r => {
+        // Garante que o item "Escolher" apareça como opção se foi preenchido pelo EA
+        const rjasComEscolher = [...rjasDisponiveis];
+        if ((cel.rja === 'Escolher') && !rjasComEscolher.includes('Escolher')) {
+           rjasComEscolher.unshift('Escolher');
+        }
+
+        rjasComEscolher.forEach(r => {
           const op = document.createElement('option');
           op.value = r; op.textContent = r;
           if ((cel.rja || '') === r) op.selected = true;
@@ -2993,6 +3034,9 @@ async function renderPauta(id){
   
   const btnAutoTopo = document.getElementById('pAutoTopo');
   if(btnAutoTopo) btnAutoTopo.onclick = () => document.getElementById('gabAuto').click();
+
+  const btnAutoRjaTopo = document.getElementById('pAutoRjaTopo');
+  if(btnAutoRjaTopo) btnAutoRjaTopo.onclick = () => document.getElementById('gabRja').click();
   
   const cw=document.getElementById('copyWrap');
 // Eventos do menu
@@ -3000,8 +3044,7 @@ async function renderPauta(id){
   document.getElementById('copyCar').onclick = ev => { ev.stopPropagation(); cw.classList.toggle('open'); };
   // Fecha o menu se clicar fora (mas não fecha ao clicar nos checkboxes)
   document.addEventListener('click', e => { if(!cw.contains(e.target)) cw.classList.remove('open'); });
-  cw.querySelectorAll('.menu button').forEach(b=>b.onclick=()=>{ copiar(b.dataset.c); cw.classList.remove('open'); });
-
+  
   function sincronizaCelulaPessoaHora(p, nk, H){
     if(!nk) return false;
     const pe=(pautaEquipe||[]).concat(p.dia.extra||[]).find(x=>chave(x.nome)===nk);
@@ -3300,6 +3343,9 @@ async function renderPauta(id){
 
       if(confirm(`Distribuir RJAs automaticamente usando as ${regras.length} regras configuradas?\n\nO sistema processará as regras na ordem em que aparecem no gerenciador.`)){
         let alterou = false;
+        
+        // --- INÍCIO DOS LOGS NO CONSOLE ---
+        console.group('=== LOG DE ATRIBUIÇÃO EA-RJA ===');
 
         const nomeToRja = {};
         const todasPessoas = (pautaEquipe || []).concat(p.dia.extra || []);
@@ -3313,7 +3359,11 @@ async function renderPauta(id){
           if (!c || !(c.proc || '').trim() || chave(c.res) === 'CANCELADA') return;
           const c1k = chave(c.c1);
           if (c1k && c1k !== 'OUTRO' && nomeToRja[c1k]) {
-            if (c.rja !== nomeToRja[c1k]) { c.rja = nomeToRja[c1k]; alterou = true; }
+            if (c.rja !== nomeToRja[c1k]) { 
+              c.rja = nomeToRja[c1k]; 
+              alterou = true; 
+              console.log(`[Passo 1] RJA '${c.rja}' fixado na sessão ${L.HH}h pois ${c.c1} é o 1º Conciliador.`);
+            }
           }
         });
 
@@ -3326,6 +3376,8 @@ async function renderPauta(id){
             contagemRja[rjaUpper] = (contagemRja[rjaUpper] || 0) + 1;
           }
         });
+        
+        console.log('[Passo 2] Contagem atual antes de rodar as regras:', JSON.parse(JSON.stringify(contagemRja)));
 
         // 3) Separar as elegíveis
         let elegiveis = linhasDaPauta(p).filter(L => {
@@ -3373,6 +3425,8 @@ async function renderPauta(id){
 
         // 4) PROCESSA O MOTOR DE REGRAS DINÂMICAS
         regras.forEach(regra => {
+            console.log(`\n--- Executando Regra: ${regra.nome} (Cota máxima: ${regra.cota}) ---`);
+            
             // Filtra as pessoas que se enquadram na regra atual
             const pessoasMatch = todasPessoas.filter(pe => {
                 const ev = aus[pe.id];
@@ -3397,11 +3451,19 @@ async function renderPauta(id){
                 let jaTem = contagemRja[rja] || 0;
                 let toAssign = regra.cota - jaTem;
                 
+                console.log(`> Analisando ${pe.nome} (RJA: ${rja}): Já possui ${jaTem}, precisa de mais ${toAssign}`);
+                
                 while (toAssign > 0) {
                     let L = (regra.priorizaVara && pe.cartorio) 
                             ? consomeAudEspecifica(regra.horas, pe.cartorio) 
                             : consomeAud(regra.horas);
-                    if (!L) break;
+                    
+                    if (!L) {
+                        console.log(`  - Sem sessões vazias nos horários [${regra.horas.join(',')}] para ${pe.nome}.`);
+                        break;
+                    }
+                    
+                    console.log(`  - [Regra Aplicada] RJA '${rja}' atribuído na sessão ${L.HH}h (Sala: ${L.sala}).`);
                     p.celulas[L.key].rja = rja;
                     alterou = true;
                     toAssign--;
@@ -3410,10 +3472,23 @@ async function renderPauta(id){
             });
         });
 
+        // 5) Preencher "Escolher" nos processos restantes
+        linhasDaPauta(p).forEach(L => {
+          const c = p.celulas[L.key];
+          if (c && (c.proc || '').trim() && chave(c.res) !== 'CANCELADA') {
+            if (!c.rja || !c.rja.trim()) {
+              c.rja = 'Escolher';
+              alterou = true;
+            }
+          }
+        });
+        
+        console.groupEnd(); // --- FIM DOS LOGS ---
+
         if (alterou) {
           agendaSalvar();
           if (window._refreshEspelho) window._refreshEspelho();
-          toast('RJAs escalados com sucesso!');
+          toast('RJAs escalados com sucesso! Verifique o console (F12) para detalhes.');
         } else {
           toast('Nenhuma alteração necessária ou possível nos RJAs.');
         }
@@ -4302,43 +4377,23 @@ function sincronizaGabarito(p){
       const box = document.getElementById('csCancelList');
       box.innerHTML = '';
       
-      // Limpa campos vazios que ficaram soltos e garante apenas 1 branco no final
-      const limpos = pautaAtual.dia.cancelamentos.filter(x => x.trim() !== '');
-      limpos.push('');
-      pautaAtual.dia.cancelamentos = limpos;
+      // Limpa os dados antigos garantindo que seja um array de strings válidas
+      const arr = (pautaAtual.dia.cancelamentos || []).filter(x => x.trim() !== '');
 
-      const arr = pautaAtual.dia.cancelamentos;
+      const ta = document.createElement('textarea');
+      ta.className = 'input';
+      ta.rows = 5;
+      ta.style.resize = 'vertical';
+      ta.placeholder = 'Cole os números dos processos aqui (um por linha)...';
+      ta.value = arr.join('\n');
       
-      arr.forEach((num, idx) => {
-        const inp = document.createElement('input');
-        inp.className = 'input';
-        inp.value = num;
-        inp.placeholder = 'Número do processo';
-        
-        inp.addEventListener('input', () => {
-          arr[idx] = inp.value;
-          agendaSalvar();
-          
-          // Se preencheu o último campo disponível, cria o próximo imediatamente sem perder o foco
-          if (idx === arr.length - 1 && inp.value.trim() !== '') {
-            arr.push('');
-            renderCsCancelamentos();
-            setTimeout(() => {
-              const inputs = box.querySelectorAll('input');
-              if(inputs[idx]) inputs[idx].focus();
-            }, 10);
-          }
-        });
-        
-        inp.addEventListener('blur', () => {
-          // Se o usuário apagou o conteúdo de um campo intermediário e saiu dele, redesenha limpando
-          if (inp.value.trim() === '' && idx < arr.length - 1) {
-            renderCsCancelamentos();
-          }
-        });
-
-        box.appendChild(inp);
+      // Atualiza o array no Firebase toda vez que o usuário digitar ou colar algo
+      ta.addEventListener('input', () => {
+        pautaAtual.dia.cancelamentos = ta.value.split('\n').map(x => x.trim());
+        agendaSalvar();
       });
+
+      box.appendChild(ta);
     }
 
     // ATUALIZAÇÃO: Vincula o botão "Aud. Simples" na hora que a janela de Supervisão abre
@@ -5093,7 +5148,7 @@ function sincronizaGabarito(p){
         const wrap = document.createElement('div');
         wrap.innerHTML = `
           <div class="modal-bg keep-open" id="mChecklist"><div class="modal lg modal-flex">
-            <div class="modal-head"><div class="row between"><div><div style="font-size:19px;font-weight:800;">Checklists da Escala</div><div class="muted" style="font-size:14px;">Atividades diárias e gestão mensal.</div></div><button class="btn icon-btn" onclick="closeM('mChecklist')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>
+            <div class="modal-head"><div class="row between"><div><div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:12px;">Checklists da Escala <button class="btn btn-sm" onclick="abrirPendencias()" style="color:#d97706; border-color:#fef3c7; background:#fffbeb; font-size:12px; padding:4px 8px; font-weight:600;" title="Abrir Pendências & Anotações"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Pendências</button></div><div class="muted" style="font-size:14px;">Atividades diárias e gestão mensal.</div></div><button class="btn icon-btn" onclick="closeM('mChecklist')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>
             <div class="modal-body" style="display:flex; gap:16px; padding-bottom:20px; min-height:450px; flex-wrap:wrap;">
               
               <div style="flex:3; display:flex; flex-direction:column; min-width:300px;">
@@ -6075,8 +6130,27 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
         closeM('mUpdateEdit');
         toast('Atualização excluída!');
       }
+    };    
+
+    // ===== ATALHOS DE CÓPIA PARA O EXCEL =====
+    window.copiarColunasRapido = function(colunasAlvo) {
+      // 1. Marca apenas os checkboxes passados no atalho e desmarca o resto
+      const checkboxes = document.querySelectorAll('#copyMenu input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.checked = colunasAlvo.includes(cb.value);
+      });
+      
+      // 2. Aciona o botão principal de "Copiar p/ Excel" automaticamente
+      document.getElementById('copyMain').click();
     };
 
 </script>
+
+    <button class="fab-checklist" onclick="abrirChecklist()" title="Checklist">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+    </button>
+
 </body>
 </html>

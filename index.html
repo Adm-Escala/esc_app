@@ -1209,7 +1209,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.5</h1>
+        <h1>Escala Adm - v 1.1.6</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -2727,7 +2727,20 @@ async function renderPauta(id){
           <input type="file" id="pjeFile" accept=".xlsx,.xls,.csv" style="display:none;">
           <button class="btn btn-sm" id="pImport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg> Importar PJe</button>
           <button class="btn btn-sm btn-primary" id="pAutoTopo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg> EA</button>
-          <button class="btn btn-sm" id="pAutoRjaTopo" style="color:var(--brand-d); border-color:var(--brand-100); background:var(--brand-50);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> EA-RJA</button>
+          <div class="split" id="rjaWrap">
+          <button class="main" id="pAutoRjaTopo" style="color:var(--brand-d); border:1px solid var(--brand-100); background:var(--brand-50); border-right:none; padding:6px 11px; font-size:12.5px;" onmouseover="this.style.background='var(--brand-100)'" onmouseout="this.style.background='var(--brand-50)'" title="Rodar distribuição automática">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> EA-RJA
+          </button>
+          <button class="car" id="rjaCar" style="color:var(--brand-d); border:1px solid var(--brand-100); background:var(--brand-50); border-left:1px solid #c7d2fe; padding:6px 9px; font-size:12.5px;" onmouseover="this.style.background='var(--brand-100)'" onmouseout="this.style.background='var(--brand-50)'" title="Abrir menu de RJA">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="menu" id="rjaMenu" style="padding:6px; min-width:200px;">
+            <button type="button" id="btnMenuGerenciarRja" style="display:flex; align-items:center; gap:8px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+              Gerenciar Regras
+            </button>
+          </div>
+        </div>
           <div class="split" id="copyWrap">
             <button class="main" id="copyMain"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar</button><button class="car" id="copyCar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
             <div class="menu" id="copyMenu" style="padding:10px; min-width:220px;">
@@ -2750,7 +2763,7 @@ async function renderPauta(id){
         </div>
       </div>
       <div class="card shadow" id="gradeScroll" style="margin-top:16px;overflow:auto;max-height:65vh;">
-        <table class="grade"><thead><tr><th data-col="sala" style="width:120px;">Salas</th><th data-col="hora" style="width:64px;text-align:center;">Horário</th><th data-col="proc">Processo</th><th data-col="vara">Vara de Origem</th><th data-col="c1" style="background:#1e3a8a;width:160px;">1º Conciliador</th><th data-col="c2" style="background:#14532d;">2º Conciliador</th><th data-col="c3" style="background:#3730a3;min-width:200px;">Coconciliador / Observações</th><th style="width:40px;text-align:center;background:#475569;" title="Trocar conciliadores">🔄</th><th data-col="rja" style="background:#0f766e;width:80px;">RJA</th><th data-col="res" style="background:#92400e;width:150px;">Resultado</th></tr></thead><tbody id="gradeBody"></tbody></table>
+        <table class="grade"><thead><tr><th data-col="sala" style="width:120px;">Salas</th><th data-col="hora" style="width:64px;text-align:center;">Horário</th><th data-col="proc">Processo</th><th data-col="vara">Vara de Origem</th><th data-col="c1" style="background:#1e3a8a;width:160px;">1º Conciliador</th><th data-col="c2" style="background:#14532d;">2º Conciliador</th><th data-col="c3" style="background:#3730a3;min-width:200px;">Coconciliador / Observações</th><th style="width:40px;text-align:center;background:#475569;" title="Trocar conciliadores">🔄</th><th data-col="rja" style="background:#e0e7ff; color:#3730a3; width:110px;">RJA <span id="lblMediaRja" style="font-size:11px; font-weight:800; opacity:0.8; margin-left:4px; background:#c7d2fe; padding:2px 6px; border-radius:12px; cursor:help; display:none;"></span></th><th data-col="res" style="background:#92400e;width:150px;">Resultado</th></tr></thead><tbody id="gradeBody"></tbody></table>
       </div>
 
       <div class="card" style="margin-top:16px;padding:18px;">
@@ -3094,7 +3107,35 @@ async function renderPauta(id){
   const btnAutoRjaTopo = document.getElementById('pAutoRjaTopo');
   if(btnAutoRjaTopo) btnAutoRjaTopo.onclick = () => document.getElementById('gabRja').click();
   
-  const cw=document.getElementById('copyWrap');
+  // Lógica do menu de Copiar
+  const cw = document.getElementById('copyWrap');
+  if(cw) { 
+    document.getElementById('copyCar').onclick = (ev) => {
+      ev.stopPropagation();
+      cw.classList.toggle('open');
+    }; 
+    document.addEventListener('click', e => { 
+      if(!cw.contains(e.target)) cw.classList.remove('open'); 
+    }); 
+  }
+
+  // Lógica do menu lateral EA-RJA (Topo)
+  const rW = document.getElementById('rjaWrap');
+  if(rW) { 
+    document.getElementById('rjaCar').onclick = (ev) => {
+      ev.stopPropagation();
+      rW.classList.toggle('open');
+    }; 
+    document.addEventListener('click', e => { 
+      if(!rW.contains(e.target)) rW.classList.remove('open'); 
+    }); 
+    
+    document.getElementById('btnMenuGerenciarRja').onclick = () => { 
+      rW.classList.remove('open'); 
+      abrirGerenciarRja(); 
+    };
+  }
+
 // Eventos do menu
   document.getElementById('copyMain').onclick = () => copiarDynamic();
   document.getElementById('copyCar').onclick = ev => { ev.stopPropagation(); cw.classList.toggle('open'); };
@@ -3408,21 +3449,13 @@ async function renderPauta(id){
       let perfilSelecionado = perfisDisponiveis[0];
 
       // Se houver mais de um cenário salvo, pergunta qual o usuário quer rodar
+      // Se houver mais de um cenário salvo, abre o modal combobox
       if (perfisDisponiveis.length > 1) {
-          let msg = "Qual cenário de regras RJA você deseja rodar nesta pauta?\n\n";
-          perfisDisponiveis.forEach((p, i) => {
-              msg += `${i + 1} - ${p.nome}\n`;
-          });
-          let escolha = prompt(msg + "\nDigite o número do cenário:", "1");
-          if (!escolha) return; // Cancelou
+          // O "await" faz o código pausar e esperar o usuário clicar no Modal!
+          perfilSelecionado = await escolherCenarioModal(perfisDisponiveis);
           
-          let idx = parseInt(escolha) - 1;
-          if (idx >= 0 && idx < perfisDisponiveis.length) {
-              perfilSelecionado = perfisDisponiveis[idx];
-          } else {
-              toast("Opção inválida.");
-              return;
-          }
+          // Se retornou null, é porque o usuário clicou em Cancelar.
+          if (!perfilSelecionado) return; 
       }
 
       const regras = perfilSelecionado.regras;
@@ -3592,8 +3625,8 @@ async function renderPauta(id){
         if(!document.getElementById('mGerenciarRja')) {
             const wrap = document.createElement('div');
             wrap.innerHTML = `
-              <div class="modal-bg keep-open" id="mGerenciarRja"><div class="modal md modal-flex">
-                <div class="modal-head">
+              <div class="modal-bg keep-open" id="mGerenciarRja"><div class="modal md modal-flex" style="background:#f8fafc;">
+                <div class="modal-head" style="background:#fff; border-bottom:none; padding-bottom:10px;">
                   <div class="row between" style="align-items:flex-start;">
                     <div>
                       <div style="font-size:19px;font-weight:800;">Motor de Regras RJA</div>
@@ -3608,10 +3641,14 @@ async function renderPauta(id){
                   </div>
                 </div>
                 
-                <div id="tabsRegrasContainer" class="row" style="overflow-x: auto; padding: 12px 22px 0; gap: 4px; display: flex; align-items: flex-end; background:#f1f5f9; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);"></div>
+                <!-- CONTAINER DAS ABAS CORRIGIDO: Largura total, scroll suave oculto, sem espremer -->
+                <div style="width:100%; border-bottom:1px solid var(--line); background:#fff; position:relative;">
+                    <div id="tabsRegrasContainer" style="display:flex; align-items:flex-end; overflow-x:auto; padding:12px 22px 0; gap:4px; scrollbar-width:none; -ms-overflow-style:none;"></div>
+                </div>
                 
-                <div class="modal-body" id="rjaRegrasList" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px; padding-top:10px;"></div>
-                <div class="modal-foot">
+                <div class="modal-body" id="rjaRegrasList" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px; padding-top:16px;"></div>
+                
+                <div class="modal-foot" style="background:#fff;">
                   <div class="row between">
                     <button class="btn btn-sm" id="rjaRegrasAdd" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">+ Nova Regra</button>
                     <button class="btn btn-primary" id="rjaRegrasSalvar">Salvar Todos os Cenários</button>
@@ -3620,6 +3657,23 @@ async function renderPauta(id){
               </div></div>
             `;
             document.body.appendChild(wrap);
+            
+            // Oculta scrollbar no Chrome/Safari dinamicamente
+            const style = document.createElement('style');
+            style.textContent = `#tabsRegrasContainer::-webkit-scrollbar { display: none; }`;
+            document.head.appendChild(style);
+
+            // --- NOVA LÓGICA: Rolar as abas horizontalmente com o wheel do mouse ---
+            const tabsContainer = document.getElementById('tabsRegrasContainer');
+            if (tabsContainer) {
+                tabsContainer.addEventListener('wheel', (evt) => {
+                    // Verifica se o movimento foi na vertical (scroll padrão do mouse)
+                    if (evt.deltaY !== 0) {
+                        evt.preventDefault(); // Impede a tela toda de rolar para baixo
+                        tabsContainer.scrollLeft += evt.deltaY; // Converte o movimento para a lateral
+                    }
+                }, { passive: false }); // Obrigatório para o preventDefault funcionar
+            }
             
             document.getElementById('rjaRegrasSalvar').onclick = async () => {
                 await DB.saveRegrasRja(perfisRegrasRJA);
@@ -3643,17 +3697,21 @@ async function renderPauta(id){
         if (!dbData) {
             perfisRegrasRJA = [{ id: 'p-default', nome: 'Padrão', regras: regrasPadrao }];
         } else if (Array.isArray(dbData) && dbData.length > 0 && dbData[0].alvoTipo) {
-            // Migração invisível: Converte array antigo para o formato de Abas
             perfisRegrasRJA = [{ id: 'p-default', nome: 'Cenário Padrão', regras: dbData }];
         } else {
-            perfisRegrasRJA = dbData;
+            // CORREÇÃO: O Firebase deleta arrays vazios. Aqui nós forçamos a recriação deles!
+            perfisRegrasRJA = dbData.map(p => {
+                p.regras = p.regras || []; // Se for undefined, vira []
+                return p;
+            });
         }
 
         if (!perfilRegrasAtivoId || !perfisRegrasRJA.find(p => p.id === perfilRegrasAtivoId)) {
             perfilRegrasAtivoId = perfisRegrasRJA[0].id;
         }
 
-        rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === perfilRegrasAtivoId).regras;
+        // Trava de segurança extra usando o "|| []"
+        rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === perfilRegrasAtivoId).regras || [];
 
         renderAbasRegrasRja();
         renderRjaRegrasList();
@@ -3668,66 +3726,69 @@ async function renderPauta(id){
         let html = '';
         perfisRegrasRJA.forEach((p, idx) => {
             const isActive = p.id === perfilRegrasAtivoId;
+            
+            // Estilos para aba ativa (conecta com o fundo cinza da lista) vs aba inativa
             const style = isActive
-                ? "background: #fff; color: var(--brand-d); border: 1px solid var(--line); border-bottom: 1px solid #fff; font-weight: 700; margin-bottom: -1px; border-radius: 8px 8px 0 0;"
-                : "color: var(--muted); cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0;";
+                ? "background: #f8fafc; color: var(--brand-d); border: 1px solid var(--line); border-bottom: 1px solid #f8fafc; font-weight: 700; margin-bottom: -1px; border-radius: 8px 8px 0 0;"
+                : "background: #fff; color: var(--muted); cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0;";
 
-            // MÁGICA AQUI: flex-shrink: 0 impede que a aba seja esmagada. Padding e font-size aumentados!
-            html += `<div style="flex-shrink: 0; padding: 12px 20px; font-size: 14.5px; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 10px; position: relative; ${style}" 
+            // O segredo está no "flex: 0 0 auto;" -> Ele impede que as abas sejam esmagadas!
+            html += `<div style="flex: 0 0 auto; padding: 12px 20px; font-size: 14px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; position: relative; ${style}" 
                           data-aba-id="${p.id}" class="aba-rja-item">
                         
-                        <span class="aba-rja-drag" style="cursor:grab; color:var(--line2); font-size:18px; margin-left:-4px; display:${perfisRegrasRJA.length > 1 ? 'block' : 'none'}" title="Arraste para reordenar as abas">⠿</span>
+                        <span class="aba-rja-drag" style="cursor:grab; color:var(--line2); font-size:16px; margin-left:-4px; display:${perfisRegrasRJA.length > 1 ? 'block' : 'none'}" title="Arraste para reordenar as abas">⠿</span>
                         
-                        <span onclick="trocarAbaRja('${p.id}')" style="flex:1;">${esc(p.nome)}</span>
+                        <span onclick="trocarAbaRja('${p.id}')" style="padding-right:4px;">${esc(p.nome)}</span>
                         
                         <div class="aba-menu-wrap" style="position:relative; margin-right: -6px;">
                             <button class="btn icon-btn" title="Opções do cenário" style="padding:4px; border:0; background:transparent; color:${isActive ? 'var(--brand)' : 'var(--muted)'};" onclick="toggleMenuAbaRja(event, '${p.id}')">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                             </button>
                             
-                            <div class="menu" id="menuAba-${p.id}" style="top:calc(100% + 4px); right:0; min-width:140px; z-index:9999; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
-                                <button onclick="acaoAbaRja(event, 'renomear', '${p.id}')" style="padding:10px 14px; font-weight:600; font-size:13px;">✏️ Renomear</button>
-                                <button onclick="acaoAbaRja(event, 'duplicar', '${p.id}')" style="padding:10px 14px; font-weight:600; font-size:13px;">📄 Duplicar</button>
-                                <button onclick="acaoAbaRja(event, 'excluir', '${p.id}')" style="padding:10px 14px; font-weight:600; font-size:13px; color:#ef4444;">🗑️ Excluir</button>
+                            <div class="menu aba-dropdown" id="menuAba-${p.id}" style="display:none; position:fixed; width:160px; z-index:999999; box-shadow: 0 4px 20px rgba(0,0,0,0.15); background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                                <div onclick="acaoAbaRja(event, 'renomear', '${p.id}')" style="padding:12px 16px; font-weight:600; font-size:13.5px; cursor:pointer; border-bottom:1px solid #f8fafc; color: var(--ink); transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">✏️ Renomear</div>
+                                <div onclick="acaoAbaRja(event, 'duplicar', '${p.id}')" style="padding:12px 16px; font-weight:600; font-size:13.5px; cursor:pointer; border-bottom:1px solid #f8fafc; color: var(--ink); transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">📄 Duplicar</div>
+                                <div onclick="acaoAbaRja(event, 'excluir', '${p.id}')" style="padding:12px 16px; font-weight:600; font-size:13.5px; color:#ef4444; cursor:pointer; transition: background 0.2s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">🗑️ Excluir</div>
                             </div>
                         </div>
                      </div>`;
         });
         
-        // Botão Novo Cenário (Também com flex-shrink: 0 e maior)
-        html += `<div style="flex-shrink: 0; padding: 12px 16px; font-size: 14.5px; color: var(--brand); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px;" id="btnNovaAbaRja">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo Cenário
+        // Botão Novo Cenário
+        html += `<div style="flex: 0 0 auto; padding: 12px 16px; font-size: 14px; color: var(--brand); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px;" id="btnNovaAbaRja">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo Cenário
                  </div>`;
                  
         container.innerHTML = html;
 
-        // Fecha menus abertos se o usuário clicar fora
         document.addEventListener('click', fecharMenusAbasRja);
 
         container.querySelectorAll('.aba-rja-item').forEach(el => {
             if (el.dataset.abaId !== perfilRegrasAtivoId) {
                 el.onmouseover = () => el.style.background = '#e2e8f0';
-                el.onmouseout = () => el.style.background = 'transparent';
+                el.onmouseout = () => el.style.background = '#fff';
             }
         });
 
-        document.getElementById('btnNovaAbaRja').onclick = () => {
+        // Transformamos o onclick em 'async' para poder salvar no banco
+        document.getElementById('btnNovaAbaRja').onclick = async () => {
             const nome = prompt("Dê um nome para este novo cenário (ex: 'Mutirão', 'Pauta Dupla'):");
             if (!nome || !nome.trim()) return;
             const novoId = 'p-' + Date.now();
             
-            // Clona o array de regras da aba atual para a nova
-            const regrasClonadas = JSON.parse(JSON.stringify(rjaRegrasAlvo));
-            regrasClonadas.forEach(r => r.id = uid());
-            
-            perfisRegrasRJA.push({ id: novoId, nome: nome.trim(), regras: regrasClonadas });
+            // Cria a aba com um array de regras 100% VAZIO
+            perfisRegrasRJA.push({ id: novoId, nome: nome.trim(), regras: [] });
             perfilRegrasAtivoId = novoId;
             rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === novoId).regras;
+            
+            // Auto-Save: Já grava no Firebase imediatamente
+            await DB.saveRegrasRja(perfisRegrasRJA);
+            toast('Novo cenário criado!');
+            
             renderAbasRegrasRja();
             renderRjaRegrasList();
         };
 
-        // Aplica o Drag-and-Drop (SortableJS) para as abas!
         if (typeof Sortable !== 'undefined') {
             new Sortable(container, {
                 animation: 150,
@@ -3736,7 +3797,7 @@ async function renderPauta(id){
                 onEnd: (evt) => {
                     const item = perfisRegrasRJA.splice(evt.oldIndex, 1)[0];
                     perfisRegrasRJA.splice(evt.newIndex, 0, item);
-                    renderAbasRegrasRja(); // Atualiza a tela após arrastar
+                    renderAbasRegrasRja();
                 }
             });
         }
@@ -3752,17 +3813,24 @@ async function renderPauta(id){
     };
 
     window.toggleMenuAbaRja = function(ev, id) {
-        ev.stopPropagation(); // Impede que o clique seja considerado "clicar fora"
-        fecharMenusAbasRja(); // Garante que só 1 menu fique aberto
+        ev.stopPropagation(); 
+        fecharMenusAbasRja(); 
         const menu = document.getElementById('menuAba-' + id);
-        if (menu) menu.style.display = 'block';
+        if (menu) {
+            // Calcula a posição exata do botão clicado na tela
+            const rect = ev.currentTarget.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 4) + 'px';
+            menu.style.left = (rect.right - 150) + 'px'; // 150 é a largura do menu
+            menu.style.display = 'block';
+        }
     };
 
     window.fecharMenusAbasRja = function() {
-        document.querySelectorAll('[id^="menuAba-"]').forEach(m => m.style.display = 'none');
+        document.querySelectorAll('.aba-dropdown').forEach(m => m.style.display = 'none');
     };
 
-    window.acaoAbaRja = function(ev, acao, id) {
+    // Adicionamos o 'async' aqui também
+    window.acaoAbaRja = async function(ev, acao, id) {
         ev.stopPropagation();
         fecharMenusAbasRja();
         
@@ -3774,6 +3842,7 @@ async function renderPauta(id){
             const n = prompt("Novo nome:", perfil.nome);
             if (n && n.trim()) {
                 perfil.nome = n.trim();
+                await DB.saveRegrasRja(perfisRegrasRJA); // Auto-save
                 renderAbasRegrasRja();
             }
         } else if (acao === 'duplicar') {
@@ -3784,6 +3853,10 @@ async function renderPauta(id){
             perfisRegrasRJA.splice(index + 1, 0, { id: novoId, nome: perfil.nome + ' (Cópia)', regras: regrasClonadas });
             perfilRegrasAtivoId = novoId;
             rjaRegrasAlvo = perfisRegrasRJA.find(p => p.id === novoId).regras;
+            
+            await DB.saveRegrasRja(perfisRegrasRJA); // Auto-save
+            toast('Cenário duplicado com sucesso!');
+            
             renderAbasRegrasRja();
             renderRjaRegrasList();
         } else if (acao === 'excluir') {
@@ -3791,9 +3864,13 @@ async function renderPauta(id){
             if (confirm("Tem certeza que deseja excluir o cenário '" + perfil.nome + "'?")) {
                 perfisRegrasRJA.splice(index, 1);
                 if (perfilRegrasAtivoId === id) {
-                    perfilRegrasAtivoId = perfisRegrasRJA[0].id; // Retorna para a primeira aba se a ativa for excluída
+                    perfilRegrasAtivoId = perfisRegrasRJA[0].id;
                     rjaRegrasAlvo = perfisRegrasRJA[0].regras;
                 }
+                
+                await DB.saveRegrasRja(perfisRegrasRJA); // Auto-save
+                toast('Cenário excluído!');
+                
                 renderAbasRegrasRja();
                 renderRjaRegrasList();
             }
@@ -3994,15 +4071,95 @@ async function renderPauta(id){
   }
 
   function recalc(){
-    let tot=0,cv=0,outroN=0,outroAdmN=0; const ph={'13':0,'14':0,'15':0,'16':0,'17':0,'18':0}; const pv={};
-    linhasOrd().forEach(L=>{ const c=p.celulas[L.key]||{}; if(!(c.proc||'').trim()) return; tot++; if(ph[L.HH]!==undefined) ph[L.HH]++; const v=(c.vara||'').trim(); if(v){ cv++; pv[v]=(pv[v]||0)+1; } if(chave(c.res)==='CANCELADA') return; if(chave(c.c1)==='OUTRO') outroN++; if(chave(c.c2)==='OUTROADM') outroAdmN++; });
-    document.getElementById('stTot').textContent=tot; document.getElementById('stVara').textContent=cv; document.getElementById('stSem').textContent=tot-cv; document.getElementById('stNv').textContent=Object.keys(pv).length;
-    const eo=document.getElementById('stOutro'); if(eo) eo.textContent=outroN; const ea=document.getElementById('stOutroAdm'); if(ea) ea.textContent=outroAdmN;
-    const hc=document.getElementById('stHora'); const hEnt=Object.keys(ph).map(h=>[h,ph[h]]).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]); const hMax=hEnt.length?Math.max.apply(null,hEnt.map(e=>e[1])):1;
+    let tot=0,cv=0,outroN=0,outroAdmN=0,totAtivas=0;
+    const ph={'13':0,'14':0,'15':0,'16':0,'17':0,'18':0};
+    const pv={};
+    linhasOrd().forEach(L=>{
+      const c=p.celulas[L.key]||{};
+      if(!(c.proc||'').trim()) return;
+      tot++;
+      if(ph[L.HH]!==undefined) ph[L.HH]++;
+      const v=(c.vara||'').trim();
+      if(v){ cv++; pv[v]=(pv[v]||0)+1; }
+      
+      // Ignora as canceladas daqui para frente
+      if(chave(c.res)==='CANCELADA') return;
+      
+      totAtivas++; // Conta audiência ativa
+      if(chave(c.c1)==='OUTRO') outroN++;
+      if(chave(c.c2)==='OUTROADM') outroAdmN++;
+    });
+
+    document.getElementById('stTot').textContent=tot;
+    document.getElementById('stVara').textContent=cv;
+    document.getElementById('stSem').textContent=tot-cv;
+    document.getElementById('stNv').textContent=Object.keys(pv).length;
+    const eo=document.getElementById('stOutro'); if(eo) eo.textContent=outroN;
+    const ea=document.getElementById('stOutroAdm'); if(ea) ea.textContent=outroAdmN;
+    
+    const hc=document.getElementById('stHora');
+    const hEnt=Object.keys(ph).map(h=>[h,ph[h]]).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
+    const hMax=hEnt.length?Math.max.apply(null,hEnt.map(e=>e[1])):1;
     hc.innerHTML = hEnt.length ? hEnt.map(([h,n])=>{ const w=Math.round(n/hMax*100); return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;"><span style="width:34px;color:var(--muted);font-weight:700;flex:none;">${h}h</span><span style="flex:1;height:10px;background:var(--brand-50);border-radius:999px;overflow:hidden;"><span style="display:block;height:100%;width:${w}%;background:var(--brand);border-radius:999px;"></span></span><b class="tnums" style="width:26px;text-align:right;flex:none;">${n}</b></div>`; }).join('') : '<span class="faint">— sem horários ainda —</span>';
-    const vc=document.getElementById('stPorVara'); const ord=Object.entries(pv).sort((a,b)=>b[1]-a[1]);
+    
+    const vc=document.getElementById('stPorVara');
+    const ord=Object.entries(pv).sort((a,b)=>b[1]-a[1]);
     vc.innerHTML = ord.length ? ord.map(([v,n])=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:7px 0;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(v)}</span><b class="tnums" style="flex:none;">${n}</b></div>`).join('') : '<span class="faint">— nenhuma vara ainda —</span>';
-    const chip=document.getElementById('pSalvo'); if(chip) chip.textContent='salvo';
+    
+    const chip=document.getElementById('pSalvo');
+    if(chip) chip.textContent='salvo';
+
+    // --- NOVA LÓGICA: CÁLCULO DE MÉDIA RJA NA PAUTA ---
+    const lblMediaRja = document.getElementById('lblMediaRja');
+    if (lblMediaRja) {
+        const diaIso = diaSemanaISO(p.data);
+        const ausencias = p.dia.aus || {};
+        let qtdeRjas = 0;
+        
+        // Garante que só contaremos pessoas únicas, misturando a equipe fixa e os extras do dia
+        const equipeCompleta = (pautaEquipe || []).concat(p.dia.extra || []);
+        const equipeUnica = [];
+        const idsVistos = new Set();
+        equipeCompleta.forEach(x => {
+           if(!idsVistos.has(x.id)) { idsVistos.add(x.id); equipeUnica.push(x); }
+        });
+
+        equipeUnica.forEach(x => {
+           if (x.inativo) return;
+           if (!x.rja || !x.rja.trim()) return; // A pessoa tem que possuir uma sigla de RJA
+           
+           const ev = ausencias[x.id] || null;
+           // Ausências bloqueantes (ignora supervisao, iniciante e apoio jurídico)
+           if (ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev)) return; 
+           
+           if (x.tipo === 'adm') {
+               // Servidores ADM não possuem grade de horários, mas se estão no fórum e têm RJA, contam!
+               qtdeRjas++;
+           } else {
+               // Servidores normais/estagiários precisam ter alguma hora alocada no dia
+               const isExtra = (p.dia.extra || []).some(e => e.id === x.id);
+               const horasBase = isExtra ? (x.hor || []) : eqSlotsNoDia(x, diaIso);
+               const horasDia = p.dia.hor && p.dia.hor[x.id] ? p.dia.hor[x.id] : horasBase;
+               const horasGab = (p.dia.gab && p.dia.gab[x.id]) ? p.dia.gab[x.id] : [];
+               
+               // Se atende em pelo menos 1 horário da grade normal ou na grade de imprevistos, está disponível!
+               if (horasDia.length > 0 || horasGab.length > 0) {
+                   qtdeRjas++;
+               }
+           }
+        });
+
+        // Atualiza o texto na tela
+        if (qtdeRjas > 0) {
+            const media = (totAtivas / qtdeRjas).toFixed(1);
+            lblMediaRja.textContent = `(${media})`;
+            lblMediaRja.title = `${totAtivas} audiências ativas ÷ ${qtdeRjas} servidores com RJA disponíveis`;
+            lblMediaRja.style.display = 'inline-block';
+        } else {
+            lblMediaRja.style.display = 'none'; // Esconde se não houver RJAs disponíveis para evitar Infinity/NaN
+        }
+    }
+    // --------------------------------------------------
 
     // Dispara a verificação de alerta sempre que a grade é recalculada
     verificarDuplicidades();
@@ -6402,6 +6559,53 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
       // 2. Aciona o botão principal de "Copiar p/ Excel" automaticamente
       document.getElementById('copyMain').click();
     };
+
+    // --- MODAL DE SELEÇÃO DE CENÁRIO (Combobox) ---
+    function escolherCenarioModal(perfis) {
+        return new Promise((resolve) => {
+            if(!document.getElementById('mSeletorCenarioRja')) {
+                const wrap = document.createElement('div');
+                wrap.innerHTML = `
+                  <div class="modal-bg keep-open" id="mSeletorCenarioRja" style="z-index: 999999;">
+                    <div class="modal sm" style="background:#fff; border-radius:12px; overflow:hidden;">
+                      <div class="modal-head" style="background:#f8fafc; border-bottom:1px solid var(--line); padding:16px 20px;">
+                        <div style="font-size:17px; font-weight:800; color:var(--brand-d);">⚙️ Escolha o Cenário</div>
+                      </div>
+                      <div class="modal-body" style="padding: 20px;">
+                        <label style="font-size:13.5px; margin-bottom:8px; display:block; color:var(--muted); font-weight:600;">Qual conjunto de regras deseja utilizar nesta pauta?</label>
+                        <select id="selectCenarioRja" style="width:100%; padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14.5px; color: var(--ink); outline: none; cursor:pointer;">
+                        </select>
+                      </div>
+                      <div class="modal-foot" style="background:#f8fafc; padding:16px 20px; border-top:1px solid var(--line);">
+                        <div class="row right" style="gap:12px;">
+                          <button class="btn" id="btnCancelarCenarioRja" style="background:#fff; border:1px solid #cbd5e1; color:#64748b;">Cancelar</button>
+                          <button class="btn btn-primary" id="btnConfirmarCenarioRja" style="background:var(--brand); color:#fff; border:none; padding:8px 20px; font-weight:700;">Distribuir</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                document.body.appendChild(wrap);
+            }
+
+            const select = document.getElementById('selectCenarioRja');
+            select.innerHTML = perfis.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+
+            document.getElementById('btnCancelarCenarioRja').onclick = () => {
+                closeM('mSeletorCenarioRja');
+                resolve(null); // Cancelou
+            };
+            
+            document.getElementById('btnConfirmarCenarioRja').onclick = () => {
+                const idEscolhido = select.value;
+                const perfil = perfis.find(p => p.id === idEscolhido);
+                closeM('mSeletorCenarioRja');
+                resolve(perfil); // Confirmou a escolha
+            };
+
+            openM('mSeletorCenarioRja');
+        });
+    }
 
 </script>
 

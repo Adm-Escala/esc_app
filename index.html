@@ -1212,7 +1212,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.8</h1>
+        <h1>Escala Adm - v 1.1.9</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -5593,20 +5593,50 @@ function sincronizaGabarito(p){
     }
 
 
-/* ============================================================
-   CHECKLIST, PENDÊNCIAS E SITUAÇÕES EXCEPCIONAIS
-   ============================================================ */
-    let chkAlvo = [], chkMensalAlvo = [], pendAlvo = [], excepAlvo = {}, excDataAtual = '';
-
     /* ============================================================
       LÓGICA DE PROCEDIMENTOS E BASE DE CONHECIMENTO
       ============================================================ */
     let procAlvo = [];
     let procAtivaCatId = null;
     let procAtivaPostId = null;
+    let procEditCatId = null;
+
+    // Funções Auxiliares Recursivas
+    function buscarItemRecursivo(arr, id) {
+        for (let item of arr) {
+            if (item.id === id) return item;
+            if (item.posts) {
+                const res = buscarItemRecursivo(item.posts, id);
+                if (res) return res;
+            }
+        }
+        return null;
+    }
+
+    function getDiretorioAtivo() {
+        if (!procAtivaCatId) return procAlvo; 
+        const cat = buscarItemRecursivo(procAlvo, procAtivaCatId);
+        if (cat) {
+            if (!cat.posts) cat.posts = [];
+            return cat.posts;
+        }
+        return procAlvo;
+    }
+
+    function removerItemRecursivo(arr, id) {
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].id === id) {
+                arr.splice(i, 1);
+                return true;
+            }
+            if (arr[i].posts && removerItemRecursivo(arr[i].posts, id)) return true;
+        }
+        return false;
+    }
 
     window.abrirProcedimentos = async () => {
-        initNovosModais();
+        // Caso você tenha a função initNovosModais() em seu projeto, remova as barras '//' da linha abaixo:
+        // initNovosModais(); 
         procAlvo = await DB.getProcedimentos();
         renderProcedimentos();
         openM('mProcedimentos');
@@ -5616,128 +5646,270 @@ function sincronizaGabarito(p){
         const box = document.getElementById('procGridCategorias');
         box.innerHTML = '';
 
-        if (!procAlvo.length) {
-            box.innerHTML = '<div class="faint" style="text-align:center; padding:20px;">Nenhuma categoria de procedimento cadastrada.</div>';
+        let currentArray = procAlvo;
+        let parentCatId = null;
+        let currentCat = null;
+
+        function findNodeInfo(arr, id, parentId) {
+            for (let item of arr) {
+                if (item.id === id) return { node: item, parent: parentId };
+                if (item.posts) {
+                    const res = findNodeInfo(item.posts, id, item.id);
+                    if (res) return res;
+                }
+            }
+            return null;
+        }
+
+        if (procAtivaCatId !== null) {
+            const info = findNodeInfo(procAlvo, procAtivaCatId, null);
+            if (info) {
+                currentCat = info.node;
+                parentCatId = info.parent;
+                if (!currentCat.posts) currentCat.posts = [];
+                currentArray = currentCat.posts;
+            } else {
+                procAtivaCatId = null; 
+            }
+        }
+
+        if (procAtivaCatId === null) {
+            document.getElementById('btnProcVoltar').style.display = 'none';
+            document.getElementById('procModalTitle').innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Base de Conhecimento e Procedimentos';
+            document.getElementById('procModalDesc').textContent = 'Categorias e manuais para consulta da equipe.';
+        } else {
+            document.getElementById('btnProcVoltar').style.display = 'inline-flex';
+            document.getElementById('btnProcVoltar').onclick = () => { procAtivaCatId = parentCatId; renderProcedimentos(); };
+            document.getElementById('procModalTitle').innerHTML = `${esc(currentCat.icone || '📁')} ${esc(currentCat.nome)}`;
+            document.getElementById('procModalDesc').textContent = 'Gerencie as sub-pastas e postagens desta categoria.';
+        }
+
+        if (currentArray.length === 0) {
+            box.innerHTML = '<div class="faint" style="text-align:center; padding:40px 20px;">Nenhum item cadastrado aqui.</div>';
             return;
         }
 
-        // Grid que irá segurar os cards das categorias (comporta SortableJs)
-        const grid = document.createElement('div');
-        grid.className = 'proc-cat-grid';
-        grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;';
+        const containerFolders = document.createElement('div');
+        containerFolders.className = 'proc-root-container';
+        containerFolders.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; width:100%; margin-bottom: 24px;';
 
-        procAlvo.forEach((cat, cIdx) => {
-            const catCard = document.createElement('div');
-            catCard.className = 'card proc-cat-card';
-            catCard.style.cssText = 'background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;';
-            
-            // Cabeçalho da Categoria (Quadrado superior)
-            const header = document.createElement('div');
-            header.className = 'row between';
-            header.style.cssText = 'padding: 16px; background: #f8fafc; border-bottom: 1px solid var(--line); align-items: center;';
-            header.innerHTML = `
-                <div class="row" style="gap: 10px;">
-                    <span class="proc-cat-drag" style="cursor:grab; color:var(--line2); font-size:20px;" title="Arrastar Categoria">⠿</span>
-                    <div style="width:36px; height:36px; border-radius:10px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">${esc(cat.icone || '📄')}</div>
-                    <div style="font-weight: 800; font-size: 16px; color: var(--ink);">${esc(cat.nome)}</div>
-                </div>
-                <div class="row" style="gap:6px;">
-                    <button class="btn icon-btn btn-sm" title="Adicionar Postagem" style="color:var(--brand); border:0; background:transparent;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
-                    <button class="btn icon-btn btn-sm" title="Editar Categoria" style="color:var(--muted); border:0; background:transparent;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                </div>
-            `;
-            
-            header.querySelector('button[title="Adicionar Postagem"]').onclick = () => abrirProcEditPost(cat.id, null);
-            header.querySelector('button[title="Editar Categoria"]').onclick = () => abrirProcEditCat(cat.id);
+        const containerPosts = document.createElement('div');
+        containerPosts.className = 'proc-posts-container';
+        containerPosts.style.cssText = 'display: flex; flex-direction: column; gap: 8px; width:100%;';
 
-            const postsList = document.createElement('div');
-            postsList.className = 'proc-post-list';
-            postsList.style.cssText = 'padding: 10px; display: flex; flex-direction: column; gap: 8px; flex: 1;';
-
-            if (!cat.posts || cat.posts.length === 0) {
-                postsList.innerHTML = '<div class="faint" style="font-size:12px; text-align:center; padding:10px 0;">Sem postagens.</div>';
-            } else {
-                cat.posts.forEach((post, pIdx) => {
-                    const postEl = document.createElement('div');
-                    postEl.className = 'proc-post-item';
-                    postEl.style.cssText = 'background:#fff; border:1px solid var(--line2); border-radius:8px; padding:12px; cursor:pointer; transition:0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.02);';
-                    postEl.onmouseover = () => { postEl.style.borderColor = 'var(--brand-100)'; postEl.style.boxShadow = '0 4px 12px rgba(79,70,229,0.1)'; };
-                    postEl.onmouseout = () => { postEl.style.borderColor = 'var(--line2)'; postEl.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)'; };
-
-                    postEl.innerHTML = `
-                        <div class="row between" style="align-items:flex-start; margin-bottom:6px;">
-                            <div class="row" style="gap:8px; flex:1;">
-                                <span class="proc-post-drag" style="cursor:grab; color:var(--line2); font-size:16px; margin-top:-2px;" title="Arrastar Postagem">⠿</span>
-                                <div style="font-weight:700; font-size:14px; color:var(--brand-d);">${esc(post.titulo)}</div>
-                            </div>
-                            <button class="btn icon-btn btn-sm" title="Editar Postagem" style="color:var(--muted); border:0; background:transparent; padding:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                        </div>
-                        <div style="font-size:13px; color:var(--ink); line-height:1.5; white-space:pre-wrap; padding-left:24px;">${esc(post.descricao)}</div>
-                    `;
-                    
-                    postEl.querySelector('button[title="Editar Postagem"]').onclick = (e) => {
-                        e.stopPropagation();
-                        abrirProcEditPost(cat.id, post.id);
-                    };
-
-                    postsList.appendChild(postEl);
+        currentArray.forEach((item) => {
+            if (item.nome !== undefined) {
+                const folderCard = document.createElement('div');
+                folderCard.className = 'card proc-folder-card';
+                folderCard.dataset.id = item.id;
+                const bgColor = item.cor || '#ffffff';
+                folderCard.style.cssText = `background: ${bgColor}; border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; text-align: center; min-height: 120px;`;
+                
+                folderCard.innerHTML = `
+                    <span class="proc-drag-handle" title="Arraste ou clique com botão direito para mover" style="position:absolute; top:12px; left:12px; color:var(--line2); cursor:grab; font-size:18px;">⠿</span>
+                    <button class="btn icon-btn btn-sm" title="Editar Categoria" style="position:absolute; top:8px; right:8px; color:var(--muted); border:0; background:transparent;" onclick="event.stopPropagation(); abrirProcEditCat('${item.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <div style="font-size: 32px; margin-bottom: 12px;">${esc(item.icone || '📁')}</div>
+                    <div style="font-weight: 800; font-size: 14.5px; color: var(--ink); text-shadow: 0 1px 2px rgba(255,255,255,0.8);">${esc(item.nome)}</div>
+                    <div class="badge" style="margin-top: 8px; background: rgba(0,0,0,0.05); color: var(--ink);">${(item.posts || []).length} postagens</div>
+                `;
+                
+                folderCard.onclick = () => { procAtivaCatId = item.id; renderProcedimentos(); };
+                containerFolders.appendChild(folderCard);
+                
+                folderCard.querySelector('.proc-drag-handle').addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    moverItemParaPai(item.id);
                 });
-            }
 
-            catCard.appendChild(header);
-            catCard.appendChild(postsList);
-            grid.appendChild(catCard);
+            } else {
+                const postCard = document.createElement('div');
+                postCard.className = 'card proc-post-card';
+                postCard.dataset.id = item.id;
+                postCard.style.cssText = 'background: #fff; border: 1px solid var(--line2); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s;';
+                
+                postCard.innerHTML = `
+                    <div class="row" style="gap:16px; align-items:center; flex:1; min-width:0;">
+                        <span class="proc-drag-handle" title="Arraste ou clique com botão direito para mover" style="color:var(--line2); cursor:grab; font-size:18px;">⠿</span>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight: 800; font-size: 14.5px; color: var(--brand-d); margin-bottom: 2px;">${esc(item.titulo)}</div>
+                            <div style="font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(item.descricao)}</div>
+                        </div>
+                    </div>
+                    <button class="btn icon-btn btn-sm" title="Editar Postagem" style="color:var(--muted); border:0; background:transparent; margin-left:12px;" onclick="event.stopPropagation(); abrirProcEditPost(${procAtivaCatId ? `'${procAtivaCatId}'` : 'null'}, '${item.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                `;
+                postCard.onclick = () => abrirProcEditPost(procAtivaCatId, item.id);
+                containerPosts.appendChild(postCard);
 
-            // SortableJS para os posts dentro da categoria
-            if (typeof Sortable !== 'undefined') {
-                new Sortable(postsList, {
-                    animation: 150,
-                    handle: '.proc-post-drag',
-                    onEnd: (evt) => {
-                        if (evt.oldIndex === evt.newIndex) return;
-                        const item = cat.posts.splice(evt.oldIndex, 1)[0];
-                        cat.posts.splice(evt.newIndex, 0, item);
-                        DB.saveProcedimentos(procAlvo);
-                    }
+                postCard.querySelector('.proc-drag-handle').addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    moverItemParaPai(item.id);
                 });
             }
         });
 
-        box.appendChild(grid);
+        if (containerFolders.childNodes.length > 0) box.appendChild(containerFolders);
+        if (containerPosts.childNodes.length > 0) box.appendChild(containerPosts);
 
-        // SortableJS para reordenar categorias no grid
         if (typeof Sortable !== 'undefined') {
-            new Sortable(grid, {
+            const sortableConfig = {
+                group: 'knowledge',
                 animation: 150,
-                handle: '.proc-cat-drag',
-                onEnd: (evt) => {
-                    if (evt.oldIndex === evt.newIndex) return;
-                    const item = procAlvo.splice(evt.oldIndex, 1)[0];
-                    procAlvo.splice(evt.newIndex, 0, item);
+                handle: '.proc-drag-handle',
+                onMove: function (evt) {
+                    document.querySelectorAll('.proc-folder-card').forEach(f => f.style.borderColor = 'var(--line)');
+                    if (evt.related.classList.contains('proc-folder-card')) {
+                        if (evt.dragged.dataset.id === evt.related.dataset.id) return true;
+                        evt.related.style.borderColor = 'var(--brand)';
+                        return false;
+                    }
+                },
+                onEnd: function (evt) {
+                    document.querySelectorAll('.proc-folder-card').forEach(f => f.style.borderColor = 'var(--line)');
+
+                    const ev = evt.originalEvent;
+                    if (ev) {
+                        const clientX = ev.clientX || (ev.changedTouches && ev.changedTouches[0].clientX);
+                        const clientY = ev.clientY || (ev.changedTouches && ev.changedTouches[0].clientY);
+                        
+                        if (clientX !== undefined && clientY !== undefined) {
+                            const dropTarget = document.elementFromPoint(clientX, clientY);
+                            const folderCard = dropTarget ? dropTarget.closest('.proc-folder-card') : null;
+
+                            if (folderCard && folderCard.dataset.id !== evt.item.dataset.id) {
+                                moverItemParaCategoria(evt.item.dataset.id, folderCard.dataset.id);
+                                return; 
+                            }
+                        }
+                    }
+
+                    const newReorderedArray = [];
+                    document.querySelectorAll('#procGridCategorias .proc-folder-card').forEach(el => {
+                        newReorderedArray.push(currentArray.find(x => x.id === el.dataset.id));
+                    });
+                    document.querySelectorAll('#procGridCategorias .proc-post-card').forEach(el => {
+                        newReorderedArray.push(currentArray.find(x => x.id === el.dataset.id));
+                    });
+
+                    currentArray.length = 0; 
+                    newReorderedArray.forEach(item => currentArray.push(item));
+                    
                     DB.saveProcedimentos(procAlvo);
                 }
-            });
+            };
+
+            if (containerFolders.childNodes.length > 0) new Sortable(containerFolders, sortableConfig);
+            if (containerPosts.childNodes.length > 0) new Sortable(containerPosts, sortableConfig);
         }
     }
 
-    window.abrirProcEditCat = (id = null) => {
-        procAtivaCatId = id;
-        const isEdit = id !== null;
+    // Funções de Arrastar e Soltar Específicas
+    window.moverItemParaPai = function(itemId) {
+        if (!procAtivaCatId) return; 
+        if (confirm('Deseja mover este item para a pasta anterior (nível acima)?')) {
+            let avoId = null;
+            function findParentId(arr, targetId, currentParentId) {
+                for (let item of arr) {
+                    if (item.id === targetId) return currentParentId;
+                    if (item.posts) {
+                        let res = findParentId(item.posts, targetId, item.id);
+                        if (res !== undefined) return res;
+                    }
+                }
+            }
+            avoId = findParentId(procAlvo, procAtivaCatId, null);
+            moverItemParaCategoria(itemId, avoId);
+        }
+    };
+
+    function moverItemParaCategoria(draggedId, targetFolderId) {
+        let draggedItem = null;
+        
+        function extractItem(arr, id) {
+            for (let i = 0; i < arr.length; i++) {
+                if (arr[i].id === id) return arr.splice(i, 1)[0];
+                if (arr[i].posts) {
+                    const res = extractItem(arr[i].posts, id);
+                    if (res) return res;
+                }
+            }
+            return null;
+        }
+        
+        draggedItem = extractItem(procAlvo, draggedId);
+        if (!draggedItem) return;
+
+        if (targetFolderId === null) {
+            procAlvo.push(draggedItem);
+        } else {
+            function insertItem(arr, targetId, item) {
+                for (let i = 0; i < arr.length; i++) {
+                    if (arr[i].id === targetId && arr[i].nome !== undefined) {
+                        if (!arr[i].posts) arr[i].posts = [];
+                        arr[i].posts.push(item);
+                        return true;
+                    }
+                    if (arr[i].posts) {
+                        if (insertItem(arr[i].posts, targetId, item)) return true;
+                    }
+                }
+                return false;
+            }
+            insertItem(procAlvo, targetFolderId, draggedItem);
+        }
+        
+        DB.saveProcedimentos(procAlvo);
+        renderProcedimentos();
+        toast('Item movido com sucesso!');
+    }
+
+
+    // Editar Categoria (Pasta) -> As funções Cat estão aqui!
+    window.abrirProcEditCat = (catId = null) => {
+        procEditCatId = catId;
+        const isEdit = catId !== null;
+        
         document.getElementById('procCatTitle').textContent = isEdit ? 'Editar Categoria' : 'Nova Categoria';
         document.getElementById('procCatExcluir').style.display = isEdit ? 'block' : 'none';
 
         if (isEdit) {
-            const cat = procAlvo.find(c => c.id === id);
-            document.getElementById('procCatNome').value = cat.nome;
-            document.getElementById('procCatIcone').value = cat.icone || '📄';
+            const cat = buscarItemRecursivo(procAlvo, catId);
+            if (cat) {
+                document.getElementById('procCatNome').value = cat.nome || '';
+                document.getElementById('procCatIcone').value = cat.icone || '';
+                document.getElementById('procCatCor').value = cat.cor || '#ffffff';
+            }
         } else {
             document.getElementById('procCatNome').value = '';
-            document.getElementById('procCatIcone').value = '📄';
+            document.getElementById('procCatIcone').value = '📁';
+            document.getElementById('procCatCor').value = '#ffffff';
         }
-        
+
         openM('mProcEditCat');
-        setTimeout(() => document.getElementById('procCatNome').focus(), 150);
     };    
+
+    // Editar Postagem -> E aqui estão as funções Post!
+    window.abrirProcEditPost = (catId, postId = null) => {
+        procAtivaCatId = catId;
+        procAtivaPostId = postId;
+        const isEdit = postId !== null;
+        
+        document.getElementById('procPostTitle').textContent = isEdit ? 'Editar Postagem' : 'Nova Postagem';
+        document.getElementById('procPostExcluir').style.display = isEdit ? 'block' : 'none';
+
+        if (isEdit) {
+            const post = buscarItemRecursivo(procAlvo, postId);
+            if (post) {
+                document.getElementById('procPostTitulo').value = post.titulo || '';
+                document.getElementById('procPostDesc').value = post.descricao || '';
+            }
+        } else {
+            document.getElementById('procPostTitulo').value = '';
+            document.getElementById('procPostDesc').value = '';
+        }
+
+        openM('mProcEditPost');
+        setTimeout(() => document.getElementById('procPostTitulo').focus(), 150);
+    };     
 
     function initNovosModais() {
         if(document.getElementById('mChecklist')) return;
@@ -5866,76 +6038,89 @@ function sincronizaGabarito(p){
             </div></div>
           </div></div>
 
-          <div class="modal-bg keep-open" id="mProcedimentos" style="z-index: 60;">
+          <div class="modal-bg keep-open" id="mProcedimentos">
             <div class="modal lg modal-flex">
               <div class="modal-head">
-                <div class="row between">
-                  <div>
-                    <div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:8px;">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 
-                      Base de Conhecimento e Procedimentos
+                <div class="row between" style="align-items:flex-start;">
+                  <div class="row" style="gap:12px; align-items:center;">
+                    <button class="btn icon-btn" id="btnProcVoltar" style="display:none; color:var(--brand);" title="Voltar para a pasta anterior">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <div>
+                      <div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:8px;" id="procModalTitle"></div>
+                      <div class="muted" style="font-size:13.5px;" id="procModalDesc"></div>
                     </div>
-                    <div class="muted" style="font-size:13.5px;">Categorias e manuais para consulta da equipe.</div>
                   </div>
                   <button class="btn icon-btn" onclick="closeM('mProcedimentos')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                 </div>
               </div>
-              <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; gap:16px; min-height: 400px; background:var(--bg);" id="procGridCategorias">
-                </div>
+              <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; min-height: 400px; background:var(--bg);" id="procGridCategorias">
+              </div>
               <div class="modal-foot">
-                <div class="row between">
-                  <button class="btn btn-sm" onclick="abrirProcEditCat(null)" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">+ Nova Categoria</button>
+                <div class="row between" style="width: 100%;">
+                  <div class="row" style="gap:8px;">
+                    <button class="btn btn-sm" onclick="abrirProcEditCat(null)" style="color:var(--brand); border-color:var(--brand-100); background:var(--brand-50);">+ Nova Categoria (Pasta)</button>
+                    <button class="btn btn-sm" onclick="abrirProcEditPost(procAtivaCatId, null)" style="color:#0d9488; border-color:#ccfbf1; background:#f0fdfa;">+ Nova Postagem</button>
+                  </div>
                   <button class="btn" onclick="closeM('mProcedimentos')">Fechar</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="modal-bg" id="mProcEditCat" style="z-index: 70;">
-            <div class="modal sm modal-flex">
-              <div class="modal-head"><div style="font-size:18px;font-weight:800;" id="procCatTitle">Nova Categoria</div></div>
-              <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; gap:12px;">
+          <div class="modal-bg" id="mProcEditCat">
+            <div class="modal">
+              <div class="modal-head row between">
+                <h3 id="procCatTitle" style="font-size:18px; font-weight:800;">Nova Categoria</h3>
+                <button class="btn icon-btn" onclick="closeM('mProcEditCat')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+              </div>
+              <div class="modal-body" style="display:flex; flex-direction:column; gap:16px; padding-bottom: 20px;">
                 <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Nome da Categoria</div>
-                  <input type="text" id="procCatNome" class="input" placeholder="Ex.: Sistemas, PJe, Conciliação...">
+                  <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Nome da Pasta</label>
+                  <input type="text" id="procCatNome" class="input" placeholder="Ex: Manuais do Sistema" style="margin-top:4px;">
                 </div>
-                <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Ícone (Emoji)</div>
-                  <input type="text" id="procCatIcone" class="input" placeholder="Ex.: 💻" style="width: 80px; text-align: center; font-size: 20px;">
+                <div class="row" style="gap:16px;">
+                    <div style="flex:1;">
+                      <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Ícone (Emoji)</label>
+                      <input type="text" id="procCatIcone" class="input" placeholder="Ex: 📚" style="margin-top:4px;">
+                    </div>
+                    <div style="flex:1;">
+                      <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Cor de Fundo</label>
+                      <input type="color" id="procCatCor" value="#ffffff" style="width:100%; height:38px; border:1px solid var(--line); border-radius:6px; cursor:pointer; padding:2px; margin-top:4px;">
+                    </div>
                 </div>
               </div>
-              <div class="modal-foot">
-                <div class="row between">
-                  <button class="btn" id="procCatExcluir" style="display:none; color:#ef4444; border-color:#fecaca;">Excluir Categoria</button>
-                  <div class="row" style="margin-left:auto; gap:8px;">
-                    <button class="btn" onclick="closeM('mProcEditCat')">Cancelar</button>
-                    <button class="btn btn-primary" id="procCatSalvar">Salvar</button>
-                  </div>
+              <div class="modal-foot row between">
+                <button class="btn" id="procCatExcluir" style="display:none; color:#ef4444; border-color:#fecaca;">Excluir Pasta</button>
+                <div class="row" style="gap:8px; margin-left:auto;">
+                  <button class="btn" onclick="closeM('mProcEditCat')">Cancelar</button>
+                  <button class="btn btn-primary" id="procCatSalvar">Salvar</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="modal-bg" id="mProcEditPost" style="z-index: 75;">
+          <div class="modal-bg" id="mProcEditPost">
             <div class="modal md modal-flex">
-              <div class="modal-head"><div style="font-size:18px;font-weight:800;" id="procPostTitle">Nova Postagem</div></div>
-              <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; gap:12px;">
+              <div class="modal-head row between">
+                <h3 id="procPostTitle" style="font-size:18px; font-weight:800;">Nova Postagem</h3>
+                <button class="btn icon-btn" onclick="closeM('mProcEditPost')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+              </div>
+              <div class="modal-body" style="display:flex; flex-direction:column; gap:16px; padding-bottom:20px; padding-top:10px;">
                 <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Título</div>
-                  <input type="text" id="procPostTitulo" class="input" placeholder="Ex.: Como registrar acordo de família">
+                  <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Título da Postagem</label>
+                  <input type="text" id="procPostTitulo" class="input" placeholder="Ex: Como fazer o fechamento..." style="margin-top:4px;">
                 </div>
-                <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Descrição / Texto</div>
-                  <textarea id="procPostDesc" class="input" rows="8" placeholder="Escreva o passo a passo..." style="resize:vertical;"></textarea>
+                <div style="flex:1; display:flex; flex-direction:column;">
+                  <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Conteúdo</label>
+                  <textarea id="procPostDesc" class="input" style="flex:1; min-height:250px; margin-top:4px; resize:vertical; line-height:1.5;" placeholder="Digite o conteúdo aqui..."></textarea>
                 </div>
               </div>
-              <div class="modal-foot">
-                <div class="row between">
-                  <button class="btn" id="procPostExcluir" style="display:none; color:#ef4444; border-color:#fecaca;">Excluir Postagem</button>
-                  <div class="row" style="margin-left:auto; gap:8px;">
-                    <button class="btn" onclick="closeM('mProcEditPost')">Cancelar</button>
-                    <button class="btn btn-primary" id="procPostSalvar">Salvar Postagem</button>
-                  </div>
+              <div class="modal-foot row between">
+                <button class="btn" id="procPostExcluir" style="display:none; color:#ef4444; border-color:#fecaca;">Excluir Postagem</button>
+                <div class="row" style="gap:8px; margin-left:auto;">
+                  <button class="btn" onclick="closeM('mProcEditPost')">Cancelar</button>
+                  <button class="btn btn-primary" id="procPostSalvar">Salvar Postagem</button>
                 </div>
               </div>
             </div>
@@ -6136,51 +6321,28 @@ function sincronizaGabarito(p){
            }).catch(() => { alert('Erro ao copiar. Use navegadores suportados.'); });
         };
 
-        document.getElementById('procCatSalvar').onclick = async () => {
-        const nome = document.getElementById('procCatNome').value.trim();
-        const icone = document.getElementById('procCatIcone').value.trim() || '📄';
-
-        if (!nome) return toast('Preencha o nome da categoria.');
-
-        if (procAtivaCatId) {
-            const cat = procAlvo.find(c => c.id === procAtivaCatId);
-            if (cat) {
-                cat.nome = nome;
-                cat.icone = icone;
-            }
-        } else {
-            procAlvo.push({ id: uid(), nome, icone, posts: [] });
-        }
-
-        await DB.saveProcedimentos(procAlvo);
-        renderProcedimentos();
-        closeM('mProcEditCat');
-    };
-
-        document.getElementById('procCatExcluir').onclick = async () => {
-            if (!procAtivaCatId) return;
-            if (confirm('Tem certeza que deseja excluir esta categoria inteira e todas as suas postagens?')) {
-                procAlvo = procAlvo.filter(c => c.id !== procAtivaCatId);
-                await DB.saveProcedimentos(procAlvo);
-                renderProcedimentos();
-                closeM('mProcEditCat');
-                toast('Categoria excluída!');
-            }
-        };
-
         window.abrirProcEditPost = (catId, postId = null) => {
             procAtivaCatId = catId;
             procAtivaPostId = postId;
             const isEdit = postId !== null;
-
+            
             document.getElementById('procPostTitle').textContent = isEdit ? 'Editar Postagem' : 'Nova Postagem';
             document.getElementById('procPostExcluir').style.display = isEdit ? 'block' : 'none';
 
             if (isEdit) {
-                const cat = procAlvo.find(c => c.id === catId);
-                const post = cat.posts.find(p => p.id === postId);
-                document.getElementById('procPostTitulo').value = post.titulo;
-                document.getElementById('procPostDesc').value = post.descricao;
+                let post;
+                if (catId === null) {
+                    // Busca na raiz
+                    post = procAlvo.find(p => p.id === postId);
+                } else {
+                    // Busca na pasta
+                    const cat = procAlvo.find(c => c.id === catId);
+                    post = cat ? cat.posts.find(p => p.id === postId) : null;
+                }
+                if (post) {
+                    document.getElementById('procPostTitulo').value = post.titulo;
+                    document.getElementById('procPostDesc').value = post.descricao;
+                }
             } else {
                 document.getElementById('procPostTitulo').value = '';
                 document.getElementById('procPostDesc').value = '';
@@ -6190,47 +6352,93 @@ function sincronizaGabarito(p){
             setTimeout(() => document.getElementById('procPostTitulo').focus(), 150);
         };
 
-        document.getElementById('procPostSalvar').onclick = async () => {
+        // Função auxiliar global para encontrar a lista atual onde estamos trabalhando
+        function getDiretorioAtivo() {
+            if (!procAtivaCatId) return procAlvo; 
+            
+            function buscarCat(arr, id) {
+                for (let item of arr) {
+                    if (item.id === id) return item;
+                    if (item.posts) {
+                        let r = buscarCat(item.posts, id);
+                        if (r) return r;
+                    }
+                }
+                return null;
+            }
+            
+            const cat = buscarCat(procAlvo, procAtivaCatId);
+            if (cat) {
+                if (!cat.posts) cat.posts = [];
+                return cat.posts;
+            }
+            return procAlvo;
+        }        
+
+      }
+
+    document.addEventListener('click', async (e) => {        
+        // === 1. SALVAR CATEGORIA ===
+        if (e.target.id === 'procCatSalvar') {
+            const nome = document.getElementById('procCatNome').value.trim();
+            const icone = document.getElementById('procCatIcone').value.trim();
+            const cor = document.getElementById('procCatCor').value;
+            if (!nome) return toast('Preencha o nome da categoria.');
+
+            if (procEditCatId) {
+                const cat = buscarItemRecursivo(procAlvo, procEditCatId);
+                if (cat) { cat.nome = nome; cat.icone = icone; cat.cor = cor; }
+            } else {
+                const diretorioAtivo = getDiretorioAtivo();
+                diretorioAtivo.push({ id: uid(), nome, icone, cor, posts: [] });
+            }
+            
+            await DB.saveProcedimentos(procAlvo);
+            renderProcedimentos();
+            closeM('mProcEditCat');
+        }
+        
+        // === 2. EXCLUIR CATEGORIA ===
+        else if (e.target.id === 'procCatExcluir') {
+            if (confirm('Atenção: Ao excluir esta categoria, TODAS as pastas e postagens dentro dela também serão apagadas. Deseja continuar?')) {
+                removerItemRecursivo(procAlvo, procEditCatId);
+                await DB.saveProcedimentos(procAlvo);
+                renderProcedimentos();
+                closeM('mProcEditCat');
+                toast('Categoria excluída!');
+            }
+        }
+        
+        // === 3. SALVAR POSTAGEM ===
+        else if (e.target.id === 'procPostSalvar') {
             const titulo = document.getElementById('procPostTitulo').value.trim();
             const descricao = document.getElementById('procPostDesc').value.trim();
-
             if (!titulo || !descricao) return toast('Preencha o título e a descrição.');
 
-            const cat = procAlvo.find(c => c.id === procAtivaCatId);
-            if (!cat) return;
-            
-            if (!cat.posts) cat.posts = [];
-
             if (procAtivaPostId) {
-                const post = cat.posts.find(p => p.id === procAtivaPostId);
-                if (post) {
-                    post.titulo = titulo;
-                    post.descricao = descricao;
-                }
+                const post = buscarItemRecursivo(procAlvo, procAtivaPostId);
+                if (post) { post.titulo = titulo; post.descricao = descricao; }
             } else {
-                cat.posts.push({ id: uid(), titulo, descricao });
+                const diretorioAtivo = getDiretorioAtivo();
+                diretorioAtivo.push({ id: uid(), titulo, descricao });
             }
-
+            
             await DB.saveProcedimentos(procAlvo);
             renderProcedimentos();
             closeM('mProcEditPost');
-        };
-
-        document.getElementById('procPostExcluir').onclick = async () => {
-            if (!procAtivaCatId || !procAtivaPostId) return;
+        }
+        
+        // === 4. EXCLUIR POSTAGEM ===
+        else if (e.target.id === 'procPostExcluir') {
             if (confirm('Tem certeza que deseja excluir esta postagem?')) {
-                const cat = procAlvo.find(c => c.id === procAtivaCatId);
-                if (cat) {
-                    cat.posts = cat.posts.filter(p => p.id !== procAtivaPostId);
-                    await DB.saveProcedimentos(procAlvo);
-                    renderProcedimentos();
-                    closeM('mProcEditPost');
-                    toast('Postagem excluída!');
-                }
+                removerItemRecursivo(procAlvo, procAtivaPostId);
+                await DB.saveProcedimentos(procAlvo);
+                renderProcedimentos();
+                closeM('mProcEditPost');
+                toast('Postagem excluída!');
             }
-        };
-
-      }
+        }
+    });
 
     window.abrirChecklist = async () => {
       initNovosModais(); 

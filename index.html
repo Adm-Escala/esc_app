@@ -1212,7 +1212,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.7</h1>
+        <h1>Escala Adm - v 1.1.8</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -1417,10 +1417,26 @@ async function abrirModalPresence() {
           ${buildPagination(totalVis)}</div>`;
           
         const tb = cont.querySelector('tbody');
+
+        let mesAnoAnterior = null;
         
         vis.forEach(p => { 
           const isHoje = (p.data === hoje);
           const [y,m,d] = (p.data||'--- - -').split('-'); 
+
+          // --- NOVO BLOCO: SEPARADOR DE MÊS NO MURAL ---
+          const mesAnoAtual = y + '-' + m;
+          if (mesAnoAnterior && mesAnoAtual !== mesAnoAnterior && p.data) {
+             const trSep = document.createElement('tr');
+             trSep.style.backgroundColor = '#f1f5f9';
+             trSep.style.pointerEvents = 'none'; // Evita o efeito de hover padrão da tabela
+             const nomeMes = m ? MESN[parseInt(m, 10) - 1] : '';
+             trSep.innerHTML = `<td colspan="7" style="text-align:center; font-weight:800; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; padding:10px; border-top:2px solid var(--line2); border-bottom:1px solid var(--line2);">${nomeMes} ${y}</td>`;
+             tb.appendChild(trSep);
+          }
+          if (p.data) mesAnoAnterior = mesAnoAtual;
+          // --------------
+
           const i = linhaInfo(p); 
           const tr = document.createElement('tr');
           
@@ -1512,10 +1528,32 @@ async function abrirModalPresence() {
         if(homePg === 1) {
           const nc=document.createElement('button'); nc.className='newcard'; nc.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:13px;">Nova pauta</span>'; nc.onclick=()=>openM('mNova'); g.appendChild(nc);
         }
+
+        let mesAnoAnterior = null;
         
         vis.forEach(p=>{ 
           const isHoje = (p.data === hoje);
           const [y,m,d]=(p.data||'').split('-'); 
+
+          // --- NOVO BLOCO: SEPARADOR DE MÊS NO MURAL ---
+          const mesAnoAtual = y + '-' + m;
+          if (mesAnoAnterior && mesAnoAtual !== mesAnoAnterior && p.data) {
+             const divSep = document.createElement('div');
+             divSep.style.gridColumn = '1 / -1'; // Ocupa a linha inteira da grade
+             divSep.style.display = 'flex';
+             divSep.style.alignItems = 'center';
+             divSep.style.margin = '16px 0 6px 0';
+             const nomeMes = m ? MESN[parseInt(m, 10) - 1] : '';
+             divSep.innerHTML = `
+                <div style="flex:1; height:2px; background:var(--line2); border-radius:2px;"></div>
+                <div style="padding:0 16px; font-weight:800; font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">${nomeMes} ${y}</div>
+                <div style="flex:1; height:2px; background:var(--line2); border-radius:2px;"></div>
+             `;
+             g.appendChild(divSep);
+          }
+          if (p.data) mesAnoAnterior = mesAnoAtual;
+          // -------
+
           const i=linhaInfo(p); 
           const isR=i.auds===0&&p.status!=='editando'; 
           const c=document.createElement('button'); 

@@ -1212,7 +1212,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.9</h1>
+        <h1>Escala Adm - v 1.1.10</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -5636,7 +5636,7 @@ function sincronizaGabarito(p){
 
     window.abrirProcedimentos = async () => {
         // Caso você tenha a função initNovosModais() em seu projeto, remova as barras '//' da linha abaixo:
-        // initNovosModais(); 
+        initNovosModais(); 
         procAlvo = await DB.getProcedimentos();
         renderProcedimentos();
         openM('mProcedimentos');
@@ -6069,7 +6069,7 @@ function sincronizaGabarito(p){
           </div>
 
           <div class="modal-bg" id="mProcEditCat">
-            <div class="modal">
+            <div class="modal sm modal-flex">
               <div class="modal-head row between">
                 <h3 id="procCatTitle" style="font-size:18px; font-weight:800;">Nova Categoria</h3>
                 <button class="btn icon-btn" onclick="closeM('mProcEditCat')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -6080,14 +6080,14 @@ function sincronizaGabarito(p){
                   <input type="text" id="procCatNome" class="input" placeholder="Ex: Manuais do Sistema" style="margin-top:4px;">
                 </div>
                 <div class="row" style="gap:16px;">
-                    <div style="flex:1;">
-                      <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Ícone (Emoji)</label>
-                      <input type="text" id="procCatIcone" class="input" placeholder="Ex: 📚" style="margin-top:4px;">
-                    </div>
-                    <div style="flex:1;">
-                      <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Cor de Fundo</label>
-                      <input type="color" id="procCatCor" value="#ffffff" style="width:100%; height:38px; border:1px solid var(--line); border-radius:6px; cursor:pointer; padding:2px; margin-top:4px;">
-                    </div>
+                  <div style="flex:1;">
+                    <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Ícone (Emoji)</label>
+                    <input type="text" id="procCatIcone" class="input" placeholder="Ex: 📚" style="margin-top:4px;">
+                  </div>
+                  <div style="flex:1;">
+                    <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Cor de Fundo</label>
+                    <input type="color" id="procCatCor" value="#ffffff" style="width:100%; height:38px; border:1px solid var(--line); border-radius:6px; cursor:pointer; padding:2px; margin-top:4px;">
+                  </div>
                 </div>
               </div>
               <div class="modal-foot row between">
@@ -6325,29 +6325,21 @@ function sincronizaGabarito(p){
             procAtivaCatId = catId;
             procAtivaPostId = postId;
             const isEdit = postId !== null;
-            
             document.getElementById('procPostTitle').textContent = isEdit ? 'Editar Postagem' : 'Nova Postagem';
             document.getElementById('procPostExcluir').style.display = isEdit ? 'block' : 'none';
 
             if (isEdit) {
-                let post;
-                if (catId === null) {
-                    // Busca na raiz
-                    post = procAlvo.find(p => p.id === postId);
-                } else {
-                    // Busca na pasta
-                    const cat = procAlvo.find(c => c.id === catId);
-                    post = cat ? cat.posts.find(p => p.id === postId) : null;
-                }
+                // Usa a busca recursiva para achar a postagem, não importa quão fundo ela esteja
+                const post = buscarItemRecursivo(procAlvo, postId);
                 if (post) {
-                    document.getElementById('procPostTitulo').value = post.titulo;
-                    document.getElementById('procPostDesc').value = post.descricao;
+                    document.getElementById('procPostTitulo').value = post.titulo || '';
+                    document.getElementById('procPostDesc').value = post.descricao || '';
                 }
             } else {
                 document.getElementById('procPostTitulo').value = '';
                 document.getElementById('procPostDesc').value = '';
             }
-
+            
             openM('mProcEditPost');
             setTimeout(() => document.getElementById('procPostTitulo').focus(), 150);
         };

@@ -1212,7 +1212,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.10</h1>
+        <h1>Escala Adm - v 1.1.11</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -3039,33 +3039,54 @@ async function renderPauta(id){
       tr.appendChild(mk('c3','obs')); 
 
       const mkRja = () => {
-        const c = document.createElement('td');
-        const sel = document.createElement('select');
-        sel.className = 'rescell';
-        sel.style.color = 'var(--ink)';
-        sel.style.fontWeight = '700';
-        
-        const op0 = document.createElement('option');
-        op0.value = ''; op0.textContent = '—';
-        sel.appendChild(op0);
-        
-        // Garante que o item "Escolher" apareça como opção se foi preenchido pelo EA
-        const rjasComEscolher = [...rjasDisponiveis];
-        if ((cel.rja === 'Escolher') && !rjasComEscolher.includes('Escolher')) {
-           rjasComEscolher.unshift('Escolher');
-        }
+          const c = document.createElement('td');
+          const sel = document.createElement('select');
+          sel.className = 'rescell';
+          sel.style.color = 'var(--ink)';
+          sel.style.fontWeight = '700';
+          
+          const op0 = document.createElement('option');
+          op0.value = '';
+          op0.textContent = '—';
+          sel.appendChild(op0);
 
-        rjasComEscolher.forEach(r => {
-          const op = document.createElement('option');
-          op.value = r; op.textContent = r;
-          if ((cel.rja || '') === r) op.selected = true;
-          sel.appendChild(op);
-        });
-        
-        sel.onchange = () => { cel.rja = sel.value; agendaSalvar(); };
-        c.appendChild(sel);
-        return c;
-      };
+          // 1) Se a célula contiver uma fórmula, criamos uma opção visual amigável
+          if (cel.rja && cel.rja.startsWith('=')) {
+            const opF = document.createElement('option');
+            opF.value = cel.rja; // O valor oculto continua sendo a fórmula inteira
+            opF.textContent = 'ƒ Fórmula'; // O que o usuário vê
+            opF.selected = true;
+            sel.appendChild(opF);
+            sel.style.color = 'var(--brand)'; // Dá uma cor azulzinha para destacar
+          }
+
+          // Garante que o item "Escolher" apareça como opção se foi preenchido pelo EA
+          const rjasComEscolher = [...rjasDisponiveis];
+          if ((cel.rja === 'Escolher') && !rjasComEscolher.includes('Escolher')) {
+            rjasComEscolher.unshift('Escolher');
+          }
+
+          rjasComEscolher.forEach(r => {
+            const op = document.createElement('option');
+            op.value = r;
+            op.textContent = r;
+            // Só marca como selecionado se for igualzinho e NÃO for a fórmula
+            if ((cel.rja || '') === r && !(cel.rja || '').startsWith('=')) {
+                op.selected = true;
+            }
+            sel.appendChild(op);
+          });
+          
+          sel.onchange = () => {
+            cel.rja = sel.value;
+            agendaSalvar();
+            // Se trocar a opção manualmente, atualiza a cor
+            sel.style.color = (sel.value && sel.value.startsWith('=')) ? 'var(--brand)' : 'var(--ink)';
+          };
+          
+          c.appendChild(sel);
+          return c;
+        };
 
       tr.appendChild(mkSwap()); // <--- AQUI FICA NOSSO BOTÃO!
       tr.appendChild(mkRja());  // <--- NOVA COLUNA RJA AQUI!
@@ -3515,15 +3536,20 @@ async function renderPauta(id){
         });
 
         // 1) Preencher RJA de quem está atrelado na coluna 1º Conciliador
-        linhasDaPauta(p).forEach(L => {
+        linhasDaPauta(p).forEach((L, index) => {
           const c = p.celulas[L.key];
           if (!c || !(c.proc || '').trim() || chave(c.res) === 'CANCELADA') return;
+          
           const c1k = chave(c.c1);
-          if (c1k && c1k !== 'OUTRO' && nomeToRja[c1k]) {
-            if (c.rja !== nomeToRja[c1k]) { 
-              c.rja = nomeToRja[c1k]; 
-              alterou = true; 
-              console.log(`[Passo 1] RJA '${c.rja}' fixado na sessão ${L.HH}h pois ${c.c1} é o 1º Conciliador.`);
+          
+          // Se houver alguém no 1º Conciliador e NÃO for "OUTRO"
+          if (c1k && c1k !== 'OUTRO') {
+            const linhaExcel = index + 4; 
+            const formulaRJA = `=SES(T${linhaExcel}="CANCELADA"; ""; T${linhaExcel}="AGUARD. CANCEL. PJE"; ""; J${linhaExcel}="Filipe";"FIL"; J${linhaExcel}="Emídio";"EMI"; J${linhaExcel}="Luana";"LUA"; J${linhaExcel}="Deborah";"DEB"; J${linhaExcel}="Maura";"MAA"; J${linhaExcel}="Joice";"JOI"; J${linhaExcel}="Aracele";"ARA"; J${linhaExcel}="Dr. David (ADM)";"Escolher"; J${linhaExcel}="Outro"; "Escolher")`;
+            
+            if (c.rja !== formulaRJA) {
+              c.rja = formulaRJA;
+              alterou = true;
             }
           }
         });

@@ -1212,7 +1212,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.11</h1>
+        <h1>Escala Adm - v 1.1.12</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -6595,9 +6595,19 @@ function sincronizaGabarito(p){
                   c.checked = cb.checked;
                   if (c.checked) {
                       let d = new Date();
-                      d.setMonth(d.getMonth() + 1);
+                      let hojeDia = d.getDate();
+                      
+                      // Se o dia de hoje for maior ou igual ao dia da atividade, 
+                      // significa que já passou (ou é hoje), então joga pro mês que vem.
+                      // Se for menor, ele não entra no if e mantém no mês atual.
+                      if (hojeDia >= c.day) {
+                          d.setMonth(d.getMonth() + 1);
+                      }
+                      
+                      // Ajusta para não bugar em meses com 30, 31 ou 28 dias
                       let maxDays = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
                       d.setDate(Math.min(c.day, maxDays));
+                      
                       c.resetDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
                   } else {
                       c.resetDate = null;

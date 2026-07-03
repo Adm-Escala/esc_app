@@ -1212,7 +1212,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.13</h1>
+        <h1>Escala Adm - v 1.1.14</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -5208,7 +5208,14 @@ function sincronizaGabarito(p){
       return cores[Math.abs(hash) % cores.length];
     }
 
+    // 1. Variável para lembrar de onde viemos (cole um pouco antes da função abrirGerenciarSup)
+    let mCancelSupEstavaAberto = false;
+    // 2. Substitua o começo da função abrirGerenciarSup:
     async function abrirGerenciarSup() {
+      const modalCancel = document.getElementById('mCancelSup');
+      // Guarda se o modal estava visível antes de fechar
+      mCancelSupEstavaAberto = modalCancel && modalCancel.classList.contains('open');
+      
       closeM('mCancelSup');
       gsAlvo = (await DB.getSupConfig()) || [];
       gsFiltroSupervisor = '';
@@ -5269,13 +5276,15 @@ function sincronizaGabarito(p){
         await DB.saveSupConfig(gsAlvo);
         toast('Grade de supervisões atualizada!');
         closeM('mGerenciarSup');
-        abrirCancelSup();
-      };
+        // Só reabre se ele realmente estava aberto quando este modal foi chamado
+        if (mCancelSupEstavaAberto) abrirCancelSup();
+    };
 
       document.getElementById('gsX').onclick = () => {
         closeM('mGerenciarSup');
-        abrirCancelSup();
-      };
+        // Só reabre se ele realmente estava aberto quando este modal foi chamado
+        if (mCancelSupEstavaAberto) abrirCancelSup();
+    };
 
       openM('mGerenciarSup');
     }
@@ -5477,10 +5486,12 @@ function sincronizaGabarito(p){
     let gsSimplesAlvo = [];
     let gsSimplesFiltroVal = '';
     let lastSimplesClickTime = 0; // Nova variável para controlar os 5 segundos
+    let equipeAudSimples = [];
 
     async function abrirGerenciarSimples() {
       closeM('mGerenciarSup');
       gsSimplesAlvo = (await DB.getSimplesConfig()) || [];
+      equipeAudSimples = (await DB.getEquipe()) || [];
       gsSimplesFiltroVal = '';
 
       const selectFiltro = document.getElementById('gSimplesFiltro');
@@ -5545,11 +5556,13 @@ function sincronizaGabarito(p){
       openM('mGerenciarSimples');
     }
 
-    function renderGsSimplesList() {
+    async function renderGsSimplesList() {
       const box = document.getElementById('gSimplesList');
       box.innerHTML = '';
       
-      const equipeGeral = (pautaEquipe || []);
+      // 3. SUBSTITUA a linha "const equipeGeral = (pautaEquipe || []);" por esta abaixo:
+      const equipeGeral = equipeAudSimples.length > 0 ? equipeAudSimples : (typeof pautaEquipe !== 'undefined' ? pautaEquipe : []);
+      
       let list = gsSimplesAlvo;
       if (gsSimplesFiltroVal) list = list.filter(s => s.estagiario === gsSimplesFiltroVal);
       

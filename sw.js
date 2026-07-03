@@ -1,5 +1,5 @@
 /* ============================================================
-   SERVICE WORKER — Sistema de Escala
+   SERVICE WORKER — Sistema de Escala 
    ------------------------------------------------------------
    Responsável por: deixar o site instalável como aplicativo e
    abrir mesmo sem internet (guarda apenas a "casca" visual).

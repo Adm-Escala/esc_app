@@ -461,6 +461,12 @@
         .fab-checklist { bottom: 16px; left: 16px; width: 44px; height: 44px; }
       }
 
+    /* Força os menus flutuantes (.split) a abrirem da esquerda para a direita */
+    .split .menu {
+      right: auto !important;
+      left: 0 !important;
+    }
+
 </style>
 </head>
 <body>
@@ -1259,7 +1265,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.19</h1>
+        <h1>Escala Adm - v 1.1.20</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -2679,38 +2685,57 @@ async function renderPauta(id){
         boxRja.innerHTML = '';
         const contRja = {};
         let totalRja = 0;
-        
+
         // Passa por todas as sessões e conta as siglas, pulando sessões Canceladas
         linhasDaPauta(p).forEach(L => {
           const cel = p.celulas[L.key];
           if (cel && (cel.proc || '').trim() && chave(cel.res) !== 'CANCELADA' && cel.rja && cel.rja.trim()) {
-             const sigla = cel.rja.toUpperCase().trim();
-             contRja[sigla] = (contRja[sigla] || 0) + 1;
-             totalRja++;
+            let sigla = cel.rja.toUpperCase().trim();
+            
+            // Se não for uma sigla de exatamente 3 letras, computa como "Escolher/Fórmulas"
+            if (sigla.length !== 3) {
+              sigla = 'Escolher/Fórmulas';
+            }
+            
+            contRja[sigla] = (contRja[sigla] || 0) + 1;
+            totalRja++;
           }
         });
 
         // Ordena por quem tem mais sessões. Se empatar, ordena em ordem alfabética.
         const rjasOrdenados = Object.keys(contRja).sort((a,b) => contRja[b] - contRja[a] || a.localeCompare(b));
-        
+
         if (rjasOrdenados.length === 0) {
-           boxRja.innerHTML = '<div class="faint" style="font-size:13px; text-align:center; padding:10px;">Nenhuma sigla RJA preenchida ainda.</div>';
+          boxRja.innerHTML = '<div class="faint" style="font-size:13px; text-align:center; padding:10px;">Nenhuma sigla RJA preenchida ainda.</div>';
         } else {
-           rjasOrdenados.forEach(sigla => {
-             const qtd = contRja[sigla];
-             const row = document.createElement('div');
-             row.className = 'row between';
-             row.style.cssText = 'padding:6px 12px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:8px; color:#0f766e; font-weight:700; font-size:13.5px; margin-bottom:4px;';
-             row.innerHTML = `<span>${esc(sigla)}</span><span class="badge" style="background:#0d9488; color:#fff; font-size:11px; padding:3px 9px;">${qtd}</span>`;
-             boxRja.appendChild(row);
-           });
-           
-           // Adiciona a linha de TOTAL no final
-           const rowTot = document.createElement('div');
-           rowTot.className = 'row between';
-           rowTot.style.cssText = 'padding:6px 12px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; color:var(--ink); font-weight:800; font-size:13.5px; margin-top:4px;';
-           rowTot.innerHTML = `<span>TOTAL</span><span class="badge" style="background:var(--muted); color:#fff; font-size:11px; padding:3px 9px;">${totalRja}</span>`;
-           boxRja.appendChild(rowTot);
+          rjasOrdenados.forEach(sigla => {
+            const qtd = contRja[sigla];
+            const row = document.createElement('div');
+            row.className = 'row between';
+            row.style.cssText = 'padding:6px 12px; border-radius:8px; font-weight:700; font-size:13.5px; margin-bottom:4px;';
+            
+            // Estilo condicional: se for Escolher/Fórmulas fica com um fundo neutro, senão usa a cor do RJA
+            if (sigla === 'Escolher/Fórmulas') {
+              row.style.background = '#f8fafc';
+              row.style.border = '1px solid var(--line)';
+              row.style.color = 'var(--muted)';
+              row.innerHTML = `<span>${esc(sigla)}</span><span class="badge" style="background:var(--line2); color:var(--ink); font-size:11px; padding:3px 9px;">${qtd}</span>`;
+            } else {
+              row.style.background = '#f0fdfa';
+              row.style.border = '1px solid #ccfbf1';
+              row.style.color = '#0f766e';
+              row.innerHTML = `<span>${esc(sigla)}</span><span class="badge" style="background:#0d9488; color:#fff; font-size:11px; padding:3px 9px;">${qtd}</span>`;
+            }
+            
+            boxRja.appendChild(row);
+          });
+
+          // Adiciona a linha de TOTAL no final
+          const rowTot = document.createElement('div');
+          rowTot.className = 'row between';
+          rowTot.style.cssText = 'padding:6px 12px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; color:var(--ink); font-weight:800; font-size:13.5px; margin-top:4px;';
+          rowTot.innerHTML = `<span>TOTAL</span><span class="badge" style="background:var(--muted); color:#fff; font-size:11px; padding:3px 9px;">${totalRja}</span>`;
+          boxRja.appendChild(rowTot);
         }
       }
     }
@@ -3231,34 +3256,99 @@ async function renderPauta(id){
   const btnAutoRjaTopo = document.getElementById('pAutoRjaTopo');
   if(btnAutoRjaTopo) btnAutoRjaTopo.onclick = () => document.getElementById('gabRja').click();
   
-  // Lógica do menu de Copiar
-  const cw = document.getElementById('copyWrap');
-  if(cw) { 
-    document.getElementById('copyCar').onclick = (ev) => {
-      ev.stopPropagation();
-      cw.classList.toggle('open');
-    }; 
-    document.addEventListener('click', e => { 
-      if(!cw.contains(e.target)) cw.classList.remove('open'); 
-    }); 
+  // --- UTILITÁRIO: REPOSICIONAMENTO DINÂMICO DE POPUP ---
+  function ajustarPosicaoDropdown(menuElement) {
+    if (!menuElement) return;
+    
+    // 1. Reseta para o padrão Tailwind (alinhado à direita da setinha)
+    menuElement.classList.remove('left-0');
+    menuElement.classList.add('right-0');
+    
+    // 2. Lê as dimensões na tela APÓS o menu estar visível
+    const rect = menuElement.getBoundingClientRect();
+    
+    // 3. Se cortou na esquerda da janela
+    if (rect.left < 0) {
+      menuElement.classList.remove('right-0');
+      menuElement.classList.add('left-0'); 
+    } 
+    // 4. Se cortou na direita da janela
+    else if (rect.right > window.innerWidth) {
+      menuElement.classList.remove('left-0');
+      menuElement.classList.add('right-0'); 
+    }
   }
 
-  // Lógica do menu lateral EA-RJA (Topo)
-  const rW = document.getElementById('rjaWrap');
-  if(rW) { 
-    document.getElementById('rjaCar').onclick = (ev) => {
-      ev.stopPropagation();
-      rW.classList.toggle('open');
-    }; 
-    document.addEventListener('click', e => { 
-      if(!rW.contains(e.target)) rW.classList.remove('open'); 
-    }); 
-    
-    document.getElementById('btnMenuGerenciarRja').onclick = () => { 
-      rW.classList.remove('open'); 
-      abrirGerenciarRja(); 
-    };
-  }
+    // Lógica do menu de Copiar
+    const cw = document.getElementById('copyWrap');
+    if(cw) { 
+      document.getElementById('copyCar').onclick = (ev) => {
+        ev.stopPropagation();
+        cw.classList.toggle('open');
+        
+        if (cw.classList.contains('open')) {
+          const menuFlutuante = cw.querySelector('.menu');
+          if (menuFlutuante) {
+            // Mede a posição do BOTÃO (que já está no ecrã e é 100% estável)
+            const btnRect = cw.getBoundingClientRect();
+            
+            // Se o botão estiver na metade esquerda do ecrã, o menu cresce para a direita
+            if (btnRect.left < (window.innerWidth / 2)) {
+              menuFlutuante.style.setProperty('left', '0px', 'important');
+              menuFlutuante.style.setProperty('right', 'auto', 'important');
+            } else {
+              // Se estiver na metade direita, o menu cresce para a esquerda (padrão)
+              menuFlutuante.style.setProperty('left', 'auto', 'important');
+              menuFlutuante.style.setProperty('right', '0px', 'important');
+            }
+          }
+        }
+      }; 
+      
+      document.addEventListener('click', e => { 
+        if(!cw.contains(e.target)) cw.classList.remove('open'); 
+      }); 
+    }
+
+    // Lógica do menu lateral EA-RJA (Topo)
+    const rW = document.getElementById('rjaWrap');
+    if(rW) {
+      document.getElementById('rjaCar').onclick = (ev) => {
+        ev.stopPropagation();
+        rW.classList.toggle('open');
+        
+        if (rW.classList.contains('open')) {
+          const menuFlutuante = rW.querySelector('.menu');
+          if (menuFlutuante) {
+            // Zera qualquer ajuste anterior
+            menuFlutuante.style.transform = 'none';
+            
+            requestAnimationFrame(() => {
+              const rect = menuFlutuante.getBoundingClientRect();
+              const margem = 8;
+              
+              if (rect.left < margem) {
+                menuFlutuante.style.transform = `translateX(${margem - rect.left}px)`;
+              } else if (rect.right > window.innerWidth - margem) {
+                menuFlutuante.style.transform = `translateX(${(window.innerWidth - margem) - rect.right}px)`;
+              }
+            });
+          }
+        }
+      };
+      
+      document.addEventListener('click', e => {
+        if(!rW.contains(e.target)) rW.classList.remove('open');
+      });
+      
+      const btnM = document.getElementById('btnMenuGerenciarRja');
+      if(btnM) {
+        btnM.onclick = () => {
+          rW.classList.remove('open');
+          abrirGerenciarRja();
+        };
+      }
+    }
 
 // Eventos do menu
   document.getElementById('copyMain').onclick = () => copiarDynamic();
@@ -3720,13 +3810,21 @@ async function renderPauta(id){
             });
         });
 
-        // 5) Preencher "Escolher" nos processos restantes
-        linhasDaPauta(p).forEach(L => {
+        // 5) Aplicar fórmula nos processos restantes ou que ficaram com "Escolher"
+        linhasDaPauta(p).forEach((L, index) => {
           const c = p.celulas[L.key];
           if (c && (c.proc || '').trim() && chave(c.res) !== 'CANCELADA') {
-            if (!c.rja || !c.rja.trim()) {
-              c.rja = 'Escolher';
-              alterou = true;
+            
+            // Se o campo RJA estiver vazio ou se estiver preenchido com a palavra "Escolher"
+            if (!c.rja || !c.rja.trim() || c.rja === 'Escolher') {
+              const linhaExcel = index + 4;
+              const formulaRJA = `=SES(T${linhaExcel}="CANCELADA"; ""; T${linhaExcel}="AGUARD. CANCEL. PJE"; ""; J${linhaExcel}="Filipe";"FIL"; J${linhaExcel}="Emídio";"EMI"; J${linhaExcel}="Luana";"LUA"; J${linhaExcel}="Deborah";"DEB"; J${linhaExcel}="Maura";"MAA"; J${linhaExcel}="Joice";"JOI"; J${linhaExcel}="Aracele";"ARA"; J${linhaExcel}="Dr. David (ADM)";"Escolher"; J${linhaExcel}="Outro"; "Escolher")`;
+              
+              // Só marca como alterado se o conteúdo atual for diferente da fórmula
+              if (c.rja !== formulaRJA) {
+                c.rja = formulaRJA;
+                alterou = true;
+              }
             }
           }
         });

@@ -7260,10 +7260,13 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
       ============================================================ */
     let updatesAlvo = [];
     let updEditId = null;
+    let updPg = 1; // Variável para controlar a página atual do modal
+    const UPD_PP = 5; // Número máximo de atualizações por página
 
     window.abrirAtualizacoes = async () => {
       // Fecha o modal de Presença para dar foco nas atualizações
-      closeM('mPresence'); 
+      closeM('mPresence');
+      updPg = 1; // Volta para a página 1 sempre que abrir o modal
       updatesAlvo = await DB.getUpdates();
       renderUpdatesList();
       openM('mUpdates');
@@ -7272,27 +7275,34 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
     function renderUpdatesList() {
       const box = document.getElementById('updatesList');
       box.innerHTML = '';
-
+      
       if (!updatesAlvo || !updatesAlvo.length) {
-        box.innerHTML = '<div class="faint" style="text-align:center; padding:20px;">Nenhuma atualização registrada ainda.</div>';
+        box.innerHTML = '<div class="faint" style="text-align:center; padding:20px;">Nenhuma atualização registada ainda.</div>';
         return;
       }
 
       // Ordena da mais recente para a mais antiga pela data
       updatesAlvo.sort((a, b) => new Date(b.data || 0) - new Date(a.data || 0));
 
-      updatesAlvo.forEach((upd, index) => {
+      // --- LÓGICA DE PAGINAÇÃO ---
+      const totalVis = updatesAlvo.length;
+      const totalPgs = Math.ceil(totalVis / UPD_PP) || 1;
+      if (updPg > totalPgs) updPg = totalPgs;
+
+      // Filtra as atualizações para mostrar apenas as da página atual
+      const pagedUpd = updatesAlvo.slice((updPg - 1) * UPD_PP, updPg * UPD_PP);
+
+      pagedUpd.forEach((upd, index) => {
         const card = document.createElement('div');
         card.style.cssText = 'border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff;';
         
-        // O primeiro item (mais recente) vem expandido por padrão
-        const isExpanded = index === 0;
-
+        // O primeiro item vem expandido por padrão (mas apenas se estivermos na primeira página)
+        const isExpanded = (index === 0 && updPg === 1);
+        
         const head = document.createElement('div');
         head.className = 'row between';
         head.style.cssText = `padding:12px 14px; cursor:pointer; background:${isExpanded ? 'var(--brand-50)' : '#f8fafc'}; color:${isExpanded ? 'var(--brand-d)' : 'var(--ink)'}; font-weight:700; transition:0.2s;`;
         
-        // Mudança: Colocamos uma classe específica 'upd-arrow' no span do indicador para isolá-lo da data
         head.innerHTML = `
           <div class="row" style="gap:6px;">
             <span style="font-size:15px; font-weight:700;">${esc(upd.versao)}</span>
@@ -7303,34 +7313,53 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
             <span class="upd-arrow" style="font-size:11px; font-weight:600; color:var(--muted);">${isExpanded ? '▼' : '▶'}</span>
           </div>
         `;
-
+        
         const body = document.createElement('div');
-        body.style.cssText = 'padding:14px; border-top:1px solid var(--line2); font-size:13.5px; line-height:1.5; color:var(--ink); white-space:pre-wrap;';
+        // Adicionado max-height: 220px e overflow-y: auto para limitar a ~10 linhas
+        body.style.cssText = 'padding:14px; border-top:1px solid var(--line2); font-size:13.5px; line-height:1.5; color:var(--ink); white-space:pre-wrap; max-height: 220px; overflow-y: auto;';
         body.style.display = isExpanded ? 'block' : 'none';
         body.innerHTML = esc(upd.detalhes || '');
-
-        // Comportamento de expandir/recolher corrigido
+        
         head.onclick = (e) => {
-          if(e.target.closest('.upd-edit-btn')) return; // Evita fechar se clicar no botão de editar
+          if(e.target.closest('.upd-edit-btn')) return; 
           const isNowOpen = body.style.display === 'none';
           body.style.display = isNowOpen ? 'block' : 'none';
           head.style.background = isNowOpen ? 'var(--brand-50)' : '#f8fafc';
           head.style.color = isNowOpen ? 'var(--brand-d)' : 'var(--ink)';
-          
-          // Mudança: Agora alteramos estritamente o span com a classe 'upd-arrow', preservando a data intacta
           head.querySelector('.upd-arrow').textContent = isNowOpen ? '▼' : '▶';
         };
-
-        // Botão de Editar
+        
         head.querySelector('.upd-edit-btn').onclick = (e) => {
           e.stopPropagation();
           abrirUpdateEdit(upd.id, upd.versao, upd.data, upd.detalhes);
         };
-
+        
         card.appendChild(head);
         card.appendChild(body);
         box.appendChild(card);
       });
+
+      // --- RENDERIZA O CONTROLO DE PÁGINAS (Se houver mais de 1 página) ---
+      if (totalPgs > 1) {
+        let pgsHtml = '';
+        for(let i = 1; i <= totalPgs; i++) {
+          pgsHtml += `<span class="page-num ${i === updPg ? 'active' : ''}" data-p="${i}">${i}</span>`;
+        }
+        
+        const pagContainer = document.createElement('div');
+        pagContainer.style.cssText = 'display:flex; justify-content:center; align-items:center; gap:4px; margin-top:8px; padding-top:10px; border-top:1px solid var(--line);';
+        pagContainer.innerHTML = pgsHtml;
+        
+        pagContainer.querySelectorAll('.page-num').forEach(btn => {
+          btn.onclick = () => {
+            if (btn.classList.contains('active')) return;
+            updPg = parseInt(btn.dataset.p);
+            renderUpdatesList();
+          };
+        });
+        
+        box.appendChild(pagContainer);
+      }
     }
 
     function abrirUpdateEdit(id = null, versao = '', data = '', detalhes = '') {

@@ -1259,7 +1259,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.17</h1>
+        <h1>Escala Adm - v 1.1.18</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -6019,13 +6019,13 @@ function sincronizaGabarito(p){
         const wrap = document.createElement('div');
         wrap.innerHTML = `
           <div class="modal-bg keep-open" id="mChecklist"><div class="modal lg modal-flex">
-            <div class="modal-head"><div class="row between"><div><div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:12px;">Checklists da Escala 
+            <div class="modal-head"><div class="row between"><div><div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:12px;">Checklists da Escala
               <button class="btn btn-sm" onclick="abrirPendencias()" style="color:#d97706; border-color:#fef3c7; background:#fffbeb; font-size:12px; padding:4px 8px; font-weight:600;" title="Abrir Pendências & Anotações"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Pendências</button>
               <button class="btn btn-sm" onclick="abrirExcep()" style="color:#059669; border-color:#d1fae5; background:#ecfdf5; font-size:12px; padding:4px 8px; font-weight:600;" title="Situações Excepcionais"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Sit. Excepcionais</button>
               <button class="btn btn-sm" onclick="abrirProcedimentos()" style="color:#2563eb; border-color:#bfdbfe; background:#eff6ff; font-size:12px; padding:4px 8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Procedimentos</button>
+              <button class="btn btn-sm" onclick="abrirModalRelatorio()" style="color:#4f46e5; border-color:#e0e7ff; background:#eef2ff; font-size:12px; padding:4px 8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Relatório</button>
             </div><div class="muted" style="font-size:14px;">Atividades diárias e gestão mensal.</div></div><button class="btn icon-btn" onclick="closeM('mChecklist')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>
             <div class="modal-body" style="display:flex; gap:16px; padding-bottom:20px; min-height:450px; flex-wrap:wrap;">
-              
               <div style="flex:3; display:flex; flex-direction:column; min-width:300px;">
                 <div style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--brand);">Rotina Diária</div>
                 <div id="chkList" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; padding-right:6px;"></div>
@@ -6034,12 +6034,10 @@ function sincronizaGabarito(p){
                   <button class="btn btn-sm" id="chkReset">Desmarcar Todas</button>
                 </div>
               </div>
-
               <div style="flex:1; display:flex; flex-direction:column; border-left:1px solid var(--line); padding-left:16px; min-width:220px;">
                 <div style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--green-700);">Atividades Mensais</div>
                 <div id="chkMensalList" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; padding-right:6px;"></div>
-               </div>
-
+              </div>
             </div>
           </div></div>
 
@@ -6228,6 +6226,31 @@ function sincronizaGabarito(p){
               </div>
             </div>
           </div>
+
+          <div class="modal-bg" id="mRelatorioEscala" style="z-index: 9999;">
+            <div class="modal sm modal-flex">
+              <div class="modal-head">
+                <div class="row between" style="align-items:flex-start;">
+                  <div>
+                    <div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:8px;">Relatório de Desempenho</div>
+                    <div class="muted" style="font-size:13.5px;">Gere um PDF com estatísticas do mês selecionado.</div>
+                  </div>
+                  <button class="btn icon-btn" onclick="closeM('mRelatorioEscala')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+                </div>
+              </div>
+              <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; gap:12px;">
+                <label class="fld" style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Selecione o Mês e Ano</label>
+                <input type="month" id="inpMesRelatorio" class="input" style="font-weight:700;">
+              </div>
+              <div class="modal-foot">
+                <div class="row between">
+                  <button class="btn" onclick="closeM('mRelatorioEscala')">Cancelar</button>
+                  <button class="btn btn-primary" onclick="gerarRelatorioPdf()">Gerar Relatório (PDF)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         `;
         document.body.appendChild(wrap);
 
@@ -7273,6 +7296,256 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
 
             openM('mSeletorCenarioRja');
         });
+    }
+
+    // ============================================================
+    // RELATÓRIO MENSAL (PDF / IMPRESSÃO)
+    // ============================================================
+
+    function abrirModalRelatorio() {
+      const inpMes = document.getElementById('inpMesRelatorio');
+      const d = new Date();
+      inpMes.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      openM('mRelatorioEscala');
+    }
+    
+    async function gerarRelatorioPdf() {
+      const mesAno = document.getElementById('inpMesRelatorio').value;
+      if (!mesAno) return toast('Selecione um mês e ano.');
+      
+      const [anoFiltro, mesFiltro] = mesAno.split('-');
+      const equipeAtual = await DB.getEquipe() || [];
+      const todasPautas = await DB.list();
+      
+      // Filtra apenas pautas do mês escolhido e ordena cronologicamente
+      const pautasMes = todasPautas.filter(p => p.data && p.data.startsWith(`${anoFiltro}-${mesFiltro}`))
+                                  .sort((a,b) => a.data.localeCompare(b.data));
+
+      if (pautasMes.length === 0) return toast('Nenhuma pauta encontrada para este mês.');
+      
+      let totalAudDesignadas = 0;
+      let totalAudCanceladas = 0;
+      let linhasTabelaHtml = '';
+
+      pautasMes.forEach(p => {
+        // Conta as audiências do dia
+        const celulas = Object.values(p.celulas || {});
+        const audsComProc = celulas.filter(c => (c.proc || '').trim());
+        const qtdDesignadas = audsComProc.length;
+        const qtdCanceladas = audsComProc.filter(c => chave(c.res) === 'CANCELADA').length;
+        const qtdRealizadas = qtdDesignadas - qtdCanceladas;
+
+        totalAudDesignadas += qtdDesignadas;
+        totalAudCanceladas += qtdCanceladas;
+
+        // Cálculo da equipe disponível para o dia da pauta
+        const diaSemana = diaSemanaISO(p.data);
+        let qtdeServidores = 0;
+        let qtdeEstagiarios = 0;
+        let sessoesServ = 0;
+        let sessoesEstag = 0;
+
+        if (diaSemana) {
+          equipeAtual.forEach(pe => {
+            if (pe.inativo) return;
+            // Despreza explicitamente voluntários e equipe administrativa
+            if (pe.tipo === 'adm' || pe.tipo === 'voluntario') return; 
+
+            if (pe.tipo === 'estagiario' && !pe.npj) pe.npj = [];
+
+            const ev = (p.dia && p.dia.aus) ? p.dia.aus[pe.id] : null;
+            if (ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev)) return; // Afastado definitivo no dia
+
+            let horasDisp = eqSlotsNoDia(pe, diaSemana) || [];
+            const horasGab = (p.dia && p.dia.gab && p.dia.gab[pe.id]) ? p.dia.gab[pe.id] : [];
+            if (horasGab.length > 0) horasDisp = [...new Set([...horasDisp, ...horasGab])];
+
+            // Se a pessoa tem disponibilidade no dia (está presente), soma na capacidade fixa
+            if (horasDisp.length > 0) {
+              if (pe.tipo === 'servidor') {
+                qtdeServidores++;
+                sessoesServ += 5; // Multiplica por 5 sessões
+              } else if (pe.tipo === 'estagiario') {
+                qtdeEstagiarios++;
+                sessoesEstag += 3; // Multiplica por 3 sessões
+              }
+            }
+          });
+          
+          // Extras manuais do dia
+          (p.dia && p.dia.extra || []).forEach(ex => {
+            if (ex.tipo === 'adm' || ex.tipo === 'voluntario') return;
+            const ev = p.dia && p.dia.aus ? p.dia.aus[ex.id] : null;
+            if (ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev)) return;
+            
+            let horasDisp = ex.hor || [];
+            const horasGab = (p.dia && p.dia.gab && p.dia.gab[ex.id]) ? p.dia.gab[ex.id] : [];
+            if (horasGab.length > 0) horasDisp = [...new Set([...horasDisp, ...horasGab])];
+            
+            if (horasDisp.length > 0) {
+              if (ex.tipo === 'servidor') { 
+                  qtdeServidores++; 
+                  sessoesServ += 5; // Multiplica por 5 sessões
+              } else if (ex.tipo === 'estagiario') { 
+                  qtdeEstagiarios++; 
+                  sessoesEstag += 3; // Multiplica por 3 sessões
+              }
+            }
+          });
+        }
+
+        // Métrica de Capacidade Brutal do Dia (Total que a força de trabalho consegue realizar)
+        const capacidadeTotal = sessoesServ + sessoesEstag;
+        const saldo = capacidadeTotal - qtdDesignadas; // Quantas sessões "sobraram" de margem
+        
+        let analiseTexto = '';
+        let analiseBg = '';
+        let analiseCor = '';
+        
+        // Regra de ouro atualizada (Subutilizada >= 13, Adequada 8 a 12):
+        if (saldo < 0) { 
+          analiseTexto = '🚨 Além da Capacidade'; 
+          analiseBg = '#fee2e2'; analiseCor = '#991b1b'; 
+        } else if (saldo < 8) { 
+          analiseTexto = '⚠️ Pauta apertada'; 
+          analiseBg = '#fef3c7'; analiseCor = '#92400e'; 
+        } else if (saldo < 13) { 
+          analiseTexto = '✅ Pauta Adequada'; 
+          analiseBg = '#d1fae5'; analiseCor = '#065f46'; 
+        } else { 
+          analiseTexto = '🧊 Pauta Subutilizada'; 
+          analiseBg = '#e0f2fe'; analiseCor = '#075985'; 
+        }
+
+        linhasTabelaHtml += `
+          <tr>
+            <td style="font-weight: 700; font-size: 13.5px; color: #0f172a;">
+              ${isoParaBR(p.data)}
+              <br><small style="color:#64748b; font-weight:500;">${diaSemana ? DIA_FULL[diaSemana] : ''}</small>
+            </td>
+            <td style="text-align: center; font-weight: 600;">${qtdDesignadas}</td>
+            <td style="text-align: center; color: #16a34a; font-weight: 700;">${qtdRealizadas}</td>
+            <td style="text-align: center; color: #dc2626; font-weight: 500;">${qtdCanceladas}</td>
+            <td style="font-size: 12px; color: #475569; font-weight: 500;">${qtdeServidores} Serv. / ${qtdeEstagiarios} Est.</td>
+            <td style="text-align: center; font-weight: 600; color: #475569;">${capacidadeTotal}</td>
+            <td style="text-align: center; font-weight: 800; color: ${saldo >= 13 ? '#0284c7' : (saldo >= 8 ? '#16a34a' : (saldo < 0 ? '#dc2626' : '#d97706'))}">
+              ${saldo > 0 ? '+' : ''}${saldo}
+            </td>
+            <td>
+              <span style="display: inline-block; padding: 5px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; background: ${analiseBg}; color: ${analiseCor}; letter-spacing: -0.01em;">
+                ${analiseTexto}
+              </span>
+            </td>
+          </tr>
+        `;
+      });
+
+      const totalAudRealizadas = totalAudDesignadas - totalAudCanceladas;
+
+      // Montagem do Novo HTML Layout Premium para Impressão
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório de Escala - ${mesFiltro}/${anoFiltro}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+            body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.6; padding: 40px; background-color: #f8fafc; margin: 0; }
+            .container { max-width: 1100px; margin: 0 auto; background: #ffffff; padding: 36px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.03), 0 2px 4px -2px rgb(0 0 0 / 0.03); }
+            .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 28px; }
+            h1 { font-size: 23px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em; }
+            .periodo { font-size: 13.5px; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 6px 14px; border-radius: 20px; border: 1px solid #e0e7ff; }
+            .panel { background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 32px; border: 1px solid #e2e8f0; }
+            .panel-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+            .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+            .stat-box { background: #ffffff; padding: 18px 16px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; box-shadow: 0 1px 2px rgb(0 0 0 / 0.01); }
+            .stat-num { font-size: 30px; font-weight: 800; color: #4f46e5; margin-bottom: 4px; letter-spacing: -0.03em; }
+            .stat-label { font-size: 11.5px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.02em; }
+            .section-title { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 16px; letter-spacing: -0.01em; }
+            
+            table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; margin-top: 12px; }
+            th { background: #f1f5f9; color: #475569; font-weight: 700; padding: 12px 10px; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; font-size: 11px; letter-spacing: 0.03em; }
+            td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; color: #334155; vertical-align: middle; }
+            tr:nth-child(even) td { background: #f8fafc; }
+            
+            .legend { display: flex; flex-direction: column; gap: 8px; margin-top: 28px; font-size: 11.5px; color: #64748b; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; line-height: 1.5; }
+            .legend-item { display: flex; align-items: center; gap: 6px; }
+            .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+            @media print {
+              body { padding: 0; background: #fff; }
+              .container { box-shadow: none; padding: 0; max-width: 100%; }
+              th { background: #e2e8f0 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              tr:nth-child(even) td { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              .panel { background: #fff !important; border: 1px solid #cbd5e1; }
+              .stat-box { border: 1px solid #cbd5e1; }
+              span { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Relatório de Produtividade & Capacidade Ocupacional</h1>
+              <div class="periodo">Mês de Referência: ${mesFiltro}/${anoFiltro}</div>
+            </div>
+            
+            <div class="panel">
+              <div class="panel-title">Estatísticas Consolidadas do Período</div>
+              <div class="stat-grid">
+                <div class="stat-box" style="border-top: 4px solid #4f46e5;">
+                  <div class="stat-num">${totalAudDesignadas}</div>
+                  <div class="stat-label">Audiências Designadas</div>
+                </div>
+                <div class="stat-box" style="border-top: 4px solid #16a34a;">
+                  <div class="stat-num" style="color:#16a34a;">${totalAudRealizadas}</div>
+                  <div class="stat-label">Audiências Realizadas</div>
+                </div>
+                <div class="stat-box" style="border-top: 4px solid #dc2626;">
+                  <div class="stat-num" style="color:#dc2626;">${totalAudCanceladas}</div>
+                  <div class="stat-label">Audiências Canceladas</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-title">Acompanhamento Comparativo Diário</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Data / Dia da Semana</th>
+                  <th style="text-align: center;">Designadas</th>
+                  <th style="text-align: center;">Realizadas</th>
+                  <th style="text-align: center;">Canceladas</th>
+                  <th>Equipe Ativa</th>
+                  <th style="text-align: center;">Capac. Máx (Sessões)</th>
+                  <th style="text-align: center;">Saldo Margem</th>
+                  <th>Análise Situacional</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${linhasTabelaHtml}
+              </tbody>
+            </table>
+
+            <div class="legend">
+              <div style="font-weight:700; color:#475569; margin-bottom:2px;">Regra de Negócio & Critério de Análise da Pauta:</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#065f46;"></span> <b>Pauta Adequada:</b> Sobra de 8 a 12 sessões no dia (Garante as 5 vagas do Banco de Reserva + vagas de proteção para atestados).</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#92400e;"></span> <b>Pauta Apertada:</b> Sobra entre 0 e 7 sessões (A equipe consegue realizar as designadas, mas compromete a reserva ou margem de segurança).</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#991b1b;"></span> <b>Além da Capacidade:</b> Saldo negativo (Déficit operacional crítico. Há mais audiências agendadas do que a equipe consegue suprir).</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#075985;"></span> <b>Pauta Subutilizada:</b> Sobra de 13 ou mais sessões (Indica elevada ociosidade da força de trabalho no dia).</div>
+            </div>
+          </div>
+
+          <script>
+            window.onload = function() { window.print(); }
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      closeM('mRelatorioEscala');
     }
 
 </script>

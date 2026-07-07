@@ -1259,7 +1259,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.18</h1>
+        <h1>Escala Adm - v 1.1.19</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -6228,19 +6228,61 @@ function sincronizaGabarito(p){
           </div>
 
           <div class="modal-bg" id="mRelatorioEscala" style="z-index: 9999;">
-            <div class="modal sm modal-flex">
+            <div class="modal modal-flex" style="max-width: 550px;">
               <div class="modal-head">
                 <div class="row between" style="align-items:flex-start;">
                   <div>
                     <div style="font-size:19px;font-weight:800; display:flex; align-items:center; gap:8px;">Relatório de Desempenho</div>
-                    <div class="muted" style="font-size:13.5px;">Gere um PDF com estatísticas do mês selecionado.</div>
+                    <div class="muted" style="font-size:13.5px;">Gere um PDF com estatísticas e previsão.</div>
                   </div>
                   <button class="btn icon-btn" onclick="closeM('mRelatorioEscala')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                 </div>
               </div>
-              <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; gap:12px;">
-                <label class="fld" style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Selecione o Mês e Ano</label>
-                <input type="month" id="inpMesRelatorio" class="input" style="font-weight:700;">
+              <div class="modal-body" style="padding-bottom:20px; padding-top:10px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; max-height: 75vh;">
+                
+                <div>
+                  <label class="fld" style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Selecione o Mês e Ano</label>
+                  <input type="month" id="inpMesRelatorio" class="input" style="font-weight:700;" onchange="renderizarDiasFuturosRelatorio()">
+                </div>
+
+                <div id="containerDiasFuturosRelatorio" style="display:none; flex-direction:column; gap:8px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                  <label style="font-size:12px; font-weight:700; color:var(--brand); text-transform:uppercase; margin-bottom:2px;">Dias Futuros em Aberto</label>
+                  <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Por padrão, dias futuros são ignorados. Selecione os dias que deseja <b>INCLUIR</b> no relatório:</div>
+                  <div id="listaDiasFuturosRelatorio" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+                </div>
+
+                <div style="border-top:1px solid var(--line); padding-top:16px;">
+                  <label style="display:flex; align-items:center; gap:8px; font-weight:700; cursor:pointer; font-size:14px; color:#0f172a;">
+                    <input type="checkbox" id="chkPrevisao60" onchange="document.getElementById('boxPrevisao60').style.display = this.checked ? 'flex' : 'none'">
+                    Anexar Previsão Operacional (Próx. 60 Dias)
+                  </label>
+                  
+                  <div id="boxPrevisao60" style="display:none; flex-direction:column; gap:12px; margin-top:12px; background:var(--brand-50); padding:16px; border-radius:8px; border:1px solid var(--brand-100);">
+                    <div style="font-size:12.5px; color:var(--brand); margin-bottom:4px;">Simule o cenário futuro para analisar a abertura/fechamento de salas.</div>
+                    
+                    <div style="display:flex; gap:12px;">
+                        <div style="flex:1;">
+                          <label class="fld">Servidores Disp.</label>
+                          <input type="number" id="inpPrevServ" class="input" min="0" value="0">
+                        </div>
+                        <div style="flex:1;">
+                          <label class="fld">Estagiários Disp.</label>
+                          <input type="number" id="inpPrevEstag" class="input" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="fld" style="color:#0f172a;">Sessões Abertas por Dia (Meta 60 dias)</label>
+                        <input type="number" id="inpPrevSessoes" class="input" min="0" value="0" style="border-color:#94a3b8;">
+                    </div>
+                    
+                    <div>
+                        <label class="fld">Informações Complementares (Opcional)</label>
+                        <textarea id="inpPrevObs" class="input" rows="2" placeholder="Ex: Expectativa de retorno de 2 servidores de férias; possibilidade de ampliação do estagiário..."></textarea>
+                    </div>
+                  </div>
+                </div>
+
               </div>
               <div class="modal-foot">
                 <div class="row between">
@@ -6249,7 +6291,7 @@ function sincronizaGabarito(p){
                 </div>
               </div>
             </div>
-          </div>
+        </div>
 
         `;
         document.body.appendChild(wrap);
@@ -7299,16 +7341,57 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
     }
 
     // ============================================================
-    // RELATÓRIO MENSAL (PDF / IMPRESSÃO)
+    // RELATÓRIO MENSAL E PREVISÃO 60 DIAS (PDF / IMPRESSÃO)
     // ============================================================
 
     function abrirModalRelatorio() {
       const inpMes = document.getElementById('inpMesRelatorio');
       const d = new Date();
       inpMes.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Reseta estado do modal
+      document.getElementById('chkPrevisao60').checked = false;
+      document.getElementById('boxPrevisao60').style.display = 'none';
+      document.getElementById('inpPrevServ').value = '0';
+      document.getElementById('inpPrevEstag').value = '0';
+      document.getElementById('inpPrevSessoes').value = '0';
+      document.getElementById('inpPrevObs').value = '';
+      
+      renderizarDiasFuturosRelatorio();
       openM('mRelatorioEscala');
     }
-    
+
+    async function renderizarDiasFuturosRelatorio() {
+      const mesAno = document.getElementById('inpMesRelatorio').value;
+      const container = document.getElementById('containerDiasFuturosRelatorio');
+      const lista = document.getElementById('listaDiasFuturosRelatorio');
+      
+      if (!mesAno) { container.style.display = 'none'; return; }
+
+      const [ano, mes] = mesAno.split('-');
+      const todasPautas = await DB.list();
+      const pautasMes = todasPautas.filter(p => p.data && p.data.startsWith(`${ano}-${mes}`)).sort((a,b) => a.data.localeCompare(b.data));
+      
+      // Pega data local de hoje no formato YYYY-MM-DD
+      const hojeObj = new Date();
+      const hojeIso = `${hojeObj.getFullYear()}-${String(hojeObj.getMonth()+1).padStart(2,'0')}-${String(hojeObj.getDate()).padStart(2,'0')}`;
+      
+      const diasFuturos = pautasMes.filter(p => p.data > hojeIso);
+      
+      if (diasFuturos.length > 0) {
+        lista.innerHTML = diasFuturos.map(p => `
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer; font-weight:600;">
+            <input type="checkbox" class="chk-dia-futuro" value="${p.data}">
+            ${isoParaBR(p.data).substring(0,5)}
+          </label>
+        `).join('');
+        container.style.display = 'flex';
+      } else {
+        lista.innerHTML = '';
+        container.style.display = 'none';
+      }
+    }
+
     async function gerarRelatorioPdf() {
       const mesAno = document.getElementById('inpMesRelatorio').value;
       if (!mesAno) return toast('Selecione um mês e ano.');
@@ -7317,18 +7400,25 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
       const equipeAtual = await DB.getEquipe() || [];
       const todasPautas = await DB.list();
       
-      // Filtra apenas pautas do mês escolhido e ordena cronologicamente
-      const pautasMes = todasPautas.filter(p => p.data && p.data.startsWith(`${anoFiltro}-${mesFiltro}`))
-                                  .sort((a,b) => a.data.localeCompare(b.data));
+      let pautasMes = todasPautas.filter(p => p.data && p.data.startsWith(`${anoFiltro}-${mesFiltro}`))
+                                .sort((a,b) => a.data.localeCompare(b.data));
 
-      if (pautasMes.length === 0) return toast('Nenhuma pauta encontrada para este mês.');
+      // Lógica de Filtro de Dias Futuros
+      const hojeObj = new Date();
+      const hojeIso = `${hojeObj.getFullYear()}-${String(hojeObj.getMonth()+1).padStart(2,'0')}-${String(hojeObj.getDate()).padStart(2,'0')}`;
+      const diasFuturosPermitidos = Array.from(document.querySelectorAll('.chk-dia-futuro:checked')).map(el => el.value);
+
+      pautasMes = pautasMes.filter(p => {
+        if (p.data <= hojeIso) return true; // Hoje e passado sempre entra
+        return diasFuturosPermitidos.includes(p.data); // Futuro só se marcou checkbox
+      });
+
+      if (pautasMes.length === 0) return toast('Nenhuma pauta contabilizada para este mês/filtro.');
       
-      let totalAudDesignadas = 0;
-      let totalAudCanceladas = 0;
+      let totalAudDesignadas = 0; let totalAudCanceladas = 0;
       let linhasTabelaHtml = '';
 
       pautasMes.forEach(p => {
-        // Conta as audiências do dia
         const celulas = Object.values(p.celulas || {});
         const audsComProc = celulas.filter(c => (c.proc || '').trim());
         const qtdDesignadas = audsComProc.length;
@@ -7338,41 +7428,29 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
         totalAudDesignadas += qtdDesignadas;
         totalAudCanceladas += qtdCanceladas;
 
-        // Cálculo da equipe disponível para o dia da pauta
         const diaSemana = diaSemanaISO(p.data);
-        let qtdeServidores = 0;
-        let qtdeEstagiarios = 0;
-        let sessoesServ = 0;
-        let sessoesEstag = 0;
+        let qtdeServidores = 0; let qtdeEstagiarios = 0;
+        let sessoesServ = 0; let sessoesEstag = 0;
 
         if (diaSemana) {
           equipeAtual.forEach(pe => {
             if (pe.inativo) return;
-            // Despreza explicitamente voluntários e equipe administrativa
             if (pe.tipo === 'adm' || pe.tipo === 'voluntario') return; 
-
             if (pe.tipo === 'estagiario' && !pe.npj) pe.npj = [];
 
             const ev = (p.dia && p.dia.aus) ? p.dia.aus[pe.id] : null;
-            if (ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev)) return; // Afastado definitivo no dia
+            if (ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev)) return;
 
             let horasDisp = eqSlotsNoDia(pe, diaSemana) || [];
             const horasGab = (p.dia && p.dia.gab && p.dia.gab[pe.id]) ? p.dia.gab[pe.id] : [];
             if (horasGab.length > 0) horasDisp = [...new Set([...horasDisp, ...horasGab])];
 
-            // Se a pessoa tem disponibilidade no dia (está presente), soma na capacidade fixa
             if (horasDisp.length > 0) {
-              if (pe.tipo === 'servidor') {
-                qtdeServidores++;
-                sessoesServ += 5; // Multiplica por 5 sessões
-              } else if (pe.tipo === 'estagiario') {
-                qtdeEstagiarios++;
-                sessoesEstag += 3; // Multiplica por 3 sessões
-              }
+              if (pe.tipo === 'servidor') { qtdeServidores++; sessoesServ += 5; } 
+              else if (pe.tipo === 'estagiario') { qtdeEstagiarios++; sessoesEstag += 3; }
             }
           });
           
-          // Extras manuais do dia
           (p.dia && p.dia.extra || []).forEach(ex => {
             if (ex.tipo === 'adm' || ex.tipo === 'voluntario') return;
             const ev = p.dia && p.dia.aus ? p.dia.aus[ex.id] : null;
@@ -7383,44 +7461,26 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
             if (horasGab.length > 0) horasDisp = [...new Set([...horasDisp, ...horasGab])];
             
             if (horasDisp.length > 0) {
-              if (ex.tipo === 'servidor') { 
-                  qtdeServidores++; 
-                  sessoesServ += 5; // Multiplica por 5 sessões
-              } else if (ex.tipo === 'estagiario') { 
-                  qtdeEstagiarios++; 
-                  sessoesEstag += 3; // Multiplica por 3 sessões
-              }
+              if (ex.tipo === 'servidor') { qtdeServidores++; sessoesServ += 5; } 
+              else if (ex.tipo === 'estagiario') { qtdeEstagiarios++; sessoesEstag += 3; }
             }
           });
         }
 
-        // Métrica de Capacidade Brutal do Dia (Total que a força de trabalho consegue realizar)
         const capacidadeTotal = sessoesServ + sessoesEstag;
-        const saldo = capacidadeTotal - qtdDesignadas; // Quantas sessões "sobraram" de margem
+        const saldo = capacidadeTotal - qtdDesignadas; 
         
-        let analiseTexto = '';
-        let analiseBg = '';
-        let analiseCor = '';
+        let analiseTexto = ''; let analiseBg = ''; let analiseCor = '';
         
-        // Regra de ouro atualizada (Subutilizada >= 13, Adequada 8 a 12):
-        if (saldo < 0) { 
-          analiseTexto = '🚨 Além da Capacidade'; 
-          analiseBg = '#fee2e2'; analiseCor = '#991b1b'; 
-        } else if (saldo < 8) { 
-          analiseTexto = '⚠️ Pauta apertada'; 
-          analiseBg = '#fef3c7'; analiseCor = '#92400e'; 
-        } else if (saldo < 13) { 
-          analiseTexto = '✅ Pauta Adequada'; 
-          analiseBg = '#d1fae5'; analiseCor = '#065f46'; 
-        } else { 
-          analiseTexto = '🧊 Pauta Subutilizada'; 
-          analiseBg = '#e0f2fe'; analiseCor = '#075985'; 
-        }
+        if (saldo < 0) { analiseTexto = '🚨 Além da Capacidade'; analiseBg = '#fee2e2'; analiseCor = '#991b1b'; } 
+        else if (saldo < 8) { analiseTexto = '⚠️ Margem Insuficiente'; analiseBg = '#fef3c7'; analiseCor = '#92400e'; } 
+        else if (saldo < 13) { analiseTexto = '✅ Pauta Adequada'; analiseBg = '#d1fae5'; analiseCor = '#065f46'; } 
+        else { analiseTexto = '🧊 Pauta Subutilizada'; analiseBg = '#e0f2fe'; analiseCor = '#075985'; }
 
         linhasTabelaHtml += `
           <tr>
             <td style="font-weight: 700; font-size: 13.5px; color: #0f172a;">
-              ${isoParaBR(p.data)}
+              ${isoParaBR(p.data)}${p.data > hojeIso ? ' <span style="font-size:10px; color:#f59e0b; font-weight:800;" title="Projeção Futura">*</span>' : ''}
               <br><small style="color:#64748b; font-weight:500;">${diaSemana ? DIA_FULL[diaSemana] : ''}</small>
             </td>
             <td style="text-align: center; font-weight: 600;">${qtdDesignadas}</td>
@@ -7442,7 +7502,65 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
 
       const totalAudRealizadas = totalAudDesignadas - totalAudCanceladas;
 
-      // Montagem do Novo HTML Layout Premium para Impressão
+      // Bloco Opcional de Previsão 60 dias
+      const incluirPrevisao = document.getElementById('chkPrevisao60').checked;
+      let htmlPrevisao = '';
+      if (incluirPrevisao) {
+          const serv60 = parseInt(document.getElementById('inpPrevServ').value) || 0;
+          const estag60 = parseInt(document.getElementById('inpPrevEstag').value) || 0;
+          const sessoes60 = parseInt(document.getElementById('inpPrevSessoes').value) || 0;
+          const obs60 = document.getElementById('inpPrevObs').value;
+
+          const capacidade60 = (serv60 * 5) + (estag60 * 3);
+          const saldo60 = capacidade60 - sessoes60;
+
+          let analiseTexto60 = ''; let analiseBg60 = ''; let analiseCor60 = '';
+          if (saldo60 < 0) { analiseTexto60 = '🚨 Além da Capacidade'; analiseBg60 = '#fee2e2'; analiseCor60 = '#991b1b'; }
+          else if (saldo60 < 8) { analiseTexto60 = '⚠️ Margem Insuficiente'; analiseBg60 = '#fef3c7'; analiseCor60 = '#92400e'; }
+          else if (saldo60 < 13) { analiseTexto60 = '✅ Pauta Adequada'; analiseBg60 = '#d1fae5'; analiseCor60 = '#065f46'; }
+          else { analiseTexto60 = '🧊 Pauta Subutilizada'; analiseBg60 = '#e0f2fe'; analiseCor60 = '#075985'; }
+
+          htmlPrevisao = `
+          <div class="section-title" style="margin-top: 40px; border-top: 2px dashed #cbd5e1; padding-top: 24px; font-size:20px;">
+              🔮 Previsão Operacional & Planejamento - Horizonte 60 Dias
+          </div>
+          <div class="panel" style="background: #fff; border: 2px solid #e2e8f0; margin-bottom: 0;">
+              <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px; gap: 16px;">
+                  <div class="stat-box" style="background:#f8fafc;">
+                      <div class="stat-num" style="font-size:24px; color:#475569;">${serv60}</div>
+                      <div class="stat-label">Servidores Disp.</div>
+                  </div>
+                  <div class="stat-box" style="background:#f8fafc;">
+                      <div class="stat-num" style="font-size:24px; color:#475569;">${estag60}</div>
+                      <div class="stat-label">Estagiários Disp.</div>
+                  </div>
+                  <div class="stat-box" style="border: 2px solid #cbd5e1;">
+                      <div class="stat-num" style="font-size:26px; color:#0f172a;">${capacidade60}</div>
+                      <div class="stat-label" style="color:#0f172a;">Capac. Útil Estimada</div>
+                  </div>
+                  <div class="stat-box" style="border: 2px solid #818cf8;">
+                      <div class="stat-num" style="font-size:26px; color:#4f46e5;">${sessoes60}</div>
+                      <div class="stat-label" style="color:#4f46e5;">Sessões por dia (salas abertas)</div>
+                  </div>
+              </div>
+              
+              <div style="display:flex; justify-content: space-between; align-items:center; padding: 18px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                <div>
+                    <div style="font-size:13px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.02em;">Diagnóstico Estratégico do Cenário</div>
+                    <div style="font-size:15px; color:#1e293b; margin-top:4px;">
+                        Saldo Operacional Diário Projetado: <b style="color: ${saldo60 >= 13 ? '#0284c7' : (saldo60 >= 8 ? '#16a34a' : (saldo60 < 0 ? '#dc2626' : '#d97706'))}; font-size:17px;">${saldo60 > 0 ? '+'+saldo60 : saldo60} vagas livres</b>
+                    </div>
+                </div>
+                <span style="display: inline-block; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 800; background: ${analiseBg60}; color: ${analiseCor60}; letter-spacing: -0.02em; border: 1px solid ${analiseCor60}40;">
+                      ${analiseTexto60}
+                </span>
+              </div>
+              ${obs60.trim() ? `<div style="margin-top:20px; font-size:13.5px; color:#334155; background:#f1f5f9; padding:16px; border-radius:6px; border-left:4px solid #64748b;"><b>📝 Observações e Justificativas:</b><br> <div style="margin-top:6px; font-weight:500;">${obs60.replace(/\n/g, '<br>')}</div></div>` : ''}
+          </div>
+          `;
+      }
+
+      // Montagem do HTML para Impressão
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -7481,7 +7599,7 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
               tr:nth-child(even) td { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
               .panel { background: #fff !important; border: 1px solid #cbd5e1; }
               .stat-box { border: 1px solid #cbd5e1; }
-              span { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              span { -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid currentColor !important; }
             }
           </style>
         </head>
@@ -7493,7 +7611,7 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
             </div>
             
             <div class="panel">
-              <div class="panel-title">Estatísticas Consolidadas do Período</div>
+              <div class="panel-title">Estatísticas Consolidadas (Executado e Projetado)</div>
               <div class="stat-grid">
                 <div class="stat-box" style="border-top: 4px solid #4f46e5;">
                   <div class="stat-num">${totalAudDesignadas}</div>
@@ -7518,7 +7636,7 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
                   <th style="text-align: center;">Designadas</th>
                   <th style="text-align: center;">Realizadas</th>
                   <th style="text-align: center;">Canceladas</th>
-                  <th>Equipe Ativa</th>
+                  <th>Equipe Ativa (Base)</th>
                   <th style="text-align: center;">Capac. Máx (Sessões)</th>
                   <th style="text-align: center;">Saldo Margem</th>
                   <th>Análise Situacional</th>
@@ -7529,12 +7647,15 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
               </tbody>
             </table>
 
+            ${htmlPrevisao}
+
             <div class="legend">
-              <div style="font-weight:700; color:#475569; margin-bottom:2px;">Regra de Negócio & Critério de Análise da Pauta:</div>
-              <div class="legend-item"><span class="legend-dot" style="background:#065f46;"></span> <b>Pauta Adequada:</b> Sobra de 8 a 12 sessões no dia (Garante as 5 vagas do Banco de Reserva + vagas de proteção para atestados).</div>
-              <div class="legend-item"><span class="legend-dot" style="background:#92400e;"></span> <b>Pauta Apertada:</b> Sobra entre 0 e 7 sessões (A equipe consegue realizar as designadas, mas compromete a reserva ou margem de segurança).</div>
-              <div class="legend-item"><span class="legend-dot" style="background:#991b1b;"></span> <b>Além da Capacidade:</b> Saldo negativo (Déficit operacional crítico. Há mais audiências agendadas do que a equipe consegue suprir).</div>
-              <div class="legend-item"><span class="legend-dot" style="background:#075985;"></span> <b>Pauta Subutilizada:</b> Sobra de 13 ou mais sessões (Indica elevada ociosidade da força de trabalho no dia).</div>
+              <div style="font-weight:700; color:#475569; margin-bottom:2px;">Critério e Inteligência de Negócio:</div>
+              <div class="legend-item">A força de trabalho padrão é calculada baseando-se em <b>5 sessões/dia por Servidor</b> e <b>3 sessões/dia por Estagiário</b>.
+              <div class="legend-item"><span class="legend-dot" style="background:#065f46;"></span> <b>Pauta Adequada:</b> Sobra de 8 a 12 sessões no dia (Garante a contingência para atestados e o Banco de Reserva).</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#92400e;"></span> <b>Margem Insuficiente:</b> Sobra entre 0 e 7 sessões (Equipe cumpre o dia, mas a margem médica / reserva fica defasada).</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#991b1b;"></span> <b>Além da Capacidade:</b> Saldo negativo (Déficit operacional de conciliadores / pauta inchada).</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#075985;"></span> <b>Pauta Subutilizada:</b> Sobra de 13 ou mais sessões (Indica elevado grau de ociosidade da equipe do dia).</div>
             </div>
           </div>
 

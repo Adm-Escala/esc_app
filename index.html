@@ -7553,7 +7553,7 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
       const todasPautas = await DB.list();
       
       let pautasMes = todasPautas.filter(p => p.data && p.data.startsWith(`${anoFiltro}-${mesFiltro}`))
-                                .sort((a,b) => a.data.localeCompare(b.data));
+                                 .sort((a,b) => a.data.localeCompare(b.data));
 
       // Lógica de Filtro de Dias Futuros
       const hojeObj = new Date();
@@ -7568,7 +7568,6 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
       if (pautasMes.length === 0) return toast('Nenhuma pauta contabilizada para este mês/filtro.');
       
       let totalAudDesignadas = 0; 
-      let totalAudCanceladas = 0;
       let maxSessoesDia = 0; // Variável para rastrear o Pico de Sessões
       let linhasTabelaHtml = '';
 
@@ -7576,11 +7575,8 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
         const celulas = Object.values(p.celulas || {});
         const audsComProc = celulas.filter(c => (c.proc || '').trim());
         const qtdDesignadas = audsComProc.length;
-        const qtdCanceladas = audsComProc.filter(c => chave(c.res) === 'CANCELADA').length;
-        const qtdRealizadas = qtdDesignadas - qtdCanceladas;
 
         totalAudDesignadas += qtdDesignadas;
-        totalAudCanceladas += qtdCanceladas;
         
         // Atualiza o pico se o dia atual tiver mais sessões que o recorde anterior
         if (qtdDesignadas > maxSessoesDia) {
@@ -7643,8 +7639,6 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
               <br><small style="color:#64748b; font-weight:500;">${diaSemana ? DIA_FULL[diaSemana] : ''}</small>
             </td>
             <td style="text-align: center; font-weight: 600;">${qtdDesignadas}</td>
-            <td style="text-align: center; color: #16a34a; font-weight: 700;">${qtdRealizadas}</td>
-            <td style="text-align: center; color: #dc2626; font-weight: 500;">${qtdCanceladas}</td>
             <td style="font-size: 12px; color: #475569; font-weight: 500;">${qtdeServidores} Serv. / ${qtdeEstagiarios} Est.</td>
             <td style="text-align: center; font-weight: 600; color: #475569;">${capacidadeTotal}</td>
             <td style="text-align: center; font-weight: 800; color: ${saldo >= 13 ? '#0284c7' : (saldo >= 8 ? '#16a34a' : (saldo < 0 ? '#dc2626' : '#d97706'))}">
@@ -7767,7 +7761,7 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
         <body>
           <div class="container">
             <div class="header">
-              <h1>Relatório da Escala - Demanda da Pauta X Força de Trabalho</h1>
+              <h1>Relatório da Escala - Demanda X F. Trabalho</h1>
               <div class="periodo">Mês de Referência: ${mesFiltro}/${anoFiltro}</div>
             </div>
             
@@ -7795,10 +7789,8 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
                 <tr>
                   <th>Data / Dia da Semana</th>
                   <th style="text-align: center;">Designadas</th>
-                  <th style="text-align: center;">Realizadas</th>
-                  <th style="text-align: center;">Canceladas</th>
                   <th>Equipe Ativa (Base)</th>
-                  <th style="text-align: center;">Capac. Máx (Sessões)</th>
+                  <th style="text-align: center;">Capacidade da Equpe</th>
                   <th style="text-align: center;">Saldo Margem</th>
                   <th>Análise Situacional</th>
                 </tr>

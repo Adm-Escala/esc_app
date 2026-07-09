@@ -1308,7 +1308,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.26</h1>
+        <h1>Escala Adm - v 1.1.27</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -4753,28 +4753,57 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
             const horasAtivas = [...new Set(auds.map(a => a.H))].sort((a,b) => a-b);
             
             let msgReservas = [];
-            p.dia.reservas = {};
+            
+            // ATENÇÃO: Removido o "p.dia.reservas = {}" que ficava aqui e apagava a memória antes do clone!
 
             // C0) BANCO DE RESERVAS (1 por horário ativo)
+
+            // 1. CLONE REAL DA MEMÓRIA: Copia o que você escolheu na UI antes de apagar
+            const reservasAtuais = p.dia.reservas ? { ...p.dia.reservas } : {}; 
+            
+            // 2. Agora sim, zeramos o banco oficial com segurança
+            p.dia.reservas = {};
+
             horasAtivas.forEach(H => {
-              // Busca candidatos disponíveis no horário que ainda não são reservas
-              let cands = estagN.filter(s => s.horas.has(H) && !s.foiReserva);
-              if(!cands.length) cands = estagN.filter(s => s.horas.has(H)); // Aceita repetir se faltar
+              const reservaSalva = reservasAtuais[H];
               
-              if(cands.length > 0) {
-                // Tenta balancear pegando quem tem menos carga atual
-                cands.sort((a,b) => a.count - b.count);
-                let pick = cands[0];
-                pick.foiReserva = true;
+              // 3. Validação robusta: Verifica se existe valor e se não é "Sem Reserva"
+              const temReservaManual = reservaSalva && 
+                                       String(reservaSalva).trim() !== '' && 
+                                       String(reservaSalva).trim().toLowerCase() !== 'sem reserva';
+
+              if (temReservaManual) {
+                // Mantém quem o usuário selecionou à mão
+                const nomeReserva = String(reservaSalva).trim();
+                p.dia.reservas[H] = nomeReserva;
+                msgReservas.push(`${H}h: ${nomeReserva} (Mantido à mão)`);
                 
-                // Consome 1 espaço na cota e bloqueia o horário para não ser titular em outra sala
-                pick.occ.add(H);
-                pick.count++;
-                p.dia.reservas[H] = pick.nome;
-                msgReservas.push(`${H}h: ${pick.nome}`);
+                // Avisa ao motor que essa pessoa já está ocupada neste horário
+                // Usamos chave() para garantir que case-sensitive ou espaços não quebrem o match
+                const sReserva = estagN.find(s => chave(s.nome) === chave(nomeReserva));
+                if (sReserva) {
+                  sReserva.foiReserva = true;
+                  sReserva.occ.add(H);
+                  sReserva.count++;
+                }
               } else {
-                p.dia.reservas[H] = '';
-                msgReservas.push(`${H}h: (Nenhum estagiário disponível)`);
+                // 4. Se estava vazio ou em "Sem Reserva", o motor entra em ação e sorteia
+                let cands = estagN.filter(s => s.horas.has(H) && !s.foiReserva);
+                if(!cands.length) cands = estagN.filter(s => s.horas.has(H));
+                
+                if(cands.length > 0) {
+                  // Tenta balancear pegando quem tem menos carga atual
+                  cands.sort((a,b) => a.count - b.count);
+                  let pick = cands[0];
+                  pick.foiReserva = true; 
+                  pick.occ.add(H);
+                  pick.count++;
+                  p.dia.reservas[H] = pick.nome;
+                  msgReservas.push(`${H}h: ${pick.nome}`);
+                } else {
+                  p.dia.reservas[H] = '';
+                  msgReservas.push(`${H}h: (Nenhum estagiário disponível)`);
+                }
               }
             });
 
@@ -4837,8 +4866,11 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
                 const sReserva = estagN.find(s => s.nome === nomeReserva);
                 if(sReserva) {
                   marcaAuto(a, 'c2', sReserva.nome);
-                  p.dia.reservas[a.H] = ''; // Esvazia o banco daquele horário, pois ele virou titular
-                  msgReservas = msgReservas.map(m => m.startsWith(`${a.H}h:`) ? `${a.H}h: (Foi para a sessão)` : m);
+                  
+                  // REMOVIDO: p.dia.reservas[a.H] = ''; 
+                  // Deixamos o nome intacto na memória para que a escolha sobreviva a novos cliques no botão!
+                  
+                  msgReservas = msgReservas.map(m => m.startsWith(`${a.H}h:`) ? `${a.H}h: ${sReserva.nome} (Ativado na pauta)` : m);
                 }
               }
             });

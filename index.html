@@ -891,11 +891,11 @@
   <div class="modal-body" id="deBody"><div id="deList"></div></div>
   <div class="modal-foot">
     <div id="deAreaImport" style="display:none; margin-bottom:12px; width:100%; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid var(--line);">
-      <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px;">Cole a lista de nomes (um por linha):</div>
-      <textarea id="deTxtImport" class="input" rows="4" style="width:100%; resize:vertical; font-size:13px;" placeholder="Ex:\nAna Silva\nCarlos Souza"></textarea>
+      <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px;">Cole as duas colunas do Excel (Nome e Sigla):</div>
+      <textarea id="deTxtImport" class="input" rows="4" style="width:100%; resize:vertical; font-size:13px;" placeholder="Ex:&#10;João da Silva&#09;FS&#10;Maria de Souza&#09;LMS"></textarea>
       <div class="row" style="justify-content:flex-end; gap:8px; margin-top:8px;">
         <button class="btn btn-sm" id="deCancelImport">Cancelar</button>
-        <button class="btn btn-sm btn-primary" id="deConfirmImport">Processar Nomes</button>
+        <button class="btn btn-sm btn-primary" id="deConfirmImport">Processar Dados</button>
       </div>
     </div>
     <div class="row between" style="gap:8px; flex-wrap:wrap; width:100%;">
@@ -1092,6 +1092,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const codRand=()=>{let s='';for(let i=0;i<4;i++)s+='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)];return s;};
 const esc=s=>(s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const isoParaBR=iso=>{ if(!iso) return ''; const [y,m,d]=iso.split('-'); return d+'/'+m+'/'+y; };
+
 function relTempo(ts){ if(!ts) return ''; const dif=(Date.now()-ts)/1000; if(dif<90) return 'há instantes'; if(dif<3600) return 'há '+Math.round(dif/60)+' min'; if(dif<86400) return 'há '+Math.round(dif/3600)+' h'; const d=Math.round(dif/86400); return d===1?'ontem':'há '+d+' dias'; }
 function audsDe(p){ let n=0; for(const k in (p.celulas||{})) if((p.celulas[k].proc||'').trim()) n++; return n; }
 function corSala(s,i){ if(s&&s.cor) return s.cor; const k=chave(s?s.nome:s); if(k.startsWith('MEDIACOES')) return '#F1C4FF'; if(k==='PRESALA01') return '#DDEBF7'; if(k==='PRESALA02') return '#BDD7EE'; return (i%2===0)?'#D9D9D9':'#FFFFFF'; }
@@ -1308,7 +1309,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.1.27</h1>
+        <h1>Escala Adm - v 1.2.0</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -4529,10 +4530,13 @@ function deRowHTML(pe,isExtra){
   
   // Lógica das Cores de Fundo (Background Colors)
   let bgStyle = 'border-radius:8px; padding:8px 10px; margin-bottom:4px; border:1px solid transparent; transition:0.2s;';
+  
   if (ev === 'prova') bgStyle += 'background-color:#fef9c3; border-color:#fef08a;'; // Amarelo
   else if (ev === 'afast') bgStyle += 'background-color:#ffedd5; border-color:#fed7aa;'; // Laranja
-  else if (['ferias', 'atestado', 'folga'].includes(ev)) bgStyle += 'background-color:#fee2e2; border-color:#fecaca;'; // Vermelho
-  else if (ev === 'apoio') bgStyle += 'background-color:#dbeafe; border-color:#bfdbfe;'; // Azul
+  else if (ev === 'atestado') bgStyle += 'background-color:#fee2e2; border-color:#fecaca;'; // Mantém Atestado como Vermelho
+  else if (ev === 'ferias') bgStyle += 'background-color:#dbeafe; border-color:#bfdbfe;'; // Férias: Azul claro (Antigo Apoio)
+  else if (ev === 'apoio') bgStyle += 'background-color:#eeeeee; border-color:#ff0070;'; // Apoio: Azul um pouco mais escuro
+  else if (ev === 'folga') bgStyle += 'background-color:#dcfce7; border-color:#bbf7d0;'; // Folga: Verde claro
   else bgStyle += 'border-bottom-color:var(--line); border-radius:0; padding:9px 2px; margin-bottom:0;'; // Padrão
   
   // Checkboxes de Atalho (P, F, A)
@@ -5044,33 +5048,58 @@ function sincronizaGabarito(p){
       document.getElementById('deTxtImport').value = '';
     };
 
+    // ATENÇÃO: Os valores à direita devem ser EXATAMENTE iguais ao atributo value="..."
+    // das tags <option> do seu combobox no HTML. 
+    // Exemplo: se no HTML está <option value="ferias">, aqui tem que ser 'ferias'.
+    const MAPA_AFASTAMENTOS = {
+      'FS': 'ferias',  // ID interno para Férias
+      'FE': 'ferias',  
+      'LMS': 'afast',  // ID interno para Afastamento
+      'LME': 'afast',  
+      'CF': 'folga',   // ID interno para Folga
+      'CFE': 'folga',  
+      'FAN': 'folga'   
+    };
+
     document.getElementById('deConfirmImport').onclick = () => {
       const txt = document.getElementById('deTxtImport').value;
       if (!txt.trim()) return;
       
-      const linhasTexto = txt.split('\n').map(l => l.trim()).filter(Boolean);
+      const linhasTexto = txt.split('\n').filter(l => l.trim() !== '');
       let matches = 0;
       
-      // Avalia tanto a equipe global quanto as pessoas adicionadas manualmente (extras) no dia
       const todasPessoas = (pautaEquipe || []).concat(pautaAtual.dia.extra || []);
       
       linhasTexto.forEach(linha => {
+        // Melhoria: separa por "Tab" (\t) OU por 2 ou mais espaços seguidos.
+        // Assim fica à prova de balas caso a formatação do Excel venha diferente.
+        const partes = linha.trim().split(/\t|\s{2,}/); 
+        
+        // O nome será a primeira parte encontrada
+        const nomeImportado = partes[0] ? partes[0].trim() : '';
+        // A sigla será a última parte encontrada na linha
+        const siglaImportada = partes.length > 1 ? partes[partes.length - 1].trim().toUpperCase() : '';
+        
+        if (!nomeImportado) return;
+
+        // Busca no mapa pelo ID interno. Se não achar sigla (ou não existir no mapa), cai no 'afast'
+        const situacaoID = MAPA_AFASTAMENTOS[siglaImportada] || 'afast';
+
         todasPessoas.forEach(pe => {
-          if (matchNomeParcial(linha, pe.nome)) {
-            // 'afast' é o ID interno para Afastamento
-            pautaAtual.dia.aus[pe.id] = 'afast';
+          if (matchNomeParcial(nomeImportado, pe.nome)) {
+            // Agora estamos passando o ID interno correto (ex: 'ferias', 'folga', 'afast')
+            pautaAtual.dia.aus[pe.id] = situacaoID; 
             matches++;
           }
         });
       });
       
-      // Limpa e oculta a área
       document.getElementById('deAreaImport').style.display = 'none';
       document.getElementById('deTxtImport').value = '';
       
       if (matches > 0) {
-        toast(`${matches} afastamento(s) processado(s) com sucesso!`);
-        deSave(); // Salva no Firebase e re-renderiza a lista visual do Modal
+        toast(`${matches} registro(s) processado(s) com sucesso!`);
+        deSave(); 
       } else {
         toast('Nenhuma correspondência encontrada na equipe para os nomes informados.');
       }

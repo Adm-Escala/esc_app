@@ -321,7 +321,6 @@
   .gtag.prova{ background:#fef9c3;color:#a16207;border:1px solid #fde68a; } .gtag.extra{ background:#eef2ff;color:#4338ca;border:1px solid #e0e7ff; }
   .gab-foot td{ font-weight:800;border-top:1px solid var(--line);background:#f8fafc;text-align:center;color:var(--brand-d); }
 
-
   /* ---- Modal Equipe do dia ---- */
   #mDiaEdit .de-row{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; padding:9px 2px; border-bottom:1px solid var(--line); }
   #mDiaEdit .de-row.off{ opacity:.5; }
@@ -510,6 +509,29 @@
   body.modo-seguranca button:contains("Copiar"),
   body.modo-seguranca .ocultar-seguranca {
     display: none !important;
+  }
+
+  /* Previne que o input roube o mouse durante o drag */
+  .celula-selecionavel {
+    user-select: none;
+  }
+  .celula-selecionavel input {
+    pointer-events: auto; /* Mantém o input clicável normalmente */
+  }
+
+  /* Adicione junto aos seus estilos CSS */
+  .celula-selecionada {
+    /* Azul claro clássico de seleção de planilha */
+    background-color: #dbeafe !important; 
+    /* Uma borda interna para demarcar bem o bloco */
+    box-shadow: inset 0 0 0 2px #3b82f6 !important; 
+  }
+
+  /* Força os inputs e selects internos a ficarem transparentes para mostrar o fundo azul da TD */
+  .celula-selecionada input,
+  .celula-selecionada select {
+    background-color: transparent !important;
+    color: #1e3a8a !important; /* Azul escuro para leitura do texto */
   }
 
 </style>
@@ -1100,6 +1122,179 @@ function audsDe(p){ let n=0; for(const k in (p.celulas||{})) if((p.celulas[k].pr
 function corSala(s,i){ if(s&&s.cor) return s.cor; const k=chave(s?s.nome:s); if(k.startsWith('MEDIACOES')) return '#F1C4FF'; if(k==='PRESALA01') return '#DDEBF7'; if(k==='PRESALA02') return '#BDD7EE'; return (i%2===0)?'#D9D9D9':'#FFFFFF'; }
 function corHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:'#ffffff'; }
 
+    // ==========================================
+    // MÓDULO: SELEÇÃO MÚLTIPLA DE CÉLULAS (VIA SHIFT / CTRL)
+    // ==========================================
+
+    let selectedCells = new Set();
+    let lastSelectedCellId = null; // Guarda a última célula clicada para a âncora do SHIFT
+
+    function setupMultiSelect(gridContainerId) {
+      const container = document.getElementById(gridContainerId);
+      if (!container) return;
+
+      // Trocamos o mouseover/mousedown complexo por um simples 'click' ou 'mousedown' pontual
+      container.addEventListener('mousedown', (e) => {
+        const cell = e.target.closest('.celula-selecionavel');
+        if (!cell) {
+          // Se clicou fora de qualquer célula, opcionalmente limpa a seleção
+          // clearSelection(); 
+          return;
+        }
+
+        const cellId = cell.dataset.cellId;
+
+        // 1. SELEÇÃO EM MASSA (Segurando SHIFT)
+        if (e.shiftKey && lastSelectedCellId) {
+          e.preventDefault(); // Impede o navegador de selecionar texto da tela
+          selectRange(lastSelectedCellId, cellId);
+        } 
+        // 2. SELEÇÃO PINGADA (Segurando CTRL ou CMD no Mac)
+        else if (e.ctrlKey || e.metaKey) {
+          e.preventDefault(); // Impede que o cursor entre no input para digitar
+          
+          const isCurrentlySelected = selectedCells.has(cellId);
+          toggleCell(cell, !isCurrentlySelected); // Alterna o estado atual
+          lastSelectedCellId = cellId; // Atualiza a âncora
+        } 
+        // 3. CLIQUE NORMAL (Para digitar na célula)
+        else {
+          // Limpa as outras e marca só a atual
+          clearSelection();
+          toggleCell(cell, true);
+          lastSelectedCellId = cellId;
+          // NÃO damos e.preventDefault() aqui para permitir que o usuário digite no input normalmente!
+        }
+      });
+    }
+
+    // COLOQUE ESTE BLOCO NO FINAL DA FUNÇÃO setupMultiSelect(gridContainerId)
+
+    // Previne que o evento seja adicionado várias vezes se a pauta for recarregada
+    if (!window._deleteListenerAdicionado) {
+      window._deleteListenerAdicionado = true;
+
+      document.addEventListener('keydown', (e) => {
+        // Se não for Delete ou Backspace, ou não houver nada selecionado, ignora.
+        if ((e.key !== 'Delete' && e.key !== 'Backspace') || selectedCells.size === 0) return;
+
+        // 🚨 REGRA DE OURO: Se o usuário estiver com o cursor piscando dentro de UM input para apagar um texto normal, deixamos o teclado funcionar nativamente.
+        if (document.activeElement.tagName === 'INPUT' && selectedCells.size === 1) {
+          return; 
+        }
+
+        e.preventDefault(); // Impede o Backspace de fazer o navegador voltar de página
+        
+        let houveAlteracao = false;
+
+        // Varre todas as células que estão azulzinhas (selecionadas)
+        selectedCells.forEach(cellId => {
+          // O cellId tem o formato "SALA|14-proc". Precisamos separar a chave da linha e o nome da coluna.
+          const lastDashIndex = cellId.lastIndexOf('-');
+          if (lastDashIndex === -1) return;
+          
+          const rowKey = cellId.substring(0, lastDashIndex); // Ex: "SALA|14"
+          const campo = cellId.substring(lastDashIndex + 1); // Ex: "proc", "c1", "rja"
+
+          // Verifica se a célula existe na memória do sistema (pautaAtual)
+          if (pautaAtual && pautaAtual.celulas && pautaAtual.celulas[rowKey]) {
+            const celulaMemoria = pautaAtual.celulas[rowKey];
+            // Se a célula não estiver vazia, nós a limpamos
+            if (celulaMemoria[campo] !== '') {
+                celulaMemoria[campo] = '';
+                houveAlteracao = true;
+            }
+          }
+        });
+
+        // Se apagamos pelo menos uma coisa, salvamos e atualizamos a tela inteira num piscar de olhos
+        if (houveAlteracao) {
+          agendaSalvar(); // Sua função nativa de salvar
+          if (window._refreshEspelho) window._refreshEspelho(); // Recarrega a tabela e painéis
+          toast(`${selectedCells.size} células apagadas com sucesso!`); // Notificação do seu sistema
+          selectedCells.clear(); // Limpa a memória de seleção
+        }
+      });
+    }
+
+    /**
+     * Seleciona as células formando um RETÂNGULO PERFEITO,
+     * imune ao bug de mesclagem de células (rowSpan) na coluna de Salas.
+     */
+    function selectRange(startId, endId) {
+      const allCells = Array.from(document.querySelectorAll('.celula-selecionavel'));
+      const startCell = document.querySelector(`[data-cell-id="${startId}"]`);
+      const endCell = document.querySelector(`[data-cell-id="${endId}"]`);
+
+      if (!startCell || !endCell) return;
+
+      // 1. Ordem lógica das colunas do seu sistema (ignora colunas visuais fundidas)
+      const colOrder = ['proc', 'vara', 'c1', 'c2', 'c3', 'rja', 'res'];
+
+      // 2. Extraímos a linha real da tabela
+      const startRow = startCell.closest('tr').rowIndex;
+      const endRow = endCell.closest('tr').rowIndex;
+      
+      // 3. Extraímos o nome da coluna no ID (tudo após o último hífen)
+      const startColName = startId.substring(startId.lastIndexOf('-') + 1);
+      const endColName = endId.substring(endId.lastIndexOf('-') + 1);
+
+      // 4. Achamos a posição lógica da coluna no nosso array
+      const startCol = colOrder.indexOf(startColName);
+      const endCol = colOrder.indexOf(endColName);
+
+      if (startCol === -1 || endCol === -1) return; // Fallback de segurança
+
+      // 5. Calculamos as coordenadas do retângulo perfeito
+      const minRow = Math.min(startRow, endRow);
+      const maxRow = Math.max(startRow, endRow);
+      const minCol = Math.min(startCol, endCol);
+      const maxCol = Math.max(startCol, endCol);
+
+      clearSelection();
+
+      // 6. Pintamos apenas as células que caem dentro das coordenadas (Linha e Coluna)
+      allCells.forEach(cell => {
+        const cellId = cell.dataset.cellId;
+        const row = cell.closest('tr').rowIndex;
+        
+        const colName = cellId.substring(cellId.lastIndexOf('-') + 1);
+        const col = colOrder.indexOf(colName);
+
+        // Se estiver dentro da caixa (entre a linha min/max e coluna min/max)
+        if (row >= minRow && row <= maxRow && col >= minCol && col <= maxCol) {
+          toggleCell(cell, true);
+        }
+      });
+    }
+
+    /**
+     * Altera o estado da célula aplicando a nossa nova classe CSS blindada.
+     */
+    function toggleCell(cell, forceSelect) {
+      if (!cell || !cell.dataset.cellId) return;
+      const cellId = cell.dataset.cellId;
+
+      if (forceSelect) {
+        selectedCells.add(cellId);
+        cell.classList.add('celula-selecionada'); // Usa o nosso CSS customizado
+      } else {
+        selectedCells.delete(cellId);
+        cell.classList.remove('celula-selecionada');
+      }
+    }
+
+    /**
+     * Limpa toda a seleção
+     */
+    function clearSelection() {
+      selectedCells.forEach(cellId => {
+        const cell = document.querySelector(`[data-cell-id="${cellId}"]`);
+        if (cell) toggleCell(cell, false);
+      });
+      selectedCells.clear();
+    }
+
 function configPadrao(){
   const o=[];
   for(let i=1;i<=26;i++) o.push({nome:'SALA '+String(i).padStart(2,'0'),ativa:true,horarios:['13h00','14h00','15h00','16h00','17h00']});
@@ -1311,7 +1506,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.0</h1>
+        <h1>Escala Adm - v 1.2.1</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -3044,6 +3239,11 @@ async function renderPauta(id){
             const mk=(campo,cls)=>{ 
             const c=document.createElement('td'); 
             c.style.position = 'relative'; 
+
+            // --- ADICIONA SELEÇÃO MÚLTIPLA EM TODAS AS COLUNAS DE TEXTO ---
+            c.classList.add('celula-selecionavel');
+            c.dataset.cellId = L.key + '-' + campo; 
+            // -----------------------------------------------------------
             
             const inp=document.createElement('input'); 
             inp.className='cell '+(cls||''); 
@@ -3113,7 +3313,13 @@ async function renderPauta(id){
             return c; 
             };  
     
-      const mkRes=()=>{ const c=document.createElement('td'); const sel=document.createElement('select'); sel.className='rescell'; RES_OPC.forEach(o=>{ const op=document.createElement('option'); op.value=o; op.textContent=o||'—'; if((cel.res||'')===o) op.selected=true; sel.appendChild(op); }); sel.setAttribute('data-res',cel.res||''); const aplica=v=>{ tr.classList.toggle('cancelada', v==='Cancelada'); }; aplica(cel.res||''); sel.onchange=()=>{ cel.res=sel.value; sel.setAttribute('data-res',sel.value); aplica(sel.value); agendaSalvar(); recalc(); }; c.appendChild(sel); return c; };
+      const mkRes=()=>{ 
+        const c=document.createElement('td'); 
+        // --- ADICIONA SELEÇÃO MÚLTIPLA NO RESULTADO ---
+          c.classList.add('celula-selecionavel');
+          c.dataset.cellId = L.key + '-res';
+          // ----------------------------------------------
+        const sel=document.createElement('select'); sel.className='rescell'; RES_OPC.forEach(o=>{ const op=document.createElement('option'); op.value=o; op.textContent=o||'—'; if((cel.res||'')===o) op.selected=true; sel.appendChild(op); }); sel.setAttribute('data-res',cel.res||''); const aplica=v=>{ tr.classList.toggle('cancelada', v==='Cancelada'); }; aplica(cel.res||''); sel.onchange=()=>{ cel.res=sel.value; sel.setAttribute('data-res',sel.value); aplica(sel.value); agendaSalvar(); recalc(); }; c.appendChild(sel); return c; };
       
       const mkSwap=()=>{
         const c=document.createElement('td');
@@ -3172,6 +3378,12 @@ async function renderPauta(id){
 
       const mkRja = () => {
           const c = document.createElement('td');
+
+          // --- ADICIONA SELEÇÃO MÚLTIPLA NO RJA ---
+          c.classList.add('celula-selecionavel');
+          c.dataset.cellId = L.key + '-rja';
+          // ----------------------------------------
+
           const sel = document.createElement('select');
           sel.className = 'rescell';
           sel.style.color = 'var(--ink)';
@@ -3229,6 +3441,10 @@ async function renderPauta(id){
     // montarGrade() recria as células do zero (filtro de coluna, "só com processo"),
     // então reaplica aqui o destaque de duplicidade — senão o amarelo sumiria até a próxima edição.
     verificarDuplicidades();
+
+    if (typeof setupMultiSelect === 'function') {
+      setupMultiSelect('gradeScroll');
+    }
   }
   montarGrade();
   renderResumoAuto();

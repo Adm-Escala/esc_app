@@ -10,7 +10,7 @@
    ============================================================ */
 
 // Troque a versão (v1 -> v2 ...) sempre que quiser forçar atualização.
-const CACHE = 'escala-Admin-v1.2.1';
+const CACHE = 'escala-Admin-v1.2.2';
 
 // Arquivos da "casca" do app que ficam guardados para abrir offline.
 const APP_SHELL = [

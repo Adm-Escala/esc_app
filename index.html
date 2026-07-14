@@ -1506,7 +1506,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.1</h1>
+        <h1>Escala Adm - v 1.2.2</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -2236,22 +2236,32 @@ function eqRenderEditor(box,p,onChange){
     const modoSeg='<div class="seg mini" style="width:fit-content;">'+[['padrao','Padrão'],['personalizado','Personalizado']].map(([v,t])=>`<button data-modo="${v}" class="${modo===v?'active':''}">${t}</button>`).join('')+'</div>';
     if(modo==='padrao') body=rjaHtml+modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Audiências que realiza (todos os dias)</div>'+eqSlotToggles(p.slots)+'</div><div class="hint">Em regra, servidores fazem <b>5 audiências</b> (13h–17h) — todos os dias. Para variar por dia, use <b>Personalizado</b>.</div>';
     else body=rjaHtml+modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
-  } else if(p.tipo==='estagiario'){
-    const modo=p.modo||'padrao';
-    const modoSeg='<div class="seg mini" style="width:fit-content;">'+[['padrao','Padrão'],['personalizado','Personalizado']].map(([v,t])=>`<button data-modo="${v}" class="${modo===v?'active':''}">${t}</button>`).join('')+'</div>';
-    if(modo==='padrao'){
-      const s=eqSlotsEstag(p);
-      body=modoSeg+`<div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line);">
-            <label class="fld" style="flex:1; min-width:140px;">Início do expediente<select class="sel" data-inicio>${[13,14,15,16,17].map(h=>eqOpt(h,p.inicio)).join('')}</select></label>
-            <label class="fld" style="flex:1; min-width:140px;">Fim do expediente<select class="sel" data-fim>${[14,15,16,17,18].map(h=>eqOpt(h,p.fim)).join('')}</select></label>
-          </div>
-          <div class="calc">Disponível para <b>${s.length}</b> audiência(s): ${s.length?s.map(eqFmtH).join(', '):'—'} <span style="opacity:.7">(não entra na audiência do horário de término)</span></div>
-          <div><div class="lbl" style="margin-bottom:7px;">Dias no NPJ (não é escalado nesses dias)</div><div class="diasrow">${EQDIAS.map(d=>`<button class="diabtn ${p.npj.includes(d)?'on':''}" data-npj="${d}">${d}</button>`).join('')}</div></div>
-          ${p.npj.length?`<div class="hint ok">Com NPJ em <b>${p.npj.join(', ')}</b>, nos demais dias faz as <b>5 audiências</b> (13h–17h).</div>`:`<div class="hint">Em regra estagiários fazem 4 audiências. Marcando NPJ, nos outros dias fazem 5.</div>`}`;
-    } else {
-      body=modoSeg+'<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que o estagiário atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
-    }
-  }  else if(p.tipo==='adm'){
+    } else if(p.tipo==='estagiario'){
+      const modo=p.modo||'padrao';
+      const modoSeg='<div class="seg mini" style="width:fit-content;">'+[['padrao','Padrão'],['personalizado','Personalizado']].map(([v,t])=>`<button data-modo="${v}" class="${modo===v?'active':''}">${t}</button>`).join('')+'</div>';
+      
+      // NOVO: Desenha o Checkbox do Banco de Reservas (Marcado ou Desmarcado)
+      const chkApto = `<div style="margin-top:12px; margin-bottom:12px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:10px 12px;">
+        <label class="row" style="cursor:pointer; font-size:13px; font-weight:700; color:var(--ink);">
+          <input type="checkbox" data-apto-reserva ${p.aptoReserva ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--brand);"> 
+          Apto para Banco de Reservas
+        </label>
+        <div class="faint" style="font-size:11.5px; margin-left:24px; margin-top:2px;">Permite que este estagiário seja sorteado para assumir vagas de apoio automático.</div>
+      </div>`;
+
+      if(modo==='padrao'){
+        const s=eqSlotsEstag(p);
+        body=modoSeg + chkApto + `<div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line);">
+              <label class="fld" style="flex:1; min-width:140px;">Início do expediente<select class="sel" data-inicio>${[13,14,15,16,17].map(h=>eqOpt(h,p.inicio)).join('')}</select></label>
+              <label class="fld" style="flex:1; min-width:140px;">Fim do expediente<select class="sel" data-fim>${[14,15,16,17,18].map(h=>eqOpt(h,p.fim)).join('')}</select></label>
+            </div>
+            <div class="calc">Disponível para <b>${s.length}</b> audiência(s): ${s.length?s.map(eqFmtH).join(', '):'—'} <span style="opacity:.7">(não entra na audiência do horário de término)</span></div>
+            <div><div class="lbl" style="margin-bottom:7px;">Dias no NPJ (não é escalado nesses dias)</div><div class="diasrow">${EQDIAS.map(d=>`<button class="diabtn ${p.npj.includes(d)?'on':''}" data-npj="${d}">${d}</button>`).join('')}</div></div>
+            ${p.npj.length?`<div class="hint ok">Com NPJ em <b>${p.npj.join(', ')}</b>, nos demais dias faz as <b>5 audiências</b> (13h–17h).</div>`:`<div class="hint">Em regra estagiários fazem 4 audiências. Marcando NPJ, nos outros dias fazem 5.</div>`}`;
+      } else {
+        body=modoSeg + chkApto + '<div><div class="lbl" style="margin-bottom:7px;">Disponibilidade por dia</div><div class="hint" style="margin-bottom:8px;">Marque, em cada dia, os horários que o estagiário atende. Clique no nome do dia para o dia inteiro.</div>'+eqGradeMatrix(p)+'</div>';
+      }
+    }  else if(p.tipo==='adm'){
     body=`
       <div class="row" style="gap:12px; flex-wrap:wrap; background:#f8fafc; padding:12px 14px; border-radius:10px; border:1px solid var(--line); align-items: flex-end;">
         <label class="fld" style="flex:1; min-width:140px;">Cargo (Vínculo)
@@ -2292,6 +2302,16 @@ function eqRenderEditor(box,p,onChange){
   box.querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ p.tipo=b.dataset.tipo; eqEnsureDefaults(p); re(); onChange&&onChange(); });
   
   const nm=box.querySelector('[data-nome]'); nm.oninput=()=>{ p.nome=nm.value; onChange&&onChange(); };
+  
+  // NOVO: Captura o clique no checkbox "Apto para Reserva" e sinaliza ao sistema que houve mudança
+  const inApto = box.querySelector('[data-apto-reserva]');
+  if(inApto) {
+    inApto.onchange = () => { 
+      p.aptoReserva = inApto.checked; 
+      onChange && onChange(); 
+    };
+  }
+  
   const inRja=box.querySelector('[data-rja]'); if(inRja) inRja.oninput=()=>{ p.rja=inRja.value.toUpperCase(); onChange&&onChange(); };
   
   const cSel = box.querySelector('[data-cargo]'); if(cSel) cSel.onchange = () => { p.cargo = cSel.value; re(); onChange&&onChange(); };
@@ -4900,6 +4920,20 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
         C2) Demais estagiários: horários mais críticos primeiro.
         Sobrou audiência sem 2º → "Outro (ADM)".
    ============================================================ */
+
+          // Função utilitária para embaralhar arrays (Algoritmo de Fisher-Yates)
+          function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+              randomIndex = Math.floor(Math.random() * currentIndex);
+              currentIndex--;
+              [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex], array[currentIndex]
+              ];
+            }
+            return array;
+          }
+
           const EH_OUTRO    = s => chave(s)==='OUTRO';
           const EH_OUTROADM = s => chave(s)==='OUTROADM';
 
@@ -4909,10 +4943,20 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
             if(!dia || dia==='Sab' || dia==='Dom'){ toast('Defina uma data de dia útil para usar a escala automática.'); return; }
 
             // Adicionamos "limiteAtual" e "foiReserva" na conversão para manipular a cota dinamicamente
-            const conv = x => ({ id:x.pe.id, nome:x.pe.nome, tipo:x.pe.tipo, prova:x.ev==='prova',
-                                horas:new Set(x.horas), limite:limiteEfetivo(x.horas,x.ev),
-                                limiteAtual: limiteEfetivo(x.horas,x.ev),
-                                occ:new Set(), salaAt:{}, count:0, foiReserva: false });
+            const conv = x => ({ 
+              id:x.pe.id, 
+              nome:x.pe.nome, 
+              tipo:x.pe.tipo, 
+              prova:x.ev==='prova', 
+              aptoReserva: x.pe.aptoReserva, // <--- NOVA LINHA ADICIONADA AQUI!
+              horas:new Set(x.horas), 
+              limite:limiteEfetivo(x.horas,x.ev), 
+              limiteAtual: limiteEfetivo(x.horas,x.ev), 
+              occ:new Set(), 
+              salaAt:{}, 
+              count:0, 
+              foiReserva: false 
+            });
                                 
             const todas       = gabaritoPessoas(p).filter(x => x.ev !== 'supervisao' && x.ev !== 'iniciante');
             const servidores  = todas.filter(x=>x.pe.tipo==='servidor').map(conv);
@@ -4957,11 +5001,29 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
             const need1 = auds.filter(a=> !(a.cel.c1||'').trim());
             ordemCritica(need1).forEach(H=>{
               const noH = need1.filter(a=>a.H===H && !(a.cel.c1||'').trim());
-              noH.sort((a,b)=> a.sala.localeCompare(b.sala,'pt'));
+              
+              // Prioriza salas com "PRÉ" no nome, e depois usa ordem alfabética
+              noH.sort((a,b)=> {
+                const aPre = chave(a.sala).includes('PRE');
+                const bPre = chave(b.sala).includes('PRE');
+                if (aPre && !bPre) return -1; // 'a' vai para cima
+                if (!aPre && bPre) return 1;  // 'b' vai para cima
+                return a.sala.localeCompare(b.sala,'pt');
+              });
+              
               noH.forEach(a=>{
-                const cands = servidores.filter(s=>podeUsar(s,H));
+                let cands = servidores.filter(s=>podeUsar(s,H));
                 if(!cands.length) return;
+                
+                // NOVO: Embaralha a lista de servidores disponíveis antes de escolher.
+                // Assim, em caso de empate (mesmo tempo de folga), o sistema fará 
+                // um sorteio, gerando rodízio real nas audiências "PRÉ".
+                cands = shuffle(cands);
+                
+                // 1. Tenta manter na mesma sala (audiência anterior ou seguinte)
                 let pick = cands.find(s=> s.salaAt[H-1]===a.sala || s.salaAt[H+1]===a.sala );
+                
+                // 2. Se não deu, usa o critério de melhor folga (que agora desempatará aleatoriamente)
                 if(!pick) pick = melhorPorFolga(cands);
                 ocupa(pick,a,'c1');
               });
@@ -5010,10 +5072,14 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
                 }
               } else {
                 // 4. Se estava vazio ou em "Sem Reserva", o motor entra em ação e sorteia
-                let cands = estagN.filter(s => s.horas.has(H) && !s.foiReserva);
-                if(!cands.length) cands = estagN.filter(s => s.horas.has(H));
+                // NOVO: Adicionado "&& s.aptoReserva" para só sortear quem foi validado manualmente
+                let cands = estagN.filter(s => s.horas.has(H) && !s.foiReserva && s.aptoReserva);
+                if(!cands.length) cands = estagN.filter(s => s.horas.has(H) && s.aptoReserva);
                 
                 if(cands.length > 0) {
+                  // NOVO: Embaralha os candidatos primeiro para garantir sorteio justo nos empates
+                  cands = shuffle(cands);
+                  
                   // Tenta balancear pegando quem tem menos carga atual
                   cands.sort((a,b) => a.count - b.count);
                   let pick = cands[0];
@@ -5089,8 +5155,10 @@ document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os aju
                 if(sReserva) {
                   marcaAuto(a, 'c2', sReserva.nome);
                   
-                  // REMOVIDO: p.dia.reservas[a.H] = ''; 
-                  // Deixamos o nome intacto na memória para que a escolha sobreviva a novos cliques no botão!
+                  // ALTERAÇÃO AQUI: Limpa o banco de reservas para este horário.
+                  // Isso impede que o estagiário seja escalado numa segunda sessão simultânea
+                  // e deixa a vaga visualmente sem apoio na interface.
+                  p.dia.reservas[a.H] = ''; 
                   
                   msgReservas = msgReservas.map(m => m.startsWith(`${a.H}h:`) ? `${a.H}h: ${sReserva.nome} (Ativado na pauta)` : m);
                 }

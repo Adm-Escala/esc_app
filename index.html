@@ -1168,38 +1168,48 @@ function corHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:'#ffffff'; }
       });
     }
 
-    // COLOQUE ESTE BLOCO NO FINAL DA FUNÇÃO setupMultiSelect(gridContainerId)
-
-    // Previne que o evento seja adicionado várias vezes se a pauta for recarregada
+    // ==========================================
+    // OUVINTE DE TECLADO (DELETE / BACKSPACE EM LOTE)
+    // ==========================================
     if (!window._deleteListenerAdicionado) {
       window._deleteListenerAdicionado = true;
 
       document.addEventListener('keydown', (e) => {
-        // Se não for Delete ou Backspace, ou não houver nada selecionado, ignora.
         if ((e.key !== 'Delete' && e.key !== 'Backspace') || selectedCells.size === 0) return;
 
-        // 🚨 REGRA DE OURO: Se o usuário estiver com o cursor piscando dentro de UM input para apagar um texto normal, deixamos o teclado funcionar nativamente.
-        if (document.activeElement.tagName === 'INPUT' && selectedCells.size === 1) {
-          return; 
+        // 🚨 NOVA TRAVA DE SEGURANÇA: Descobre onde o cursor do usuário está piscando agora
+        const activeEl = document.activeElement;
+        
+        // Se ele estiver focando em um Textarea, ContentEditable, ou em um Input que NÃO é da planilha...
+        const isEditingOutsideGrid = activeEl && (
+            activeEl.tagName === 'TEXTAREA' || 
+            activeEl.isContentEditable || 
+            (activeEl.tagName === 'INPUT' && !activeEl.closest('.celula-selecionavel'))
+        );
+
+        // ...deixa o navegador fazer o trabalho dele e aborta nossa exclusão em lote!
+        if (isEditingOutsideGrid) {
+            return; 
         }
 
-        e.preventDefault(); // Impede o Backspace de fazer o navegador voltar de página
-        
+        // Mantém a regra de que, se ele estiver alterando o texto de apenas UMA célula da grade, a tecla funciona normal para apagar as letrinhas
+        if (activeEl && activeEl.tagName === 'INPUT' && selectedCells.size <= 1) {
+            return; 
+        }
+
+        // Se passou pelas travas, é porque queremos apagar a seleção em lote
+        e.preventDefault(); 
         let houveAlteracao = false;
 
-        // Varre todas as células que estão azulzinhas (selecionadas)
         selectedCells.forEach(cellId => {
-          // O cellId tem o formato "SALA|14-proc". Precisamos separar a chave da linha e o nome da coluna.
           const lastDashIndex = cellId.lastIndexOf('-');
           if (lastDashIndex === -1) return;
           
-          const rowKey = cellId.substring(0, lastDashIndex); // Ex: "SALA|14"
-          const campo = cellId.substring(lastDashIndex + 1); // Ex: "proc", "c1", "rja"
+          const rowKey = cellId.substring(0, lastDashIndex); 
+          const campo = cellId.substring(lastDashIndex + 1); 
 
-          // Verifica se a célula existe na memória do sistema (pautaAtual)
           if (pautaAtual && pautaAtual.celulas && pautaAtual.celulas[rowKey]) {
             const celulaMemoria = pautaAtual.celulas[rowKey];
-            // Se a célula não estiver vazia, nós a limpamos
             if (celulaMemoria[campo] !== '') {
                 celulaMemoria[campo] = '';
                 houveAlteracao = true;
@@ -1207,12 +1217,11 @@ function corHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:'#ffffff'; }
           }
         });
 
-        // Se apagamos pelo menos uma coisa, salvamos e atualizamos a tela inteira num piscar de olhos
         if (houveAlteracao) {
-          agendaSalvar(); // Sua função nativa de salvar
-          if (window._refreshEspelho) window._refreshEspelho(); // Recarrega a tabela e painéis
-          toast(`${selectedCells.size} células apagadas com sucesso!`); // Notificação do seu sistema
-          selectedCells.clear(); // Limpa a memória de seleção
+          agendaSalvar();
+          if (window._refreshEspelho) window._refreshEspelho();
+          toast(`${selectedCells.size} células apagadas com sucesso!`);
+          clearSelection(); 
         }
       });
     }
@@ -1605,7 +1614,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.3</h1>
+        <h1>Escala Adm - v 1.2.3 (G)</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>

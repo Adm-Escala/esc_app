@@ -1614,7 +1614,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.3 (G)</h1>
+        <h1>Escala Adm - v 1.2.4 (G)</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -5450,15 +5450,20 @@ function sincronizaGabarito(p){
       const limpa = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9\s]/g, '');
       const stopWords = ['DE', 'DA', 'DO', 'DAS', 'DOS', 'E']; // Ignora conectivos
       
-      // Limpa e quebra os dois nomes em arrays de palavras
       const coladoWords = limpa(nomeColado).split(/\s+/).filter(w => w && !stopWords.includes(w));
       const sistemaWords = limpa(nomeSistema).split(/\s+/).filter(w => w && !stopWords.includes(w));
       
-      if (sistemaWords.length === 0) return false;
+      if (sistemaWords.length === 0 || coladoWords.length === 0) return false;
+
+      // REGRA DE OURO PARA EVITAR FALSOS POSITIVOS: 
+      // O primeiro nome do sistema TEM que ser idêntico ao primeiro nome da planilha.
+      // Isso impede que "Luana" dê match com "Cindy Luana".
+      if (sistemaWords[0] !== coladoWords[0]) {
+        return false; 
+      }
       
-      // LÓGICA INVERTIDA: 
-      // Retorna true APENAS se todas as palavras do nome do SISTEMA (que é menor) 
-      // forem encontradas no nome COLADO (que é o nome completo)
+      // Se o primeiro nome bateu, verifica se o resto das palavras (sobrenomes curtos, se houver)
+      // também estão contidas no nome completo da planilha.
       return sistemaWords.every(pw => coladoWords.includes(pw));
     }
 
@@ -5496,23 +5501,67 @@ function sincronizaGabarito(p){
       const todasPessoas = (pautaEquipe || []).concat(pautaAtual.dia.extra || []);
       
       linhasTexto.forEach(linha => {
-        // Melhoria: separa por "Tab" (\t) OU por 2 ou mais espaços seguidos.
-        // Assim fica à prova de balas caso a formatação do Excel venha diferente.
-        const partes = linha.trim().split(/\t|\s{2,}/); 
+        // Separa por Tabulação (padrão do Excel/Google Sheets) ou múltiplos espaços
+        let partes = linha.trim().split(/\t/); 
+        if (partes.length === 1) {
+          partes = linha.trim().split(/\s{2,}/);
+        }
         
-        // O nome será a primeira parte encontrada
-        const nomeImportado = partes[0] ? partes[0].trim() : '';
-        // A sigla será a última parte encontrada na linha
-        const siglaImportada = partes.length > 1 ? partes[partes.length - 1].trim().toUpperCase() : '';
+        let categoriaImportada = '';
+        let nomeImportado = '';
+        let siglaImportada = '';
+        
+        // Captura as 3 colunas
+        if (partes.length >= 3) {
+          categoriaImportada = partes[0].trim().toUpperCase(); // Ex: "SERVIDOR CART", "ESTAGIÁRIO SESSÕES", "RESCINDIDO"
+          nomeImportado = partes[1].trim(); 
+          siglaImportada = partes[2].trim().toUpperCase();
+        } else if (partes.length >= 2) {
+          // Fallback caso colem apenas 2 colunas por acidente
+          nomeImportado = partes[0].trim();
+          siglaImportada = partes[partes.length - 1].trim().toUpperCase();
+        } else {
+          return; // Ignora linhas inválidas
+        }
         
         if (!nomeImportado) return;
 
-        // Busca no mapa pelo ID interno. Se não achar sigla (ou não existir no mapa), cai no 'afast'
+        // 1ª BARREIRA DE SEGURANÇA: Se estiver rescindido na planilha, ignora a linha imediatamente
+        if (categoriaImportada.includes('RESCINDIDO')) {
+          return; 
+        }
+
+        // Descobre o tipo importado
+        let tipoImportado = ''; // 'servidor', 'estagiario' ou vazio
+        if (categoriaImportada.includes('SERVIDOR')) {
+          tipoImportado = 'servidor';
+        } else if (categoriaImportada.includes('ESTAGIARIO') || categoriaImportada.includes('ESTAGIÁRIO')) {
+          tipoImportado = 'estagiario';
+        }
+
+        // Busca no mapa pelo ID interno da indisponibilidade
         const situacaoID = MAPA_AFASTAMENTOS[siglaImportada] || 'afast';
 
         todasPessoas.forEach(pe => {
+          // 2ª BARREIRA DE SEGURANÇA: Validação de cargo cruzada (Planilha vs. Sistema)
+          if (tipoImportado) {
+            // Lê o cargo do banco de dados (tenta encontrar em .cargo, .tipo ou .funcao)
+            const cargoSistema = (pe.cargo || pe.tipo || pe.funcao || '').toString().toLowerCase();
+            
+            const isServidorSistema = cargoSistema.includes('servidor');
+            const isEstagiarioSistema = cargoSistema.includes('estagiario') || cargoSistema.includes('estagiário');
+
+            // Se a planilha diz "SERVIDOR" mas no sistema ele é "ESTAGIÁRIO" (ou vice-versa), bloqueia o match
+            if (tipoImportado === 'servidor' && !isServidorSistema && isEstagiarioSistema) {
+              return; 
+            }
+            if (tipoImportado === 'estagiario' && !isEstagiarioSistema && isServidorSistema) {
+              return; 
+            }
+          }
+
+          // 3ª BARREIRA DE SEGURANÇA: Regra de ouro do primeiro nome idêntico (matchNomeParcial)
           if (matchNomeParcial(nomeImportado, pe.nome)) {
-            // Agora estamos passando o ID interno correto (ex: 'ferias', 'folga', 'afast')
             pautaAtual.dia.aus[pe.id] = situacaoID; 
             matches++;
           }

@@ -1233,6 +1233,20 @@ function corHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:'#ffffff'; }
       window._pasteListenerAdicionado = true;
 
       document.addEventListener('paste', (e) => {
+        // 🚨 NOVA TRAVA DE SEGURANÇA: Onde o cursor está agora?
+        const activeEl = document.activeElement;
+        
+        const isEditingOutsideGrid = activeEl && (
+            activeEl.tagName === 'TEXTAREA' || 
+            activeEl.isContentEditable || 
+            (activeEl.tagName === 'INPUT' && !activeEl.closest('.celula-selecionavel'))
+        );
+
+        // Se estiver em um modal, campo de busca ou anotação fora da grade, deixa colar o texto normalmente!
+        if (isEditingOutsideGrid) {
+            return; 
+        }
+
         // 1. Verifica se estamos colando dentro da nossa grade
         const target = e.target;
         const isGridInput = target.tagName === 'INPUT' && target.closest('.celula-selecionavel');
@@ -1248,7 +1262,7 @@ function corHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:'#ffffff'; }
         const pasteData = (e.clipboardData || window.clipboardData).getData('text');
         if (!pasteData) return;
 
-        // 4. Se for um texto simples (sem Tab ou Enter) e o usuário estiver colando num único input, deixa o navegador agir normalmente!
+        // 4. Se for um texto simples e o usuário estiver colando num único input da pauta, deixa agir nativamente!
         const isMultiCellData = pasteData.includes('\t') || pasteData.includes('\n');
         if (!isMultiCellData && selectedCells.size <= 1) return; 
 
@@ -3376,6 +3390,12 @@ async function renderPauta(id){
             const inp=document.createElement('input'); 
             inp.className='cell '+(cls||''); 
             inp.value=cel[campo]||''; 
+
+            // --- DEIXAR C1 E C2 EM NEGRITO ---
+            if (campo === 'c1' || campo === 'c2') {
+              inp.style.fontWeight = '700'; // 700 equivale ao negrito (bold)
+            }
+            // ---------------------------------
             
             const listId = campo === 'c1' ? 'list-servidores' : (campo === 'c2' || campo === 'c3' ? 'list-outros' : null);
             
@@ -5753,7 +5773,7 @@ function sincronizaGabarito(p){
             inp.style.flex = '1'; inp.style.minWidth = '200px';
             if(s._isSimples) inp.style.borderColor = '#93c5fd';
             inp.placeholder = 'Nº do processo';
-            inp.value = pautaAtual.dia.supervisoes_dados[s.id] || '';
+            inp.value = pautaAtual.dia.supervisoes_dados[s.id] || '';            
 
             const verificarCorDoFundo = () => {
                if(validaHorarioDaSessao(inp.value, h)) inp.style.backgroundColor = '';

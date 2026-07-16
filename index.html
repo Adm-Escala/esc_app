@@ -1628,7 +1628,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.4 (G)</h1>
+        <h1>Escala Adm - v 1.2.5 (G)</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -5624,7 +5624,7 @@ function sincronizaGabarito(p){
 
     function renderCsCancelamentos() {
       const box = document.getElementById('csCancelList');
-      box.innerHTML = '';
+      box.innerHTML = '';      
       
       // Limpa os dados antigos garantindo que seja um array de strings válidas
       const arr = (pautaAtual.dia.cancelamentos || []).filter(x => x.trim() !== '');
@@ -5659,15 +5659,34 @@ function sincronizaGabarito(p){
         return;
       }
       
+      // 1. Carrega equipe global e mapa de ausências para o dia atual da pauta
+      const equipe = (await DB.getEquipe()) || [];
+      const ausencias = pautaAtual.dia.aus || {};
+
+      // 2. Função tática: checa se o nome existe na equipe e se esse ID tem ausência impeditiva
+      const taDeFolga = (nomePessoa) => {
+         // Se não tiver nome, não há como estar de folga
+         if (!nomePessoa) return false; 
+         
+         const pessoa = equipe.find(x => x.nome.toLowerCase() === nomePessoa.toLowerCase());
+         if (!pessoa) return false;
+         
+         const motivoAusencia = ausencias[pessoa.id];
+         // Se tem ausência e NÃO for os motivos que permitem atender (prova, supervisao, iniciante), ele tá de folga!
+         return motivoAusencia && !['prova', 'supervisao', 'iniciante'].includes(motivoAusencia);
+      };
+      
       const sups = (await DB.getSupConfig()) || [];
-      const hojeSups = sups.filter(s => s.dia === dia && !s.inativa).map(s => ({ ...s, _isSimples: false }));
+      // 3. Adicionamos a trava `!taDeFolga(s.supervisor)`
+      const hojeSups = sups.filter(s => s.dia === dia && !s.inativa && !taDeFolga(s.supervisor)).map(s => ({ ...s, _isSimples: false }));
       
       const simples = (await DB.getSimplesConfig()) || [];
-      const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia).map(s => ({ ...s, _isSimples: true }));
+      // 4. Adicionamos a trava `!taDeFolga(s.estagiario)`
+      const hojeSimples = simples.filter(s => !s.inativa && s.diaFolga !== dia && !taDeFolga(s.estagiario)).map(s => ({ ...s, _isSimples: true }));
 
       const todosItems = [...hojeSups, ...hojeSimples];
       if(!todosItems.length) {
-        box.innerHTML = '<div class="faint">Nenhuma supervisão ou audiência simples ativa para este dia.</div>';
+        box.innerHTML = '<div class="faint">Nenhuma supervisão ou audiência simples ativa (ou equipe ausente) para este dia.</div>';
         return;
       }
 

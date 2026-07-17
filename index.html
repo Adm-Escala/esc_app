@@ -983,7 +983,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div>    
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
@@ -1628,7 +1628,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.5 (G)</h1>
+        <h1>Escala Adm - v 1.2.6 (G)</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -4083,204 +4083,297 @@ async function renderPauta(id){
 
     // --- MOTOR DE ESCALA RJA DINÂMICO ---
     document.getElementById('gabRja').onclick = async () => {
-      const regrasPadrao = [
-        { id: 'r1', nome: 'Apoio Jurídico', alvoTipo: 'ausencia', alvoValor: 'apoio', cota: 6, horas: [14, 15], priorizaVara: false },
-        { id: 'r2', nome: 'Regra Especial (ANM)', alvoTipo: 'sigla', alvoValor: 'ANM', cota: 4, horas: [13], priorizaVara: false },
-        { id: 'r3', nome: 'Cartórios', alvoTipo: 'subequipe', alvoValor: 'cartorio', cota: 4, horas: [15, 16, 17], priorizaVara: true },
-        { id: 'r4', nome: 'Resto da Equipe ADM', alvoTipo: 'equipe', alvoValor: 'adm', cota: 4, horas: [13, 14, 15, 16, 17, 18], priorizaVara: false }
-      ];
-
-      let dbData = await DB.getRegrasRja();
-      let perfisDisponiveis = [];
-      
-      if (!dbData) {
-         perfisDisponiveis = [{ id: 'p-default', nome: 'Padrão', regras: regrasPadrao }];
-      } else if (Array.isArray(dbData) && dbData.length > 0 && dbData[0].alvoTipo) {
-         perfisDisponiveis = [{ id: 'p-default', nome: 'Cenário Padrão', regras: dbData }];
-      } else {
-         perfisDisponiveis = dbData;
-      }
-
-      let perfilSelecionado = perfisDisponiveis[0];
-
-      // Se houver mais de um cenário salvo, pergunta qual o usuário quer rodar
-      // Se houver mais de um cenário salvo, abre o modal combobox
-      if (perfisDisponiveis.length > 1) {
-          // O "await" faz o código pausar e esperar o usuário clicar no Modal!
-          perfilSelecionado = await escolherCenarioModal(perfisDisponiveis);
-          
-          // Se retornou null, é porque o usuário clicou em Cancelar.
-          if (!perfilSelecionado) return; 
-      }
-
-      const regras = perfilSelecionado.regras;
-
-      if(confirm(`Distribuir RJAs automaticamente usando o cenário '${perfilSelecionado.nome}'?\n\nSerão processadas ${regras.length} regras na ordem estabelecida.`)){
-        let alterou = false;
+      try {
+        console.log('[EA-RJA] 1. Botão clicado. Iniciando processamento...');
         
-        // --- INÍCIO DOS LOGS NO CONSOLE ---
-        console.group('=== LOG DE ATRIBUIÇÃO EA-RJA ===');
+        if (typeof p === 'undefined' || !p || !p.dia) {
+            console.error('[EA-RJA] ERRO: O objeto "p" não está definido neste escopo.');
+            return;
+        }
 
-        const nomeToRja = {};
-        const todasPessoas = (pautaEquipe || []).concat(p.dia.extra || []);
-        todasPessoas.forEach(pe => {
-          if (pe.rja && pe.rja.trim()) nomeToRja[chave(pe.nome)] = pe.rja.toUpperCase().trim();
-        });
+        const regrasPadrao = [
+          { id: 'r1', nome: 'Apoio Jurídico', alvoTipo: 'ausencia', alvoValor: 'apoio', cota: 6, horas: [14, 15], priorizaVara: false },
+          { id: 'r2', nome: 'Regra Especial (ANM)', alvoTipo: 'sigla', alvoValor: 'ANM', cota: 4, horas: [13], priorizaVara: false },
+          { id: 'r3', nome: 'Cartórios', alvoTipo: 'subequipe', alvoValor: 'cartorio', cota: 4, horas: [15, 16, 17], priorizaVara: true },
+          { id: 'r4', nome: 'Resto da Equipe ADM', alvoTipo: 'equipe', alvoValor: 'adm', cota: 4, horas: [13, 14, 15, 16, 17, 18], priorizaVara: false }
+        ];
 
-        // 1) Preencher RJA de quem está atrelado na coluna 1º Conciliador
-        linhasDaPauta(p).forEach((L, index) => {
-          const c = p.celulas[L.key];
-          if (!c || !(c.proc || '').trim() || chave(c.res) === 'CANCELADA') return;
-          
-          const c1k = chave(c.c1);
-          
-          // Se houver alguém no 1º Conciliador e NÃO for "OUTRO"
-          if (c1k && c1k !== 'OUTRO') {
-            const linhaExcel = index + 4; 
-            const formulaRJA = `=SES(T${linhaExcel}="CANCELADA"; ""; T${linhaExcel}="AGUARD. CANCEL. PJE"; ""; J${linhaExcel}="Filipe";"FIL"; J${linhaExcel}="Emídio";"EMI"; J${linhaExcel}="Luana";"LUA"; J${linhaExcel}="Deborah";"DEB"; J${linhaExcel}="Maura";"MAA"; J${linhaExcel}="Joice";"JOI"; J${linhaExcel}="Aracele";"ARA"; J${linhaExcel}="Dr. David (ADM)";"Escolher"; J${linhaExcel}="Outro"; "Escolher")`;
-            
-            if (c.rja !== formulaRJA) {
-              c.rja = formulaRJA;
-              alterou = true;
-            }
-          }
-        });
-
-        // 2) Contagem atual (evita cota dupla)
-        const contagemRja = {};
-        linhasDaPauta(p).forEach(L => {
-          const c = p.celulas[L.key];
-          if (c && c.rja && c.rja.trim()) {
-            let rjaUpper = c.rja.toUpperCase().trim();
-            contagemRja[rjaUpper] = (contagemRja[rjaUpper] || 0) + 1;
-          }
-        });
+        let dbData = await DB.getRegrasRja();
+        let perfisDisponiveis = [];
         
-        console.log('[Passo 2] Contagem atual antes de rodar as regras:', JSON.parse(JSON.stringify(contagemRja)));
+        if (!dbData) {
+           perfisDisponiveis = [{ id: 'p-default', nome: 'Padrão', regras: regrasPadrao }];
+        } else if (Array.isArray(dbData) && dbData.length > 0 && dbData[0].alvoTipo) {
+           perfisDisponiveis = [{ id: 'p-default', nome: 'Cenário Padrão', regras: dbData }];
+        } else {
+           perfisDisponiveis = dbData;
+        }
 
-        // 3) Separar as elegíveis
-        let elegiveis = linhasDaPauta(p).filter(L => {
-          const c = p.celulas[L.key];
-          return c && (c.proc || '').trim() && chave(c.c1) === 'OUTRO' && chave(c.res) !== 'CANCELADA' && (!c.rja || !c.rja.trim());
-        });
-
-        const shuffle = (array) => {
-          let arr = [...array];
-          for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
-          return arr;
-        };
-
-        let dispPorHora = {};
-        [13, 14, 15, 16, 17, 18].forEach(h => dispPorHora[h] = shuffle(elegiveis.filter(L => +L.HH === h)) );
-
-        const consomeAud = (horaList) => {
-          for (let h of horaList) { if (dispPorHora[h] && dispPorHora[h].length > 0) return dispPorHora[h].pop(); }
-          return null;
-        };
-
-        const extrairJuizado = (texto) => {
-            if (!texto) return null;
-            const m = String(texto).match(/\d+/);
-            return m ? parseInt(m[0], 10) : null;
-        };
-
-        const consomeAudEspecifica = (horaList, cartorioServidor) => {
-            if (!cartorioServidor) return consomeAud(horaList);
-            const numServidor = extrairJuizado(cartorioServidor);
-            for (let h of horaList) {
-                if (dispPorHora[h] && dispPorHora[h].length > 0) {
-                    let bestIdx = dispPorHora[h].findIndex(L => {
-                        const numPauta = extrairJuizado(p.celulas[L.key].vara);
-                        return numServidor !== null && numPauta !== null && numServidor === numPauta;
-                    });
-                    if (bestIdx >= 0) return dispPorHora[h].splice(bestIdx, 1)[0];
-                }
-            }
-            return consomeAud(horaList);
-        };
-
+        console.log('[EA-RJA] 2. Lendo ausências e pessoas...');
         const aus = p.dia.aus || {};
-        const rjasProcessados = new Set();
-
-        // 4) PROCESSA O MOTOR DE REGRAS DINÂMICAS
-        regras.forEach(regra => {
-            console.log(`\n--- Executando Regra: ${regra.nome} (Cota máxima: ${regra.cota}) ---`);
-            
-            // Filtra as pessoas que se enquadram na regra atual
-            const pessoasMatch = todasPessoas.filter(pe => {
-                const ev = aus[pe.id];
-                const off = ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev);
-                
-                // Se está de folga e a regra não busca ativamente essa ausência, ignora a pessoa
-                if (off && regra.alvoTipo !== 'ausencia') return false; 
-                if (!pe.rja || !pe.rja.trim()) return false;
-                
-                if (regra.alvoTipo === 'ausencia') return ev === regra.alvoValor;
-                if (regra.alvoTipo === 'subequipe') return pe.tipo === 'adm' && pe.subequipe === regra.alvoValor && !off;
-                if (regra.alvoTipo === 'equipe') return pe.tipo === regra.alvoValor && !off;
-                if (regra.alvoTipo === 'sigla') return pe.rja.toUpperCase().trim() === regra.alvoValor.toUpperCase().trim() && !off;
-                return false;
-            });
-
-            pessoasMatch.forEach(pe => {
-                let rja = pe.rja.toUpperCase().trim();
-                if (rjasProcessados.has(rja)) return; // Se a pessoa já foi servida por uma regra anterior, pula
-                rjasProcessados.add(rja);
-                
-                let jaTem = contagemRja[rja] || 0;
-                let toAssign = regra.cota - jaTem;
-                
-                console.log(`> Analisando ${pe.nome} (RJA: ${rja}): Já possui ${jaTem}, precisa de mais ${toAssign}`);
-                
-                while (toAssign > 0) {
-                    let L = (regra.priorizaVara && pe.cartorio) 
-                            ? consomeAudEspecifica(regra.horas, pe.cartorio) 
-                            : consomeAud(regra.horas);
-                    
-                    if (!L) {
-                        console.log(`  - Sem sessões vazias nos horários [${regra.horas.join(',')}] para ${pe.nome}.`);
-                        break;
-                    }
-                    
-                    console.log(`  - [Regra Aplicada] RJA '${rja}' atribuído na sessão ${L.HH}h (Sala: ${L.sala}).`);
-                    p.celulas[L.key].rja = rja;
-                    alterou = true;
-                    toAssign--;
-                    contagemRja[rja] = (contagemRja[rja] || 0) + 1;
-                }
-            });
+        const pEquipe = (typeof pautaEquipe !== 'undefined') ? pautaEquipe : [];
+        const todasPessoas = pEquipe.concat(p.dia.extra || []);
+        
+        const servidoresAfastados = todasPessoas.filter(pe => {
+            const ev = aus[pe.id];
+            return ev && ev === 'afast' && pe.rja && pe.rja.trim();
         });
 
-        // 5) Aplicar fórmula nos processos restantes ou que ficaram com "Escolher"
-        linhasDaPauta(p).forEach((L, index) => {
-          const c = p.celulas[L.key];
-          if (c && (c.proc || '').trim() && chave(c.res) !== 'CANCELADA') {
+        console.log(`[EA-RJA] 3. Encontrados ${servidoresAfastados.length} servidores com "Afastamento"`);
+
+        let perfilSelecionado = perfisDisponiveis[0];
+        let rjasAfastadosPermitidos = [];
+
+        if (perfisDisponiveis.length > 1 || servidoresAfastados.length > 0) {
+            console.log('[EA-RJA] 4. Abrindo Modal...');
+            const resultado = await abrirModalExecucaoRja(perfisDisponiveis, servidoresAfastados);
+            if (!resultado) {
+                console.log('[EA-RJA] 5. Usuário cancelou no modal.');
+                return;
+            }
+            perfilSelecionado = resultado.perfil;
+            rjasAfastadosPermitidos = resultado.afastadosPermitidos;
+            console.log('[EA-RJA] 6. Modal confirmado. Perfil:', perfilSelecionado.nome);
+        }
+
+        const regras = perfilSelecionado.regras;
+
+        if(confirm(`Distribuir RJAs automaticamente usando o cenário '${perfilSelecionado.nome}'?\n\nSerão processadas ${regras.length} regras na ordem estabelecida.`)){
+          let alterou = false;
+          
+          console.group('=== LOG DE ATRIBUIÇÃO EA-RJA ===');
+
+          const nomeToRja = {};
+          todasPessoas.forEach(pe => {
+            if (pe.rja && pe.rja.trim()) nomeToRja[chave(pe.nome)] = pe.rja.toUpperCase().trim();
+          });
+
+          // 1) Preencher RJA de quem está atrelado na coluna 1º Conciliador
+          linhasDaPauta(p).forEach((L, index) => {
+            const c = p.celulas[L.key];
+            if (!c || !(c.proc || '').trim() || chave(c.res) === 'CANCELADA') return;
             
-            // Se o campo RJA estiver vazio ou se estiver preenchido com a palavra "Escolher"
-            if (!c.rja || !c.rja.trim() || c.rja === 'Escolher') {
-              const linhaExcel = index + 4;
+            const c1k = chave(c.c1);
+            if (c1k && c1k !== 'OUTRO') {
+              const linhaExcel = index + 4; 
               const formulaRJA = `=SES(T${linhaExcel}="CANCELADA"; ""; T${linhaExcel}="AGUARD. CANCEL. PJE"; ""; J${linhaExcel}="Filipe";"FIL"; J${linhaExcel}="Emídio";"EMI"; J${linhaExcel}="Luana";"LUA"; J${linhaExcel}="Deborah";"DEB"; J${linhaExcel}="Maura";"MAA"; J${linhaExcel}="Joice";"JOI"; J${linhaExcel}="Aracele";"ARA"; J${linhaExcel}="Dr. David (ADM)";"Escolher"; J${linhaExcel}="Outro"; "Escolher")`;
               
-              // Só marca como alterado se o conteúdo atual for diferente da fórmula
               if (c.rja !== formulaRJA) {
                 c.rja = formulaRJA;
                 alterou = true;
               }
             }
-          }
-        });
-        
-        console.groupEnd(); // --- FIM DOS LOGS ---
+          });
 
-        if (alterou) {
-          agendaSalvar();
-          if (window._refreshEspelho) window._refreshEspelho();
-          toast('RJAs escalados com sucesso! Verifique o console (F12) para detalhes.');
-        } else {
-          toast('Nenhuma alteração necessária ou possível nos RJAs.');
+          // 2) Contagem atual
+          const contagemRja = {};
+          linhasDaPauta(p).forEach(L => {
+            const c = p.celulas[L.key];
+            // Ignora o que é fórmula da contagem de cota
+            if (c && c.rja && c.rja.trim() && !c.rja.startsWith('=')) {
+              let rjaUpper = c.rja.toUpperCase().trim();
+              contagemRja[rjaUpper] = (contagemRja[rjaUpper] || 0) + 1;
+            }
+          });
+          console.log('[Passo 2] Contagem atual:', JSON.parse(JSON.stringify(contagemRja)));
+
+          // 3) Separar as elegíveis
+          let elegiveis = linhasDaPauta(p).filter(L => {
+            const c = p.celulas[L.key];
+            return c && (c.proc || '').trim() && chave(c.c1) === 'OUTRO' && chave(c.res) !== 'CANCELADA' && (!c.rja || !c.rja.trim());
+          });
+
+          const shuffle = (array) => {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+            return arr;
+          };
+
+          let dispPorHora = {};
+          [13, 14, 15, 16, 17, 18].forEach(h => dispPorHora[h] = shuffle(elegiveis.filter(L => +L.HH === h)) );
+
+          const consomeAud = (horaList) => {
+            for (let h of horaList) { if (dispPorHora[h] && dispPorHora[h].length > 0) return dispPorHora[h].pop(); }
+            return null;
+          };
+
+          const extrairJuizado = (texto) => {
+              if (!texto) return null;
+              const m = String(texto).match(/\d+/);
+              return m ? parseInt(m[0], 10) : null;
+          };
+
+          const consomeAudEspecifica = (horaList, cartorioServidor) => {
+              if (!cartorioServidor) return consomeAud(horaList);
+              const numServidor = extrairJuizado(cartorioServidor);
+              for (let h of horaList) {
+                  if (dispPorHora[h] && dispPorHora[h].length > 0) {
+                      let bestIdx = dispPorHora[h].findIndex(L => {
+                          const numPauta = extrairJuizado(p.celulas[L.key].vara);
+                          return numServidor !== null && numPauta !== null && numServidor === numPauta;
+                      });
+                      if (bestIdx >= 0) return dispPorHora[h].splice(bestIdx, 1)[0];
+                  }
+              }
+              return consomeAud(horaList);
+          };
+
+          const rjasProcessados = new Set();
+
+          // 4) REGRAS
+          regras.forEach(regra => {
+              console.log(`\n--- Executando Regra: ${regra.nome} ---`);
+              
+              const pessoasMatch = todasPessoas.filter(pe => {
+                  const ev = aus[pe.id];
+                  const isAfastadoPermitido = rjasAfastadosPermitidos.includes(pe.id);
+                  const off = ev && !['prova', 'supervisao', 'iniciante', 'apoio'].includes(ev) && !isAfastadoPermitido;
+                  
+                  if (off && regra.alvoTipo !== 'ausencia') return false; 
+                  if (!pe.rja || !pe.rja.trim()) return false;
+                  
+                  if (regra.alvoTipo === 'ausencia') return ev === regra.alvoValor;
+                  if (regra.alvoTipo === 'subequipe') return pe.tipo === 'adm' && pe.subequipe === regra.alvoValor && !off;
+                  if (regra.alvoTipo === 'equipe') return pe.tipo === regra.alvoValor && !off;
+                  if (regra.alvoTipo === 'sigla') return pe.rja.toUpperCase().trim() === regra.alvoValor.toUpperCase().trim() && !off;
+                  return false;
+              });
+
+              pessoasMatch.forEach(pe => {
+                  let rja = pe.rja.toUpperCase().trim();
+                  if (rjasProcessados.has(rja)) return;
+                  rjasProcessados.add(rja);
+                  
+                  let jaTem = contagemRja[rja] || 0;
+                  let toAssign = regra.cota - jaTem;
+                  
+                  console.log(`> Analisando ${pe.nome} (RJA: ${rja}): precisa de mais ${toAssign}`);
+                  
+                  while (toAssign > 0) {
+                      let L = (regra.priorizaVara && pe.cartorio) 
+                              ? consomeAudEspecifica(regra.horas, pe.cartorio) 
+                              : consomeAud(regra.horas);
+                      
+                      if (!L) break;
+                      
+                      p.celulas[L.key].rja = rja;
+                      alterou = true;
+                      toAssign--;
+                      contagemRja[rja] = (contagemRja[rja] || 0) + 1;
+                  }
+              });
+          });
+
+          // 5) Fórmulas restantes
+          linhasDaPauta(p).forEach((L, index) => {
+            const c = p.celulas[L.key];
+            if (c && (c.proc || '').trim() && chave(c.res) !== 'CANCELADA') {
+              if (!c.rja || !c.rja.trim() || c.rja === 'Escolher') {
+                const linhaExcel = index + 4;
+                const formulaRJA = `=SES(T${linhaExcel}="CANCELADA"; ""; T${linhaExcel}="AGUARD. CANCEL. PJE"; ""; J${linhaExcel}="Filipe";"FIL"; J${linhaExcel}="Emídio";"EMI"; J${linhaExcel}="Luana";"LUA"; J${linhaExcel}="Deborah";"DEB"; J${linhaExcel}="Maura";"MAA"; J${linhaExcel}="Joice";"JOI"; J${linhaExcel}="Aracele";"ARA"; J${linhaExcel}="Dr. David (ADM)";"Escolher"; J${linhaExcel}="Outro"; "Escolher")`;
+                
+                if (c.rja !== formulaRJA) {
+                  c.rja = formulaRJA;
+                  alterou = true;
+                }
+              }
+            }
+          });
+          
+          console.groupEnd();
+
+          if (alterou) {
+            agendaSalvar();
+            if (window._refreshEspelho) window._refreshEspelho();
+            toast('RJAs escalados com sucesso!');
+          } else {
+            toast('Nenhuma alteração necessária ou possível nos RJAs.');
+          }
         }
+      } catch (e) {
+        console.error('[EA-RJA] Erro ao executar motor RJA:', e);
+        alert('Ocorreu um erro no motor de RJA. Abra o console (F12) para os detalhes do erro.');
       }
     };
+
+    // --- NOVO MODAL: ESCOLHA DE CENÁRIO E EXCEÇÕES DE AFASTAMENTO ---
+    function abrirModalExecucaoRja(perfis, afastados) {
+        return new Promise(resolve => {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+              <!-- A classe "open" e o z-index foram adicionados aqui para o modal ficar visível -->
+              <div class="modal-bg open" id="mExecucaoRja" style="z-index: 9999;">
+                <div class="modal md modal-flex" style="background:#fff;">
+                  <div class="modal-head">
+                    <div class="row between">
+                      <div style="font-size:19px;font-weight:800;">Executar Escala RJA</div>
+                      <button class="btn icon-btn" id="btnCancelRjaTop">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="modal-body" style="display:flex; flex-direction:column; gap:16px; padding-top:16px;">
+                      ${perfis.length > 1 ? `
+                          <div>
+                              <label style="font-weight:bold; font-size:14px; margin-bottom:8px; display:block;">Cenário de Regras</label>
+                              <select id="rjaCenarioSelect" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:4px;">
+                                  ${perfis.map((p, idx) => `<option value="${idx}">${p.nome}</option>`).join('')}
+                              </select>
+                          </div>
+                      ` : `
+                          <div style="font-size:14px;">Cenário selecionado: <strong>${perfis[0].nome}</strong></div>
+                      `}
+
+                      ${afastados.length > 0 ? `
+                          <div style="background:#f8fafc; border:1px solid var(--line); border-radius:6px; padding:12px;">
+                              <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">Servidores com "Afastamento" no dia</div>
+                              <div class="muted" style="font-size:12px; margin-bottom:12px;">Selecione quem atuará excepcionalmente como RJA:</div>
+                              <div style="display:flex; flex-direction:column; gap:8px; max-height:150px; overflow-y:auto;">
+                                  ${afastados.map(a => `
+                                      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+                                          <input type="checkbox" class="afastado-cbx" value="${a.id}">
+                                          ${a.nome} (RJA: ${a.rja.toUpperCase()})
+                                      </label>
+                                  `).join('')}
+                              </div>
+                          </div>
+                      ` : ''}
+                  </div>
+                  
+                  <div class="modal-foot">
+                    <div class="row" style="justify-content:flex-end; gap:8px;">
+                      <button class="btn" id="btnCancelRjaBtn">Cancelar</button>
+                      <button class="btn btn-primary" id="btnConfirmRjaBtn">Confirmar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(wrap);
+
+            const fechar = (retorno) => {
+                wrap.remove(); // Remove o modal inteiro do DOM
+                resolve(retorno); // Resolve a Promise, liberando a execução lá no gabRja.onclick!
+            };
+
+            document.getElementById('btnCancelRjaTop').onclick = () => fechar(null);
+            document.getElementById('btnCancelRjaBtn').onclick = () => fechar(null);
+            
+            document.getElementById('btnConfirmRjaBtn').onclick = () => {
+                const select = document.getElementById('rjaCenarioSelect');
+                const perfilIndex = select ? select.value : 0;
+                
+                const cbxs = wrap.querySelectorAll('.afastado-cbx:checked');
+                const permitidos = Array.from(cbxs).map(cb => cb.value);
+                
+                fechar({
+                    perfil: perfis[perfilIndex],
+                    afastadosPermitidos: permitidos
+                });
+            };
+        });
+    }
 
     // --- MODAL DE GERENCIAMENTO DE REGRAS RJA ---
    

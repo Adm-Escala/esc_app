@@ -762,7 +762,17 @@
   </div>
 </div>
 
-<div class="modal-bg keep-open" id="mCancelSup"><div class="modal md modal-flex">
+<!-- ===== estilo das ABAS (Modelo A) do modal Cancelamentos/Supervisões ===== -->
+<style>
+  #mCancelSup .cs-tabs{ display:flex; gap:4px; background:#e7ebf2; padding:4px; border-radius:11px; margin:6px 22px; }
+  #mCancelSup .cs-tab{ flex:1; border:0; background:transparent; font:inherit; font-weight:600; font-size:13.5px; color:var(--muted); padding:9px 12px; border-radius:8px; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  #mCancelSup .cs-tab.active{ background:#fff; color:var(--brand-d); box-shadow:0 1px 4px rgba(15,23,42,.1); }
+  #mCancelSup .cs-tab-dot{ width:7px; height:7px; border-radius:50%; background:var(--faint); display:none; }
+  #mCancelSup .cs-tab-count{ color:var(--muted); font-weight:600; font-size:12.5px; display:none; }
+  #mCancelSup .cs-pane{ display:none; } #mCancelSup .cs-pane.active{ display:block; }
+</style>
+
+<div class="modal-bg keep-open" id="mCancelSup"><div class="modal md modal-flex" style="height:85vh;">
   <div class="modal-head">
     <div class="row between" style="align-items:flex-start;">
       <div>
@@ -772,14 +782,29 @@
       <button class="btn icon-btn" onclick="closeM('mCancelSup')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
   </div>
-  <div class="modal-body" style="display:flex; flex-direction:column; gap:20px; padding-bottom: 20px;">
-    <div>
+
+  <!-- ABAS (ficam fixas; o conteúdo rola por baixo) -->
+  <div class="cs-tabs">
+    <button class="cs-tab active" data-cstab="cancel" onclick="csTab('cancel')">
+      <span class="cs-tab-dot"></span> Cancelamentos do Dia <span class="cs-tab-count"></span>
+    </button>
+    <button class="cs-tab" data-cstab="super" onclick="csTab('super')">
+      <span class="cs-tab-dot"></span> Supervisões do Dia <span class="cs-tab-count"></span>
+    </button>
+  </div>
+
+  <div class="modal-body" style="padding-bottom:20px;">
+    <!-- ABA 1: Cancelamentos -->
+    <div class="cs-pane active" data-cspane="cancel">
       <div style="font-weight:700; font-size:15px; margin-bottom:4px; color:var(--brand);">1. Cancelamentos do Dia</div>
       <div class="muted" style="font-size:12.5px; margin-bottom:8px;">Insira ou cole os números dos processos cancelados:</div>
       <div id="csCancelList" style="display:flex; flex-direction:column; gap:6px;"></div>
+      <div id="csCancelInfo" class="muted" style="font-size:12px; margin-top:6px;"></div>
+      <div id="csCancelValid" style="display:none; color:#b45309; font-size:12px; margin-top:8px; line-height:1.6;"></div>
     </div>
-    <hr style="border:0; border-top:1px solid var(--line);">
-    <div>
+
+    <!-- ABA 2: Supervisões -->
+    <div class="cs-pane" data-cspane="super">
       <div class="row between" style="margin-bottom:8px;">
         <div style="font-weight:700; font-size:15px; color:var(--brand);">2. Supervisões do Dia</div>
         <button class="btn btn-sm" id="csBtnGerenciar">Gerenciar Grade</button>
@@ -787,6 +812,7 @@
       <div id="csSupList" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
   </div>
+
   <div class="modal-foot">
     <div class="row between">
       <button class="btn" onclick="closeM('mCancelSup')">Fechar</button>
@@ -794,6 +820,126 @@
     </div>
   </div>
 </div></div>
+
+<!-- ===== troca das ABAS (Modelo A) ===== -->
+<script>
+  function csTab(qual){
+    var modal = document.getElementById('mCancelSup');
+    if(!modal) return;
+    modal.querySelectorAll('.cs-tab').forEach(function(b){ b.classList.toggle('active', b.dataset.cstab === qual); });
+    modal.querySelectorAll('.cs-pane').forEach(function(p){ p.classList.toggle('active', p.dataset.cspane === qual); });
+  }
+</script>
+
+<!-- ===== Etapa 2: números nas abas, contador, avisos e resumo antes de salvar ===== -->
+<style>
+  .cs-pop-bg{ position:fixed; inset:0; background:rgba(15,23,42,.5); display:none; align-items:center; justify-content:center; padding:16px; z-index:120; }
+  .cs-pop-bg.show{ display:flex; }
+  .cs-pop{ background:#fff; border-radius:12px; max-width:420px; width:100%; padding:22px; box-shadow:0 20px 50px rgba(0,0,0,.25); }
+  .cs-pop-title{ font-size:18px; font-weight:800; margin-bottom:12px; }
+  .cs-pop-body{ font-size:14px; color:var(--ink); line-height:1.6; }
+  .cs-pop-warn{ margin-top:12px; background:#fef3c7; color:#b45309; border:1px solid #fcd9a5; border-radius:8px; padding:9px 11px; font-size:12.5px; }
+</style>
+
+<div class="cs-pop-bg" id="csConfirmPop">
+  <div class="cs-pop">
+    <div class="cs-pop-title">Salvar na pauta?</div>
+    <div class="cs-pop-body" id="csConfirmBody"></div>
+    <div class="row between" style="margin-top:18px;">
+      <button class="btn" id="csConfirmVoltar">Voltar</button>
+      <button class="btn btn-primary" id="csConfirmOk">Confirmar e Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // padrão do número de processo (CNJ): 0000000-00.0000.0.00.0000
+  var RE = /^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/;
+
+  function analisarCancel(texto){
+    var linhas = (texto||'').split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+    var cont = {}; linhas.forEach(function(l){ cont[l] = (cont[l]||0)+1; });
+    var reps = Object.keys(cont).filter(function(k){ return cont[k] > 1; });
+    var invs = Array.from(new Set(linhas.filter(function(l){ return !RE.test(l); })));
+    return { total: linhas.length, reps: reps, invs: invs };
+  }
+  function contarSup(modal){
+    return Array.prototype.filter.call(modal.querySelectorAll('.cs-sup-input'), function(i){ return i.value.trim(); }).length;
+  }
+  function setTab(modal, qual, n){
+    var btn = modal.querySelector('.cs-tab[data-cstab="'+qual+'"]'); if(!btn) return;
+    var c = btn.querySelector('.cs-tab-count'), d = btn.querySelector('.cs-tab-dot');
+    if(c){ c.textContent = n>0 ? '('+n+')' : ''; c.style.display = n>0 ? 'inline' : 'none'; }
+    if(d){ d.style.display = n>0 ? 'inline-block' : 'none'; }
+  }
+  function atualizar(){
+    var modal = document.getElementById('mCancelSup'); if(!modal) return;
+    var ta = modal.querySelector('#csCancelList textarea');
+    var a = analisarCancel(ta ? ta.value : '');
+    var sup = contarSup(modal);
+    var info = document.getElementById('csCancelInfo');
+    if(info) info.textContent = a.total===0 ? 'Nenhum processo colado'
+                                            : (a.total + (a.total>1 ? ' processos colados' : ' processo colado'));
+    var valid = document.getElementById('csCancelValid');
+    if(valid){
+      var msgs = [];
+      if(a.reps.length) msgs.push('&#9888; Repetido'+(a.reps.length>1?'s':'')+': '+a.reps.join(', '));
+      if(a.invs.length) msgs.push('&#9888; Fora do padrão: '+a.invs.join(', '));
+      valid.innerHTML = msgs.join('<br>');
+      valid.style.display = msgs.length ? 'block' : 'none';
+    }
+    setTab(modal, 'cancel', a.total);
+    setTab(modal, 'super', sup);
+  }
+  function confirmarSalvar(){
+    var modal = document.getElementById('mCancelSup');
+    var ta = modal ? modal.querySelector('#csCancelList textarea') : null;
+    var a = analisarCancel(ta ? ta.value : '');
+    var sup = modal ? contarSup(modal) : 0;
+    var html = 'Você vai registrar:<ul style="margin:8px 0 0 18px;">'+
+      '<li><b>'+a.total+'</b> cancelamento'+(a.total===1?'':'s')+'</li>'+
+      '<li><b>'+sup+'</b> supervis'+(sup===1?'ão':'ões')+' preenchida'+(sup===1?'':'s')+'</li></ul>';
+    var avisos = [];
+    if(a.reps.length) avisos.push(a.reps.length+' processo'+(a.reps.length>1?'s repetidos':' repetido'));
+    if(a.invs.length) avisos.push(a.invs.length+' fora do padrão');
+    if(avisos.length) html += '<div class="cs-pop-warn">&#9888; Atenção: '+avisos.join(' e ')+'. Deseja salvar mesmo assim?</div>';
+    document.getElementById('csConfirmBody').innerHTML = html;
+    document.getElementById('csConfirmPop').classList.add('show');
+  }
+
+  // botões do popup de resumo
+  var pop = document.getElementById('csConfirmPop');
+  document.getElementById('csConfirmVoltar').onclick = function(){ pop.classList.remove('show'); };
+  document.getElementById('csConfirmOk').onclick = function(){
+    pop.classList.remove('show');
+    if(typeof processarCancelSup === 'function') processarCancelSup();  // usa a SUA função original para salvar
+  };
+  pop.addEventListener('click', function(e){ if(e.target===pop) pop.classList.remove('show'); });
+
+  // atualiza os números/avisos ao vivo enquanto você digita ou cola
+  document.addEventListener('input', function(e){
+    if(e.target.closest('#mCancelSup') && e.target.matches('#csCancelList textarea, .cs-sup-input')) atualizar();
+  });
+
+  // mostra o resumo ANTES de salvar (sem alterar a função original)
+  document.addEventListener('click', function(e){
+    if(e.target.closest('#csBtnProcessar')){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      confirmarSalvar();
+    }
+  }, true);
+
+  // quando o modal abre, já mostra os números do que estiver preenchido
+  var modalCS = document.getElementById('mCancelSup');
+  if(modalCS){
+    new MutationObserver(function(){
+      if(modalCS.classList.contains('open')) setTimeout(atualizar, 0);
+    }).observe(modalCS, { attributes:true, attributeFilter:['class'] });
+  }
+})();
+</script>
 
 <div class="modal-bg keep-open" id="mGerenciarSup"><div class="modal md modal-flex">
   <div class="modal-head">
@@ -1627,7 +1773,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.7 (G)</h1>
+        <h1>Escala Adm - v 1.2.8 (F)</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -6256,7 +6402,7 @@ function sincronizaGabarito(p){
         
         if (isOpen) {
           const body = document.createElement('div');
-          body.style.cssText = 'padding:10px 12px; display:flex; flex-direction:column; gap:6px; background:#fff;';
+          body.style.cssText = 'padding:10px 12px; display:flex; flex-direction:column; gap:6px; background:#fff; max-height:34vh; overflow-y:auto;';
           supsDoDia.sort((a,b) => a.hora - b.hora);
           
           if (!supsDoDia.length) {
@@ -8602,6 +8748,80 @@ function route(){ const h=location.hash||'#/'; const m=h.match(/^#\/pauta\/(.+)$
         <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
       </svg>
     </button>
+
+    <!-- ===== Arrastar o post-it de aviso e lembrar a posição (neste navegador) ===== -->
+<style>
+  #postitAviso{ cursor:move; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #postitAviso .postit-close{ cursor:pointer; }
+</style>
+<script>
+(function(){
+  var KEY = 'adm_postit_aviso_pos';   // onde a posição fica guardada neste navegador
+
+  // Coloca o aviso na posição que você salvou
+  function aplicarPos(el){
+    try{
+      var pos = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if(pos && isFinite(pos.left) && isFinite(pos.top)){
+        el.style.left = pos.left + 'px';
+        el.style.top  = pos.top  + 'px';
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+      }
+    }catch(e){}
+  }
+
+  // Sempre que o aviso (re)aparecer na tela, reposiciona onde você deixou
+  function checar(){
+    var el = document.getElementById('postitAviso');
+    if(el && !el.dataset.posAplicada){ el.dataset.posAplicada = '1'; aplicarPos(el); }
+  }
+  checar();
+  new MutationObserver(checar).observe(document.body, { childList:true, subtree:true });
+
+  // ---- Arrastar ----
+  var alvo = null, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+  document.addEventListener('pointerdown', function(e){
+    var el = e.target.closest('#postitAviso');
+    if(!el || e.target.closest('.postit-close')) return;   // clicar no X não arrasta
+    alvo = el;
+    var cs = getComputedStyle(el);
+    startLeft = parseFloat(cs.left) || 0;
+    startTop  = parseFloat(cs.top)  || 0;
+    startX = e.clientX; startY = e.clientY;
+    el.style.right = 'auto'; el.style.bottom = 'auto';
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+    e.preventDefault();
+  });
+
+  document.addEventListener('pointermove', function(e){
+    if(!alvo) return;
+    var left = startLeft + (e.clientX - startX);
+    var top  = startTop  + (e.clientY - startY);
+    // mantém o aviso dentro da tela (para não sumir)
+    var maxL = Math.max(4, window.innerWidth  - alvo.offsetWidth  - 4);
+    var maxT = Math.max(4, window.innerHeight - alvo.offsetHeight - 4);
+    left = Math.max(4, Math.min(left, maxL));
+    top  = Math.max(4, Math.min(top,  maxT));
+    alvo.style.left = left + 'px';
+    alvo.style.top  = top  + 'px';
+  });
+
+  function soltar(){
+    if(!alvo) return;
+    try{
+      localStorage.setItem(KEY, JSON.stringify({
+        left: parseInt(alvo.style.left, 10) || 0,
+        top:  parseInt(alvo.style.top,  10) || 0
+      }));
+    }catch(e){}
+    alvo = null;
+  }
+  document.addEventListener('pointerup', soltar);
+  document.addEventListener('pointercancel', soltar);
+})();
+</script>
 
 </body>
 </html>

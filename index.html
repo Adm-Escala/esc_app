@@ -337,6 +337,55 @@
   #mDiaEdit .de-sec{ font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 4px;display:flex;align-items:center;gap:8px; }
   #mDiaEdit .xrem{ color:#ef4444;cursor:pointer;font-weight:700;font-size:12px;border:0;background:none;padding:4px; }
   #mDiaEdit .hint2{ font-size:12px;color:var(--muted);background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-bottom:6px; }
+  /* ===== Escolher pessoa já cadastrada — painel de busca (Incluídos só para hoje) ===== */
+  #mDiaEdit .de-combo{ position:relative; display:inline-flex; align-items:center; }
+  #mDiaEdit .de-combo > input{ width:230px; cursor:pointer; }
+  #mDiaEdit .de-combo > input.digitando{ cursor:text; border-color:var(--brand); }
+
+  /* O painel abre PARA CIMA de propósito: o corpo do modal tem overflow:auto e cortaria o que descesse além da borda */
+  #mDiaEdit .de-painel{ position:absolute; bottom:calc(100% + 6px); left:0; width:270px; background:#fff; border:1px solid var(--line2); border-radius:10px; box-shadow:0 12px 30px rgba(15,23,42,.18); z-index:60; overflow:hidden; display:none; }
+  #mDiaEdit .de-painel.aberto{ display:block; }
+
+  #mDiaEdit .de-painel-busca{ padding:8px; border-bottom:1px solid var(--line); }
+  #mDiaEdit .de-painel-busca input{ width:100%; font:inherit; font-size:13px; font-weight:600; border:1px solid var(--line2); border-radius:7px; padding:6px 9px; }
+  #mDiaEdit .de-painel-lista{ max-height:210px; overflow-y:auto; padding:4px; }
+
+  #mDiaEdit .de-opcao{ display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:7px; cursor:pointer; font-size:13.5px; font-weight:600; }
+  #mDiaEdit .de-opcao:hover{ background:var(--brand-50); }
+  #mDiaEdit .de-opcao.novo{ color:var(--brand); font-weight:800; border-bottom:1px solid var(--line); border-radius:7px 7px 0 0; margin-bottom:4px; }
+  #mDiaEdit .de-opcao.bloqueada{ opacity:.45; cursor:not-allowed; }
+  #mDiaEdit .de-opcao.bloqueada:hover{ background:none; }
+  #mDiaEdit .de-opcao .ja{ font-size:10.5px; color:var(--faint); margin-left:auto; font-weight:600; white-space:nowrap; }
+  #mDiaEdit .de-vazio{ font-size:12.5px; color:var(--faint); padding:12px 10px; text-align:center; line-height:1.5; }
+  /* ===== Busca, contagem, resumo do dia e observação livre ===== */
+
+  /* Item 1 — campo de busca */
+  #mDiaEdit .de-busca{ position:relative; display:inline-flex; align-items:center; }
+  #mDiaEdit .de-busca > svg{ position:absolute; left:9px; color:var(--faint); pointer-events:none; }
+  #mDiaEdit .de-busca > input{ font:inherit; font-size:13px; font-weight:600; border:1px solid var(--line2); border-radius:8px; padding:6px 26px 6px 29px; width:200px; background:#fff; }
+  #mDiaEdit .de-busca > input:focus{ outline:2px solid var(--brand-100); border-color:var(--brand); }
+  #mDiaEdit .de-busca > button{ position:absolute; right:5px; border:0; background:none; cursor:pointer; color:var(--faint); font-size:16px; line-height:1; padding:2px 4px; border-radius:5px; display:none; }
+  #mDiaEdit .de-busca > button:hover{ background:var(--line); color:var(--ink); }
+
+  /* Item 2 — contagem dentro das abas */
+  #mDiaEdit .de-qt{ font-size:10.5px; font-weight:800; background:var(--line2); color:#fff; border-radius:999px; padding:1px 6px; margin-left:5px; }
+  #mDiaEdit .seg button.active .de-qt{ background:var(--brand); }
+
+  /* Item 3 — resumo do dia */
+  #mDiaEdit .de-resumo{ display:flex; gap:6px; flex-wrap:wrap; margin-top:11px; }
+  #mDiaEdit .de-chip{ font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid var(--line2); background:#fff; color:var(--muted); }
+  #mDiaEdit .de-chip.ok{ background:#ecfdf5; border-color:#a7f3d0; color:#15803d; }
+  #mDiaEdit .de-chip.bl{ background:#dbeafe; border-color:#bfdbfe; color:#1d4ed8; }
+  #mDiaEdit .de-chip.al{ background:#fef9c3; border-color:#fde68a; color:#a16207; }
+  #mDiaEdit .de-chip.rd{ background:#fee2e2; border-color:#fecaca; color:#b91c1c; }
+
+  /* Item 9 — observação livre */
+  #mDiaEdit .de-obs{ border:1px dashed var(--line2); background:none; color:var(--faint); font:inherit; font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:7px; cursor:pointer; max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #mDiaEdit .de-obs:hover{ border-color:var(--brand); color:var(--brand); }
+  #mDiaEdit .de-obs.tem{ border-style:solid; border-color:#fde68a; background:#fefce8; color:#a16207; }
+  #mDiaEdit .de-obslinha{ flex-basis:100%; margin:4px 0 0 2px; }
+  #mDiaEdit .de-obslinha input{ width:min(440px,100%); font:inherit; font-size:12.5px; font-weight:600; border:1px solid #fde68a; background:#fefce8; border-radius:7px; padding:5px 9px; }
+  #mDiaEdit .de-obslinha input:focus{ outline:2px solid #fef08a; }
   #mEquipe .gradeq{ border-collapse:separate; border-spacing:5px; font-size:12px; }
   #mEquipe .gradeq th{ font-weight:700; color:var(--muted); font-size:11px; text-align:center; padding:2px 0; }
   #mEquipe .gradeq th.cnr,#mEquipe .gradeq td.cnr{ text-align:left; }
@@ -627,6 +676,25 @@
     <button class="btn" id="confCancelar">Cancelar</button>
     <button class="btn" id="confDescartar" style="color:#ef4444;border-color:#fecaca;">Sair sem salvar</button>
     <button class="btn btn-primary" id="confSalvar">Salvar</button>
+  </div>
+</div></div></div>
+
+<!-- ===== modal: confirmar limpeza dos ajustes do dia ===== -->
+<div class="modal-bg" id="mLimpaDia" style="z-index:9998;"><div class="modal sm"><div class="mpad">
+  <div class="row" style="gap:11px; align-items:flex-start;">
+    <div style="width:38px;height:38px;border-radius:10px;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;flex:none;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+    </div>
+    <div>
+      <div style="font-size:18px;font-weight:800;">Limpar ajustes do dia?</div>
+      <div class="muted" style="font-size:13.5px;margin-top:2px;">Isto vale só para esta pauta. As marcações da grade são mantidas.</div>
+    </div>
+  </div>
+  <div id="ldLista" style="margin-top:15px;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:11px 13px;"></div>
+  <div class="muted" style="font-size:12.5px;margin-top:10px;">Esta ação não pode ser desfeita.</div>
+  <div class="row" style="justify-content:flex-end;margin-top:18px;gap:8px;flex-wrap:wrap;">
+    <button class="btn" id="ldCancelar">Cancelar</button>
+    <button class="btn btn-primary" id="ldConfirmar" style="background:#dc2626;border-color:#dc2626;">Sim, limpar</button>
   </div>
 </div></div></div>
 
@@ -1042,6 +1110,7 @@
       <div class="row" style="gap:11px;"><div style="width:38px;height:38px;border-radius:10px;background:var(--brand-50);color:var(--brand);display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg></div><div><div style="font-size:19px;font-weight:800;">Equipe do dia</div><div class="muted" style="font-size:13.5px;" id="deSub">Ajustes valem só para esta pauta.</div></div></div>
       <button class="btn icon-btn" id="deX"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
+    <div class="de-resumo" id="deResumo"></div>
     <div class="hint2" style="margin-top:12px;">Marque <b>eventualidades</b> (férias, prova, atestado, folga, afastamento) e ajuste os <b>horários só deste dia</b>. <b>Prova</b> reduz o limite pela metade. Tudo é salvo automaticamente e reflete na grade acima.</div>
       <div class="row between wrapf" style="margin-top:10px; gap:10px;">
         <div class="seg mini" id="deF" style="width:fit-content;">
@@ -1051,10 +1120,17 @@
           <button data-t="voluntario">Voluntários</button>
           <button data-t="adm">ADM</button>
         </div>
-        <label class="row" style="cursor:pointer; font-size:13px; font-weight:600; color:var(--muted);">
-          <input type="checkbox" id="deChkAusentes" style="width:16px; height:16px; accent-color:var(--brand);"> 
-          Somente com observações
-        </label>
+        <div class="row wrapf" style="gap:12px;">
+          <span class="de-busca">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <input id="deBuscaInp" placeholder="Buscar pessoa..." autocomplete="off">
+            <button id="deBuscaX" title="Limpar busca">&times;</button>
+          </span>
+          <label class="row" style="cursor:pointer; font-size:13px; font-weight:600; color:var(--muted);">
+            <input type="checkbox" id="deChkAusentes" style="width:16px; height:16px; accent-color:var(--brand);"> 
+            Somente com observações
+          </label>
+        </div>
       </div>
   </div>
   <div class="modal-body" id="deBody"><div id="deList"></div></div>
@@ -1773,7 +1849,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.8 (F)</h1>
+        <h1>Escala Adm - v 1.2.9 (F)</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
@@ -2983,7 +3059,7 @@ let pautaEquipe=[];
 const AUS_LABEL={ferias:'Férias',prova:'Prova',atestado:'Atestado',folga:'Folga',afast:'Afastamento',supervisao:'Supervisão',iniciante:'Iniciante',apoio:'Apoio Jurídico'};
 const DIA_FULL={Seg:'segunda-feira',Ter:'terça-feira',Qua:'quarta-feira',Qui:'quinta-feira',Sex:'sexta-feira',Sab:'sábado',Dom:'domingo'};
 function diaSemanaISO(iso){ const a=(iso||'').split('-').map(Number); if(a.length<3||!a[0]) return null; const d=new Date(a[0],a[1]-1,a[2]); return ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'][d.getDay()]; }
-function diaInit(p){ if(!p.dia) p.dia={}; if(!p.dia.gab) p.dia.gab={}; if(!p.dia.aus) p.dia.aus={}; if(!p.dia.hor) p.dia.hor={}; if(!Array.isArray(p.dia.extra)) p.dia.extra=[]; }
+function diaInit(p){ if(!p.dia) p.dia={}; if(!p.dia.gab) p.dia.gab={}; if(!p.dia.aus) p.dia.aus={}; if(!p.dia.hor) p.dia.hor={}; if(!p.dia.obs) p.dia.obs={}; if(!Array.isArray(p.dia.extra)) p.dia.extra=[]; }
 function horasEfetivas(p,pe,dia,isExtra){ const hor=p.dia.hor||{}; if(hor[pe.id]) return hor[pe.id].slice(); if(isExtra) return (pe.hor||[]).slice(); return eqSlotsNoDia(pe,dia); }
 function limiteEfetivo(horas,ev){ const b=horas.length; return ev==='prova'? Math.min(2,b) : b; }
 
@@ -5143,6 +5219,14 @@ function deDia(){ return diaSemanaISO(pautaAtual&&pautaAtual.data); }
       deFilterAusentes = false;
       const chk = document.getElementById('deChkAusentes');
       if(chk) chk.checked = false;
+
+      // Itens 1 e 9 — zera a busca e fecha os campos de observação ao abrir
+      deBusca = '';
+      const bi = document.getElementById('deBuscaInp');
+      const bx = document.getElementById('deBuscaX');
+      if(bi) bi.value = '';
+      if(bx) bx.style.display = 'none';
+      deObsAberta.clear();
       
       recalcularSalaApoio(); // <--- Roda a checagem inicial ao abrir o modal
       
@@ -5222,30 +5306,99 @@ function deRowHTML(pe,isExtra){
     hrow = off? '<span class="faint" style="font-size:12px;">sem audiências hoje</span>' : '<div class="hrow">'+DE_TIMES.map(h=>`<button class="hbtn ${horas.includes(h)?'on':''}" data-deh="${pe.id}:${h}">${h}h</button>`).join('')+'</div>';
   }
   
-  const nome = isExtra? `<span class="de-nome"><input data-dename="${pe.id}" value="${esc(pe.nome)}" placeholder="Nome"></span>` : `<span class="de-nome">${esc(pe.nome)||'<span class="faint">sem nome</span>'}</span>`;
+  // Pessoa "só para hoje": o campo vira um seletor com painel de busca (a lista é preenchida em deRender)
+  const nome = isExtra
+    ? `<span class="de-nome"><span class="de-combo">`
+      + `<input data-dename="${pe.id}" value="${esc(pe.nome)}" placeholder="Clique para escolher ou digitar" readonly autocomplete="off">`
+      + `<div class="de-painel" data-depainel="${pe.id}">`
+      +   `<div class="de-painel-busca"><input data-debusca="${pe.id}" placeholder="Buscar pessoa..." autocomplete="off"></div>`
+      +   `<div class="de-painel-lista" data-delista="${pe.id}"></div>`
+      + `</div>`
+      + `</span></span>`
+    : `<span class="de-nome">${esc(pe.nome)||'<span class="faint">sem nome</span>'}</span>`;
   const tipoSel = isExtra? `<select class="ev" data-detipo="${pe.id}">${['servidor','estagiario','voluntario','adm'].map(t=>`<option value="${t}" ${pe.tipo===t?'selected':''}>${eqCap(t)}</option>`).join('')}</select>` : `<span class="de-tag ${pe.tipo}">${eqCap(pe.tipo)}</span>`;
 
   const rem = isExtra? `<button class="xrem" data-derem="${pe.id}">remover</button>` : '';
   
-  return `<div class="de-row ${off?'off':''}" style="${bgStyle}"><div class="de-id">${tipoSel}${nome}</div><div class="de-ctl">${quickToggles}<select class="ev ${off?'on':''}" data-deev="${pe.id}">${opts}</select>${hrow}${rem}</div></div>`;
+  // Item 9 — observação livre deste dia
+  const obsTxt = (pautaAtual.dia.obs && pautaAtual.dia.obs[pe.id]) ? pautaAtual.dia.obs[pe.id] : '';
+  const temObs = !!obsTxt.trim();
+  const obsBtn = `<button class="de-obs ${temObs?'tem':''}" data-deobs="${pe.id}" title="${temObs? esc(obsTxt) : 'Anotar uma observação só para este dia'}">${temObs? '&#9998; '+esc(obsTxt.trim()) : '+ obs'}</button>`;
+  const obsLinha = deObsAberta.has(pe.id)
+    ? `<div class="de-obslinha"><input data-deobsinp="${pe.id}" value="${esc(obsTxt)}" placeholder="Ex.: chega às 15h, sai mais cedo, audiência no gabinete..." autocomplete="off"></div>`
+    : '';
+
+  return `<div class="de-row ${off?'off':''}" style="${bgStyle}"><div class="de-id">${tipoSel}${nome}</div><div class="de-ctl">${quickToggles}<select class="ev ${off?'on':''}" data-deev="${pe.id}">${opts}</select>${hrow}${rem}${obsBtn}</div>${obsLinha}</div>`;
 }
 
 let deF='', deFilterAusentes=false;
+let deBusca='';                 // Item 1 — o que você digitou na busca
+const deObsAberta = new Set();  // Item 9 — de quem o campo de observação está aberto
+
+/* Item 2 — número de pessoas dentro de cada aba de filtro */
+function deContarAbas(lista){
+  document.querySelectorAll('#deF button').forEach(b => {
+    const t = b.dataset.t;
+    const n = t ? lista.filter(p=>p.tipo===t).length : lista.length;
+    let selo = b.querySelector('.de-qt');
+    if(!selo){ selo = document.createElement('span'); selo.className = 'de-qt'; b.appendChild(selo); }
+    selo.textContent = n;
+  });
+}
+
+/* Item 3 — resumo do dia no alto do modal */
+function deMontarResumo(lista){
+  const cx = document.getElementById('deResumo');
+  if(!cx) return;
+  if(!lista.length){ cx.innerHTML=''; return; }
+  const aus = (pautaAtual && pautaAtual.dia && pautaAtual.dia.aus) || {};
+  const obs = (pautaAtual && pautaAtual.dia && pautaAtual.dia.obs) || {};
+  let presentes=0, ferias=0, prova=0, atestado=0, outros=0;
+  lista.forEach(p => {
+    const ev = aus[p.id] || '';
+    if(!ev) presentes++;
+    else if(ev==='ferias') ferias++;
+    else if(ev==='prova') prova++;
+    else if(ev==='atestado') atestado++;
+    else outros++;
+  });
+  const comObs = lista.filter(p => (obs[p.id]||'').trim()).length;
+  const chips = ['<span class="de-chip ok">'+presentes+(presentes===1?' presente':' presentes')+'</span>'];
+  if(ferias)   chips.push('<span class="de-chip bl">'+ferias+' de férias</span>');
+  if(prova)    chips.push('<span class="de-chip al">'+prova+' em prova</span>');
+  if(atestado) chips.push('<span class="de-chip rd">'+atestado+' com atestado</span>');
+  if(outros)   chips.push('<span class="de-chip">'+outros+' em outra situação</span>');
+  if(comObs)   chips.push('<span class="de-chip">'+comObs+(comObs===1?' com observação':' com observações')+'</span>');
+  cx.innerHTML = chips.join('');
+}
 
 function deRender(){
   const dia=deDia(); const list=document.getElementById('deList'); if(!list) return;
   // SUBSTITUA A LINHA DO LET BASE:
 let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!=='Dom' && (eqSlotsNoDia(pe,dia).length>0 || pe.tipo === 'adm') );
+// Itens 2 e 3 — guarda a lista completa do dia ANTES dos filtros
+  const baseDoDia = base.slice();
+  deContarAbas(baseDoDia);
+  deMontarResumo(baseDoDia);
+
   if(deF) base=base.filter(pe=>pe.tipo===deF);
 
+  // Item 1 — busca por nome
+  if(deBusca) base=base.filter(pe => (pe.nome||'').toLowerCase().includes(deBusca));
+
+  // Marcador "Somente com observações": eventualidade OU observação escrita
   if(deFilterAusentes) {
-    base = base.filter(pe => pautaAtual.dia.aus[pe.id] && pautaAtual.dia.aus[pe.id] !== '');
+    base = base.filter(pe => {
+      const ev = pautaAtual.dia.aus[pe.id] || '';
+      const ob = ((pautaAtual.dia.obs||{})[pe.id] || '');
+      return ev !== '' || ob.trim() !== '';
+    });
   }
  
   base = base.slice().sort((a,b) => {
     if (a.tipo !== b.tipo) return EQRANK[a.tipo] - EQRANK[b.tipo]; // Agrupa por cargos
-    if (a.tipo === 'servidor') return (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'}); // Servidor = Alfabética
-    return (a.id||'~').localeCompare(b.id||'~'); // Estag/Volunt = Ordem de Inclusão no Sistema
+    // Dentro de cada cargo: ordem alfabética (pt-BR, ignora acentos e maiúsculas)
+    return (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'});
   });
 
   let html='';
@@ -5264,6 +5417,12 @@ let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!
 
   html+='<div class="de-sec">Incluídos só para hoje <button class="btn btn-sm" id="deAdd" style="text-transform:none;letter-spacing:0;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar pessoa</button></div>';
   let extra=(pautaAtual.dia.extra||[]); if(deF) extra=extra.filter(pe=>pe.tipo===deF);
+  // Mesma regra da lista de cima: agrupa por cargo e, dentro do cargo, ordem alfabética.
+  // O .slice() ordena apenas uma cópia, para não mexer na ordem real dos dados salvos.
+  extra = extra.slice().sort((a,b) => {
+    if (a.tipo !== b.tipo) return EQRANK[a.tipo] - EQRANK[b.tipo];
+    return (a.nome||'~').localeCompare(b.nome||'~','pt',{sensitivity:'base'});
+  });
   if(!extra.length) html+='<div class="faint" style="font-size:13px;padding:4px 2px;">Ninguém incluído manualmente'+(deF?' deste tipo':'')+'. Use o botão acima se alguém vai fazer audiência só hoje.</div>';
   extra.forEach(pe=>{ html+=deRowHTML(pe,true); });
   list.innerHTML=html;
@@ -5287,6 +5446,113 @@ let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!
   list.querySelectorAll('[data-detipo]').forEach(s=>s.onchange=()=>{ const pe=(pautaAtual.dia.extra||[]).find(x=>x.id===s.dataset.detipo); if(pe){ pe.tipo=s.value; deSave(); } });
   list.querySelectorAll('[data-derem]').forEach(b=>b.onclick=()=>{ pautaAtual.dia.extra=(pautaAtual.dia.extra||[]).filter(x=>x.id!==b.dataset.derem); deSave(); });
   
+
+  // Item 9 — abrir e fechar o campo de observação
+  list.querySelectorAll('[data-deobs]').forEach(b => b.onclick = () => {
+    const id = b.dataset.deobs;
+    if(deObsAberta.has(id)) deObsAberta.delete(id); else deObsAberta.add(id);
+    deRender();
+    const campo = list.querySelector('[data-deobsinp="'+id+'"]');
+    if(campo){ campo.focus(); campo.setSelectionRange(campo.value.length, campo.value.length); }
+  });
+
+  // Item 9 — escrever a observação (salva sem redesenhar, para não perder o foco)
+  list.querySelectorAll('[data-deobsinp]').forEach(inp => {
+    const id = inp.dataset.deobsinp;
+    inp.oninput = () => {
+      if(!pautaAtual.dia.obs) pautaAtual.dia.obs = {};
+      if(inp.value.trim()) pautaAtual.dia.obs[id] = inp.value; else delete pautaAtual.dia.obs[id];
+      deSave(false);
+    };
+    inp.onkeydown = e => { if(e.key==='Enter'){ e.preventDefault(); deObsAberta.delete(id); deSave(); } };
+  });
+
+  /* ===== Painel de busca: aproveitar alguém já cadastrado ===== */
+
+  // Monta a lista de quem pode ser oferecido no painel, para um cargo.
+  // Marca como "já na lista" quem já está visível na tela, para não duplicar pessoa.
+  function deCandidatos(tipo){
+    const d = deDia();
+    const fimDeSemana = (!d || d==='Sab' || d==='Dom');
+    const jaExtra = new Set((pautaAtual.dia.extra||[]).map(x=>(x.nome||'').trim().toLowerCase()).filter(Boolean));
+    return (pautaEquipe||[])
+      .filter(p => !p.inativo && p.tipo===tipo && (p.nome||'').trim())
+      .map(p => {
+        const naListaDeCima = !fimDeSemana && (p.tipo==='adm' || eqSlotsNoDia(p,d).length>0);
+        return { nome:p.nome, ja: naListaDeCima || jaExtra.has(p.nome.trim().toLowerCase()) };
+      })
+      .sort((a,b)=> a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
+  }
+
+  // Desenha (e redesenha, ao filtrar) as opções dentro do painel de uma pessoa
+  function dePreencherPainel(id, filtro){
+    const cxLista = list.querySelector('[data-delista="'+id+'"]');
+    const pe = (pautaAtual.dia.extra||[]).find(x=>x.id===id);
+    if(!cxLista || !pe) return;
+    const f = (filtro||'').trim().toLowerCase();
+    const gente = deCandidatos(pe.tipo).filter(p=> p.nome.toLowerCase().includes(f));
+
+    let h = '<div class="de-opcao novo" data-denovo="'+id+'">&#65291; Digitar um nome novo</div>';
+    h += gente.length
+      ? gente.map(p=> '<div class="de-opcao '+(p.ja?'bloqueada':'')+'" '
+          + (p.ja ? '' : 'data-deescolhe="'+id+'" data-denome="'+esc(p.nome)+'"') + '>'
+          + '<span class="de-tag '+pe.tipo+'">'+eqCap(pe.tipo)+'</span>'+esc(p.nome)
+          + (p.ja ? '<span class="ja">já na lista</span>' : '') + '</div>').join('')
+      : '<div class="de-vazio">Nenhum nome encontrado.<br>Use a opção acima para criar.</div>';
+    cxLista.innerHTML = h;
+
+    // Clicou num nome do cadastro: preenche e salva (o deSave redesenha e o painel fecha sozinho)
+    cxLista.querySelectorAll('[data-deescolhe]').forEach(op=> op.onclick = ev => {
+      ev.stopPropagation();
+      const alvo=(pautaAtual.dia.extra||[]).find(x=>x.id===op.dataset.deescolhe);
+      if(alvo){ alvo.nome = op.dataset.denome; deSave(); }
+    });
+
+    // Clicou em "Digitar um nome novo": libera o campo para escrever
+    const btnNovo = cxLista.querySelector('[data-denovo]');
+    if(btnNovo) btnNovo.onclick = ev => {
+      ev.stopPropagation();
+      const painel = list.querySelector('[data-depainel="'+id+'"]');
+      const campo  = list.querySelector('[data-dename="'+id+'"]');
+      if(painel) painel.classList.remove('aberto');
+      if(campo){ campo.readOnly=false; campo.classList.add('digitando'); campo.placeholder='Digite o nome'; campo.focus(); }
+    };
+  }
+
+  // Clicar no campo do nome abre o painel
+  list.querySelectorAll('[data-dename]').forEach(campo => {
+    campo.onclick = ev => {
+      if(!campo.readOnly) return;   // já está em modo digitar: deixa escrever em paz
+      ev.stopPropagation();
+      document.querySelectorAll('#mDiaEdit .de-painel.aberto').forEach(p=>p.classList.remove('aberto'));
+      const id = campo.dataset.dename;
+      const painel = list.querySelector('[data-depainel="'+id+'"]');
+      if(!painel) return;
+      painel.classList.add('aberto');
+      const busca = painel.querySelector('[data-debusca]');
+      if(busca) busca.value='';
+      dePreencherPainel(id,'');
+      if(busca) setTimeout(()=>busca.focus(), 30);
+    };
+  });
+
+  // A caixa de busca filtra a lista conforme você digita
+  list.querySelectorAll('[data-debusca]').forEach(b => {
+    b.onclick = ev => ev.stopPropagation();
+    b.oninput = () => dePreencherPainel(b.dataset.debusca, b.value);
+  });
+
+  // Clicar dentro do painel não deve fechá-lo
+  list.querySelectorAll('.de-painel').forEach(p => p.onclick = ev => ev.stopPropagation());
+
+  // Clicar fora fecha qualquer painel aberto (registrado uma única vez)
+  if(!window._deFechaPainel){
+    window._deFechaPainel = true;
+    document.addEventListener('click', () => {
+      document.querySelectorAll('#mDiaEdit .de-painel.aberto').forEach(p=>p.classList.remove('aberto'));
+    });
+  }
+
     const add=document.getElementById('deAdd'); 
     if(add) add.onclick=()=>{ 
       const novoTipo = deF || 'servidor';
@@ -5306,6 +5572,24 @@ let base=(pautaEquipe||[]).filter(pe=> !pe.inativo && dia && dia!=='Sab' && dia!
 
 document.querySelectorAll('#deF button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#deF button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); deF=b.dataset.t; deRender(); });
 
+/* Item 1 — eventos do campo de busca */
+const deBuscaInp = document.getElementById('deBuscaInp');
+const deBuscaX   = document.getElementById('deBuscaX');
+if(deBuscaInp){
+  deBuscaInp.oninput = () => {
+    deBusca = deBuscaInp.value.trim().toLowerCase();
+    if(deBuscaX) deBuscaX.style.display = deBusca ? 'block' : 'none';
+    deRender();
+  };
+  deBuscaInp.onkeydown = e => {
+    if(e.key === 'Escape'){ e.stopPropagation(); deBuscaInp.value=''; deBuscaInp.oninput(); }
+  };
+}
+if(deBuscaX) deBuscaX.onclick = () => {
+  deBuscaInp.value=''; deBusca=''; deBuscaX.style.display='none';
+  deBuscaInp.focus(); deRender();
+};
+
 const chkAusentes = document.getElementById('deChkAusentes');
 if(chkAusentes) {
   chkAusentes.onchange = (e) => {
@@ -5316,7 +5600,37 @@ if(chkAusentes) {
 
 document.getElementById('deX').onclick=()=>closeM('mDiaEdit');
 document.getElementById('deFechar').onclick=()=>closeM('mDiaEdit');
-document.getElementById('deReset').onclick=()=>{ if(confirm('Limpar todos os ajustes do dia (eventualidades, horários e pessoas incluídas)? As marcações da grade são mantidas.')){ pautaAtual.dia.aus={}; pautaAtual.dia.hor={}; pautaAtual.dia.extra=[]; deSave(); toast('Ajustes do dia limpos.'); } };
+
+/* Item 4 — limpar avisando exatamente o que será apagado (modal do próprio sistema) */
+document.getElementById('deReset').onclick=()=>{
+  const nAus = Object.keys(pautaAtual.dia.aus||{}).length;
+  const nHor = Object.keys(pautaAtual.dia.hor||{}).length;
+  const nObs = Object.values(pautaAtual.dia.obs||{}).filter(v=>(v||'').trim()).length;
+  const nExt = (pautaAtual.dia.extra||[]).length;
+  if(nAus+nHor+nObs+nExt === 0){ toast('Não há ajustes neste dia para limpar.'); return; }
+
+  const itens = [];
+  if(nAus) itens.push([nAus, nAus===1?'marcação de situação':'marcações de situação']);
+  if(nHor) itens.push([nHor, nHor===1?'ajuste de horário':'ajustes de horário']);
+  if(nObs) itens.push([nObs, nObs===1?'observação escrita':'observações escritas']);
+  if(nExt) itens.push([nExt, nExt===1?'pessoa incluída só para hoje':'pessoas incluídas só para hoje']);
+
+  document.getElementById('ldLista').innerHTML = itens.map(([n,t]) =>
+      '<div style="display:flex;align-items:center;gap:9px;padding:2px 0;">'
+    + '<span style="min-width:26px;height:22px;padding:0 6px;border-radius:6px;background:#dc2626;color:#fff;font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center;">'+n+'</span>'
+    + '<span style="font-weight:600;font-size:13.5px;color:#991b1b;">'+t+'</span></div>').join('');
+
+  openM('mLimpaDia');
+};
+
+document.getElementById('ldCancelar').onclick = () => closeM('mLimpaDia');
+document.getElementById('ldConfirmar').onclick = () => {
+  pautaAtual.dia.aus={}; pautaAtual.dia.hor={}; pautaAtual.dia.obs={}; pautaAtual.dia.extra=[];
+  deObsAberta.clear();
+  closeM('mLimpaDia');
+  deSave();
+  toast('Ajustes do dia limpos.');
+};
 
 /* ============================================================
    ESCALA AUTOMÁTICA  —  LEIA A ORDEM DAS REGRAS AQUI

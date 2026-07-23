@@ -1560,6 +1560,88 @@ function corHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:'#ffffff'; }
       });
     }
 
+    // ==========================================
+    // OUVINTE DE COPIAR (COPY) PARA MÚLTIPLAS CÉLULAS
+    // ==========================================
+    if (!window._copyListenerAdicionado) {
+      window._copyListenerAdicionado = true;
+
+      document.addEventListener('copy', (e) => {
+        // Se não tem nada selecionado na nossa grade, deixa o navegador fazer o copy normal
+        if (selectedCells.size === 0) return;
+
+        // Se o usuário está com o cursor dentro de um input digitando algo, e tem SÓ aquela célula selecionada,
+        // ele provavelmente quer copiar um trecho de texto específico de dentro do input.
+        const activeEl = document.activeElement;
+        if (activeEl && activeEl.tagName === 'INPUT' && selectedCells.size <= 1) {
+            if (activeEl.selectionStart !== activeEl.selectionEnd) {
+                return; // Deixa copiar o texto selecionado dentro do input
+            }
+        }
+
+        e.preventDefault(); // Impede a cópia padrão (que pegaria apenas texto sujo do HTML)
+
+        const colOrder = ['proc', 'vara', 'c1', 'c2', 'c3', 'rja', 'res'];
+        
+        // Vamos capturar a ordem real das linhas visíveis para manter o formato exato da grade na tela
+        const trsVisiveis = Array.from(document.querySelectorAll('#gradeBody tr'));
+        
+        let minRow = Infinity, maxRow = -1;
+        let minCol = Infinity, maxCol = -1;
+        
+        const cellDataMatrix = [];
+
+        // 1. Mapear as células selecionadas em uma matriz virtual baseada nas coordenadas
+        selectedCells.forEach(cellId => {
+            const el = document.querySelector(`[data-cell-id="${cellId}"]`);
+            if (!el) return;
+            
+            const tr = el.closest('tr');
+            const rIdx = trsVisiveis.indexOf(tr);
+            
+            const colName = cellId.substring(cellId.lastIndexOf('-') + 1);
+            const cIdx = colOrder.indexOf(colName);
+            
+            if (rIdx !== -1 && cIdx !== -1) {
+                minRow = Math.min(minRow, rIdx);
+                maxRow = Math.max(maxRow, rIdx);
+                minCol = Math.min(minCol, cIdx);
+                maxCol = Math.max(maxCol, cIdx);
+                
+                if (!cellDataMatrix[rIdx]) cellDataMatrix[rIdx] = [];
+                
+                // Pega o valor do input ou select interno
+                const inputOrSelect = el.querySelector('input, select');
+                cellDataMatrix[rIdx][cIdx] = inputOrSelect ? inputOrSelect.value : '';
+            }
+        });
+
+        // 2. Montar a string TSV (Tab-Separated Values)
+        let copyString = '';
+        for (let r = minRow; r <= maxRow; r++) {
+            if (!cellDataMatrix[r]) continue; // Pula linhas inteiras não selecionadas (caso seleção pingada via Ctrl)
+            
+            let rowVals = [];
+            for (let c = minCol; c <= maxCol; c++) {
+                // Se a célula estiver no meio do retângulo mas não foi selecionada, vai em branco
+                rowVals.push(cellDataMatrix[r][c] !== undefined ? cellDataMatrix[r][c] : '');
+            }
+            copyString += rowVals.join('\t') + '\n';
+        }
+
+        // Remove a última quebra de linha para colar limpo
+        copyString = copyString.replace(/\n$/, '');
+
+        // 3. Joga pro clipboard
+        e.clipboardData.setData('text/plain', copyString);
+        
+        // Feedback visual reaproveitando sua função existente
+        if (typeof toast === 'function') {
+            toast(`${selectedCells.size} célula(s) copiada(s)!`);
+        }
+      });
+    }
+
     /**
      * Seleciona as células formando um RETÂNGULO PERFEITO,
      * imune ao bug de mesclagem de células (rowSpan) na coluna de Salas.
@@ -1849,7 +1931,7 @@ async function renderHome(){
           <svg class="brand-ic" id="btnPresence" style="cursor:pointer;" title="Ver acessos" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="editDot" style="display: ${isSiteEditing ? 'block' : 'none'}; position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:#ef4444; border-radius:50%; border:2px solid #1e293b; z-index:10;" title="${isSiteEditing ? 'Atenção: ' + esc(editingSiteUser) + ' está editando o código!' : ''}"></span>
         </div>
-        <h1>Escala Adm - v 1.2.9 (F)</h1>
+        <h1>Escala Adm - v 1.3.0 (G)</h1>
       </div>
       <div class="row" style="gap:8px;">
         <button class="btn btn-dark" id="hBackup" title="Backup dos dados (exportar / importar)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="hide-sm">Backup</span></button>
